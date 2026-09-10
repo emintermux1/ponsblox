@@ -56,7 +56,7 @@ export const SKINPAD_NAME = 'CS2 SKINPAD'
 export const SKINPAD_X_URL = env('VITE_SKINPAD_X') || 'https://x.com/skinpadfamily'
 
 const official = env('VITE_SKINPAD_TOKEN')
-export const SKINPAD_OFFICIAL_TOKEN = (official || '') as Address | ''
+export const SKINPAD_OFFICIAL_TOKEN = (official || '0x2b7c61541a3200547b5292e58d5ece2c29b45b4d') as Address | ''
 
 export function isOfficialToken(address: string): boolean {
   if (!SKINPAD_OFFICIAL_TOKEN) return false
