@@ -1,0 +1,25 @@
+{
+  "name": "ponsblox",
+  "private": true,
+  "workspaces": ["server", "web", "danny", "four", "gpu", "gitpad", "gmegirl", "bird", "skinpad"],
+  "scripts": {
+    "dev:server": "npm run dev -w server",
+    "dev:web": "npm run dev -w web",
+    "dev:danny": "npm run dev -w danny",
+    "dev:four": "npm run dev -w four",
+    "dev:gpu": "npm run dev -w gpu",
+    "dev:gitpad": "npm run dev -w @ponsblox/gitpad",
+    "dev:gmegirl": "npm run dev -w @ponsblox/gmegirl",
+    "dev:bird": "npm run dev -w @ponsblox/bird",
+    "dev:skinpad": "npm run dev -w @ponsblox/skinpad",
+    "build": "npm run build -w server && npm run build -w web",
+    "check": "npm run check -w server && npm run check -w web && npm run check -w @ponsblox/gitpad && npm run check -w @ponsblox/skinpad",
+    "game:build": "tools\\rojo\\rojo.exe build roblox/default.project.json -o roblox/Ponsblox.rbxlx",
+    "game:serve": "tools\\rojo\\rojo.exe serve roblox/default.project.json",
+    "game:open": "powershell -NoProfile -Command \"Start-Process -FilePath (Resolve-Path roblox/Ponsblox.rbxlx)\"",
+    "game:publish": "node scripts/publish-place.mjs",
+    "launch:prepare": "node scripts/pons-launch.mjs",
+    "launch:deploy": "node scripts/pons-launch.mjs --deploy",
+    "watch:pairs": "node scripts/watch-pons-pairs.mjs"
+  }
+}
