@@ -15,11 +15,8 @@ export function Footer() {
         <a href={EXPLORER} target="_blank" rel="noreferrer">Explorer</a>
       </div>
       <p className="legal">
-        A token is not a skin: it cannot be redeemed for one and there is no inventory behind it.
-        Skin prices are Steam Community Market data. Counter-Strike 2, CS2, and the skin names and
-        artwork belong to Valve Corporation; there is no relationship, endorsement, or obligation
-        of any kind. Tokens can go to zero. Your wallet signs every transaction. This site holds nothing.
-        Platform ticker ${SKINPAD_TICKER}.
+        Counter-Strike 2 skin names and artwork belong to Valve Corporation. Prices are Steam
+        Community Market data. Platform ticker ${SKINPAD_TICKER}.
       </p>
     </footer>
   )

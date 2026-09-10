@@ -28,7 +28,7 @@ export function SkinPage({ id }: { id: string }) {
           </div>
           <h2>Tokens pegged to this listing</h2>
           {(!skin.tokens || skin.tokens.length === 0) && (
-            <EmptyState title="None yet" body="Being first confers no claim. Anyone can peg another token to the same listing." />
+            <EmptyState title="None yet" body="Be the first — anyone can peg a token to this listing." />
           )}
           {skin.tokens && skin.tokens.length > 0 && (
             <ul className="pick">

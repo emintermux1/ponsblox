@@ -26,7 +26,6 @@ export function encodePegDescription(input: {
   return [
     `Pegged one to one to ${input.marketHashName}.`,
     `Steam median at launch: ${quote} (${input.quotedAt}).`,
-    'A token is not a skin and cannot be redeemed for one.',
     `${PEG_PREFIX}${input.marketHashName}`,
   ].join(' ')
 }

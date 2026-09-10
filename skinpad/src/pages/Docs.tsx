@@ -40,12 +40,6 @@ export function Docs() {
         There is no ratio and no supply arithmetic in that line. A skin has a price. A token has a
         price. They are the same kind of number, so they are set equal.
       </p>
-      <p>
-        The peg is not redemption. A token cannot be exchanged for a skin, and there is no inventory
-        of skins held behind these tokens. It is a price the market is pushed toward, not a claim on
-        an object.
-      </p>
-
       <h2>Where prices come from</h2>
       <p>
         Names, wear, StatTrak / Souvenir, and artwork come from Steam and the public CS2 item schema
@@ -129,17 +123,6 @@ export function Docs() {
         tokens launched through it and the skin each one is pegged to. Platform ticker ${SKINPAD_TICKER}.
       </p>
 
-      <h2>Risks</h2>
-      <ul>
-        <li>Nothing defends the peg. A token can trade at any fraction or multiple of its skin.</li>
-        <li>A token is not a skin. It cannot be redeemed for one.</li>
-        <li>The price feed can fail. Steam can rate-limit or go stale.</li>
-        <li>Skin prices are volatile and thin. High-tier knives trade rarely.</li>
-        <li>Valve is not involved. CS2 names and artwork belong to Valve Corporation.</li>
-        <li>Names are not unique. Check the contract address.</li>
-        <li>Graduating is not a quality signal.</li>
-        <li>Transactions are irreversible.</li>
-      </ul>
     </main>
   )
 }

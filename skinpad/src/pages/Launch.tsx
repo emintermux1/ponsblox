@@ -289,7 +289,6 @@ export function Launch({ skinId }: { skinId: string }) {
                 <div><dt>Launch fee</dt><dd>{factory ? `${factory.launchFeeEth} ETH` : '…'}</dd></div>
                 <div><dt>Wallet</dt><dd className="mono">{w.address ? short(w.address) : 'Not connected'}</dd></div>
               </dl>
-              <p className="muted">A token is not a skin. Drift is published. Nothing defends the peg. You sign the launch.</p>
             </>
           )}
 
@@ -313,7 +312,7 @@ export function Launch({ skinId }: { skinId: string }) {
                     <p className="muted">This wallet cannot launch on Pons right now — launching is paused or restricted.</p>
                   )}
                   <button type="button" className="btn btn--fire" disabled={busy || !w.address || can === false} onClick={() => void deploy()}>
-                    {busy ? 'Waiting on wallet…' : 'Launch on Pons'}
+                    {busy ? 'Waiting on wallet…' : 'Launch'}
                   </button>
                   {pending && (
                     <p className="muted">Saved hash {short(pending.hash)} — do not send another launch until you check the explorer.</p>
