@@ -50,9 +50,8 @@ function MindConstellation({ nodes }: { nodes: MuseState["mind"]["nodes"] }) {
             <motion.circle
               cx={point.x}
               cy={point.y}
-              r={2.2 + value * 3.2}
-              opacity={0.4 + value * 0.35}
               fill={grok ? "#d7b56a" : "#f0e6d2"}
+              initial={{ r: 2.2 + value * 3.2, opacity: 0.4 + value * 0.35 }}
               animate={{
                 r: [2.2 + value * 3.2, 3 + value * 4.4, 2.2 + value * 3.2],
                 opacity: [0.34 + value * 0.24, 0.58 + value * 0.34, 0.34 + value * 0.24],
