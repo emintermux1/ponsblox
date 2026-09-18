@@ -175,6 +175,7 @@ export function LivingScene({
     chill: world.muses.chill.position,
     builder: world.muses.builder.position,
     wall: wallSlotWorld(world.packet?.slot ?? 0),
+    grok: GROK_ORB_POS,
   };
 
   return (
