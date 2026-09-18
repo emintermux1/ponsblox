@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { activityLine, asCaption } from "@/components/watch/copy";
-import { DexScreenerFrame } from "@/components/world/dex-screen";
+import { DexScreenerFrame } from "@/components/world/dex-frame";
 import { usePerf } from "@/components/world/perf-context";
 import { useTape } from "@/components/world/tape-context";
 import { dexEmbedSrc, dexHonesty } from "@/lib/world/dex-embed";

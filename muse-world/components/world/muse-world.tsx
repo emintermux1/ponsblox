@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import dynamic from "next/dynamic";
 import { ACESFilmicToneMapping } from "three";
+import { DexOverlay } from "@/components/world/dex-overlay";
 import { PerfProvider, usePerf } from "@/components/world/perf-context";
 import { WatchMode } from "@/components/world/watch-mode";
 import { LOOK_CAM_NAME, ORBIT_CONTROLS_NAME } from "@/lib/world/camera";
@@ -117,6 +118,7 @@ export function MuseWorld({
           </PerfProvider>
         </Canvas>
       ) : null}
+      {ready && webgl ? <DexOverlay /> : null}
       {ready && !webgl ? (
         <WatchMode
           world={world}
