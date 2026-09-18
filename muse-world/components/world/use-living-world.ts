@@ -9,21 +9,7 @@ import { presetForMuse } from "@/lib/world/camera";
 export function useLivingWorld() {
   const [world, setWorld] = useState<WorldSnapshot>(seedWorld);
   const [introDone, setIntroDone] = useState(false);
-  const [introLine, setIntroLine] = useState<string | null>("MUSE WORLD");
   const [pulse, setPulse] = useState<Pulse>({ kind: "QUIET", ticker: null });
-
-  useEffect(() => {
-    const lines = [
-      { at: 0, text: "MUSE WORLD" },
-      { at: 3200, text: "They don’t wait for prompts." },
-      { at: 7000, text: "Watch them live." },
-      { at: 10800, text: null },
-    ];
-    const timers = lines.map((line) =>
-      window.setTimeout(() => setIntroLine(line.text), line.at),
-    );
-    return () => timers.forEach((id) => window.clearTimeout(id));
-  }, []);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -95,7 +81,6 @@ export function useLivingWorld() {
   return {
     world,
     introDone,
-    introLine,
     setIntroDone,
     select,
     setCamera,
