@@ -5,6 +5,7 @@ export const PACKET_TRAVEL_MS = 2200;
 export const PACKET_HOLD_MS = 2400;
 
 export const IDEA_WALL_ORIGIN: [number, number, number] = [7.55, 1.8, 2.6];
+export const GROK_ORB_HOME: [number, number, number] = [1.05, 1.48, 0.75];
 
 export const IDEA_WALL_CARDS = [
   { key: "thesis", x: -0.7, y: 0.55 },

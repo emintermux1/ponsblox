@@ -249,8 +249,11 @@ function Roster({
                     present ? "bg-loft-brass" : "bg-loft-paper/22"
                   }`}
                 />
-                <span className="w-20 font-serif text-[14px] italic">
+                <span className="w-24 font-serif text-[14px] italic">
                   {muse.name}
+                </span>
+                <span className="w-16 text-[10px] tracking-[0.16em] text-loft-brass/70">
+                  {muse.role}
                 </span>
                 <span className="text-[11px] text-loft-paper/45">
                   {activityLine(muse.activity)}
@@ -371,6 +374,9 @@ function SelectedPane({
         {selected.name}
       </p>
       <p className="mt-2 text-[10px] tracking-[0.2em] text-loft-brass/80">
+        {selected.role}
+      </p>
+      <p className="mt-1 text-[10px] tracking-[0.2em] text-loft-paper/45">
         {activityLine(selected.activity)}
       </p>
       {mindOpen ? <MindStatus muse={selected} /> : null}

@@ -27,7 +27,7 @@ export function seedMuses(): Record<MuseId, MuseState> {
   return {
     scroller: {
       id: "scroller",
-      name: "MUSE 01",
+      name: "Euterpe",
       role: "SCROLLER",
       activity: "SCROLLING",
       thought: null,
@@ -38,7 +38,7 @@ export function seedMuses(): Record<MuseId, MuseState> {
     },
     trader: {
       id: "trader",
-      name: "MUSE 02",
+      name: "Urania",
       role: "TRADER",
       activity: "WATCHING",
       thought: null,
@@ -49,7 +49,7 @@ export function seedMuses(): Record<MuseId, MuseState> {
     },
     chill: {
       id: "chill",
-      name: "MUSE 03",
+      name: "Thalia",
       role: "CHILL",
       activity: "CHILLING",
       thought: null,
@@ -60,7 +60,7 @@ export function seedMuses(): Record<MuseId, MuseState> {
     },
     builder: {
       id: "builder",
-      name: "MUSE 04",
+      name: "Calliope",
       role: "BUILDER",
       activity: "RESEARCHING",
       thought: null,

@@ -5,15 +5,15 @@ import { ContactShadows } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
 import { FrustumGuard } from "@/components/world/frustum-guard";
-import { MuseBody } from "@/components/world/muse-body";
+import { GrokOrb, MuseBody } from "@/components/world/muse-body";
 import { MuseMindField } from "@/components/world/mind";
 import { Penthouse } from "@/components/world/penthouse";
 import { TravelPacket } from "@/components/world/packet";
 import { usePerf } from "@/components/world/perf-context";
 import { CameraRig } from "@/components/world/rig";
 import { ThoughtChip } from "@/components/world/thoughts";
-import { wallSlotWorld } from "@/lib/world/layout";
-import { MIND_LIFT } from "@/lib/world/mind-graph";
+import { GROK_ORB_HOME, wallSlotWorld } from "@/lib/world/layout";
+import { grokSignalLive, MIND_LIFT } from "@/lib/world/mind-graph";
 import type { MuseId, PacketEndpoint, WorldSnapshot } from "@/types/world";
 import { MUSE_IDS } from "@/types/world";
 
@@ -157,8 +157,11 @@ export function LivingScene({
         wallPins={world.wallPins ?? []}
         builderPos={world.muses.builder.position}
       />
+      <FrustumGuard center={GROK_ORB_HOME} radius={0.7}>
+        <GrokOrb live={grokSignalLive(world.muses.trader.mind)} />
+      </FrustumGuard>
       {MUSE_IDS.map((id) => (
-        <FrustumGuard key={id} center={world.muses[id].position} radius={1.6}>
+        <FrustumGuard key={id} center={world.muses[id].position} radius={id === "chill" ? 2.1 : 1.6}>
           <MuseBody
             muse={world.muses[id]}
             selected={selected === id}
