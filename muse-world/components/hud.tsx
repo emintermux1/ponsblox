@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { SpectatorChrome } from "@/components/watch/chrome";
+import { FIRST_PAINT_MS } from "@/components/watch/copy";
 import type { RenderMode } from "@/lib/world/perf";
 import type { CameraPreset, MuseId, ScreenId, WorldSnapshot } from "@/types/world";
 
@@ -13,7 +15,15 @@ export type SpectatorHudProps = {
   onSelect: (id: MuseId | null) => void;
   onInspect: (id: ScreenId | null) => void;
   onEnterMind: () => void;
+  onWakeGrok: () => void;
 };
+
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
 
 export function SpectatorHud({
   world,
@@ -24,9 +34,25 @@ export function SpectatorHud({
   onSelect,
   onInspect,
   onEnterMind,
+  onWakeGrok,
 }: SpectatorHudProps) {
+  const [settled, setSettled] = useState(() => compact || prefersReducedMotion());
+
+  useEffect(() => {
+    if (compact || prefersReducedMotion()) {
+      setSettled(true);
+      return;
+    }
+    const id = window.setTimeout(() => setSettled(true), FIRST_PAINT_MS);
+    return () => window.clearTimeout(id);
+  }, [compact]);
+
+  if (!settled) {
+    return <div data-entry-veil="off" data-first-paint="watch" />;
+  }
+
   return (
-    <div data-entry-veil="off" data-first-paint="hud">
+    <div data-entry-veil="off" data-first-paint="hud" className="loft-chrome-in">
       <SpectatorChrome
         world={world}
         introLine={compact ? null : introLine}
@@ -36,6 +62,7 @@ export function SpectatorHud({
         onSelect={onSelect}
         onInspect={onInspect}
         onEnterMind={onEnterMind}
+        onWakeGrok={onWakeGrok}
       />
     </div>
   );

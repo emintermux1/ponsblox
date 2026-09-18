@@ -1,6 +1,7 @@
 import { makeGrokEvent } from "@/lib/adapters/parse";
 import { honestyFromLabel, SIM_GROK_SUMMARY } from "@/lib/adapters/source";
 import { presetForMuse } from "@/lib/world/camera";
+import { grokAskPacket, grokWakePacket } from "@/lib/world/grok-watch";
 import type {
   GrokHonesty,
   GrokSource,
@@ -72,7 +73,7 @@ export function applyScreenInspect(
   };
 }
 
-export function applyGrokFocus(world: WorldSnapshot, museId: MuseId): WorldSnapshot {
+export function applyGrokFocus(world: WorldSnapshot, museId: MuseId, now = Date.now()): WorldSnapshot {
   return {
     ...world,
     selected: null,
@@ -84,6 +85,7 @@ export function applyGrokFocus(world: WorldSnapshot, museId: MuseId): WorldSnaps
       phase: "waking",
       museId,
     },
+    packet: grokAskPacket(museId, now),
   };
 }
 
@@ -128,6 +130,7 @@ export function applyGrokWake(
         },
       },
     },
+    packet: grokWakePacket(museId, honesty, now),
     events: [
       makeGrokEvent({
         kind,

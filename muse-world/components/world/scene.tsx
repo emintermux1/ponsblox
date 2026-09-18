@@ -5,7 +5,7 @@ import { ContactShadows } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
 import { FrustumGuard } from "@/components/world/frustum-guard";
-import { GrokOrb } from "@/components/world/grok-orb";
+import { GrokPresence } from "@/components/world/grok-orb";
 import { MuseBody } from "@/components/world/muse-body";
 import { MuseMindField } from "@/components/world/mind";
 import { UsedBits } from "@/components/world/devices";
@@ -17,6 +17,7 @@ import { useTape } from "@/components/world/tape-context";
 import { ThoughtChip } from "@/components/world/thoughts";
 import { deskGrokLive } from "@/lib/sim/tick";
 import { presetForMuse } from "@/lib/world/camera";
+import { grokLookAt } from "@/lib/world/grok-watch";
 import { GROK_ORB_POS, wallSlotWorld } from "@/lib/world/layout";
 import { MIND_LIFT } from "@/lib/world/mind-graph";
 import type { TapeView } from "@/lib/world/tape";
@@ -215,13 +216,12 @@ export function LivingScene({
         world={world}
       />
       <UsedBits />
-      <FrustumGuard center={GROK_ORB_POS} radius={1.4}>
-        <GrokOrb
-          waking={world.grokWake.phase === "waking" || deskGrokLive(world.events)}
-          honesty={world.grokWake.honesty}
-          onWake={onWakeGrok}
-        />
-      </FrustumGuard>
+      <GrokPresence
+        waking={world.grokWake.phase === "waking" || deskGrokLive(world.events)}
+        honesty={world.grokWake.honesty}
+        lookAt={grokLookAt(world)}
+        onWake={onWakeGrok}
+      />
       {MUSE_IDS.map((id) => (
         <FrustumGuard key={id} center={world.muses[id].position} radius={id === "chill" ? 2.1 : 1.6}>
           <MuseBody
