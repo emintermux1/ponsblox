@@ -28,21 +28,6 @@ function loftPoint(world: WorldSnapshot, endpoint: PacketEndpoint): { left: numb
   }
 }
 
-function museAccent(id: MuseId): string {
-  switch (id) {
-    case "scroller":
-      return "#d8c6a6";
-    case "trader":
-      return "#2a2a28";
-    case "chill":
-      return "#3f7a4a";
-    case "builder":
-      return "#c9b48a";
-    default:
-      return assertNever(id);
-  }
-}
-
 function MuseFigure({
   muse,
   pulse,
@@ -87,17 +72,35 @@ function MuseFigure({
       {caption ? (
         <span className="thought-caption mb-2 block text-center">{caption}</span>
       ) : null}
-      <span className="relative mx-auto block h-[72px] w-8">
-        <span className="absolute left-1/2 top-0 h-4 w-4 -translate-x-1/2 rounded-full bg-[#f3efe6] shadow-[0_0_12px_rgba(243,239,230,0.2)]" />
-        <span className="absolute left-1/2 top-4 h-9 w-[18px] -translate-x-1/2 rounded-t-[6px] bg-[#eee8dc]" />
-        <span
-          className="absolute left-1/2 top-[22px] h-1.5 w-[18px] -translate-x-1/2"
-          style={{ background: museAccent(muse.id) }}
-        />
-        <span className="absolute bottom-1 left-1/2 h-3 w-[7px] -translate-x-[9px] bg-[#e7e0d2]" />
-        <span className="absolute bottom-1 left-1/2 h-3 w-[7px] translate-x-[2px] bg-[#e7e0d2]" />
+      <span className="relative mx-auto block h-[78px] w-12">
+        {muse.id === "chill" ? (
+          <span className="absolute bottom-1 left-1/2 h-7 w-10 -translate-x-1/2 rounded-sm bg-[#5c4a3e]" />
+        ) : null}
+        <span className="absolute left-1/2 top-2 h-[46px] w-10 -translate-x-1/2 rounded-[20px] bg-[#f6f1e8] shadow-[0_0_14px_rgba(246,241,232,0.22)]" />
+        {muse.id === "trader" ? (
+          <span className="absolute left-1/2 top-[22px] h-7 w-10 -translate-x-1/2 rounded-b-[16px] bg-[#1a1d24]" />
+        ) : null}
+        <span className="absolute left-[14px] top-[18px] h-[3px] w-[7px] rounded-full bg-[#1a1d33]" />
+        <span className="absolute right-[14px] top-[18px] h-[3px] w-[7px] rounded-full bg-[#1a1d33]" />
+        <span className="absolute left-[13px] top-[26px] h-1.5 w-1.5 rounded-full bg-[#f0b4ae]/80" />
+        <span className="absolute right-[13px] top-[26px] h-1.5 w-1.5 rounded-full bg-[#f0b4ae]/80" />
+        {muse.id === "scroller" ? (
+          <span className="absolute left-1/2 top-1 h-3 w-9 -translate-x-1/2 rounded-full border border-[#14161c]" />
+        ) : null}
+        {muse.id === "trader" ? (
+          <span className="absolute left-1/2 top-0.5 h-2.5 w-7 -translate-x-1/2 rounded-t-full bg-[#14161c]" />
+        ) : null}
+        {muse.id === "chill" ? (
+          <span className="absolute left-1/2 top-[30px] h-1.5 w-8 -translate-x-1/2 rounded-full bg-[#3f7a4a]" />
+        ) : null}
+        {muse.id === "builder" ? (
+          <span className="absolute bottom-3 right-0 h-3 w-4 rounded-[2px] bg-[#ead9c0]" />
+        ) : null}
+        {muse.id === "scroller" || muse.id === "trader" ? (
+          <span className="absolute bottom-2 left-1/2 h-3 w-5 -translate-x-1/2 rounded-[2px] bg-[#3a3d42]" />
+        ) : null}
         {selected ? (
-          <span className="absolute -bottom-0.5 left-1/2 h-1.5 w-7 -translate-x-1/2 rounded-full bg-[#e6d3a8]/55" />
+          <span className="absolute -bottom-0.5 left-1/2 h-1.5 w-8 -translate-x-1/2 rounded-full bg-[#e6d3a8]/55" />
         ) : null}
         {muse.id === "scroller" ? (
           <span
@@ -111,6 +114,9 @@ function MuseFigure({
       </span>
       <span className="mt-1 block min-h-11 cursor-pointer text-center text-base font-medium tracking-wide text-[#efe6d4]">
         {muse.name}
+      </span>
+      <span className="block cursor-pointer text-center text-[8px] tracking-[0.18em] text-[#c9b48a]">
+        {muse.role}
       </span>
       <span className="block cursor-pointer text-center text-sm tracking-normal text-[#cfc3aa]">
         {activityLine(muse.activity)}
