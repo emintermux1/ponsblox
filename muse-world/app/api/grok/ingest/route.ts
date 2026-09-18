@@ -1,4 +1,9 @@
-import { claimsExecutedFill, ingestAuthorized, makeGrokEvent } from "@/lib/adapters/parse";
+import { claimsExecutedFill, makeGrokEvent } from "@/lib/adapters/parse";
+import {
+  assertSource,
+  authorizeMuseIngest,
+  grokIngestEventSource,
+} from "@/lib/adapters/source";
 import { patchWorld } from "@/lib/world/store";
 import { isMuseId } from "@/types/world";
 
@@ -6,14 +11,11 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const secret = process.env.GROK_INGEST_SECRET;
-  const header = request.headers.get("x-muse-ingest") ?? request.headers.get("authorization");
-  const auth = ingestAuthorized(secret, header);
-  if (auth === "missing_secret") {
-    return Response.json({ error: "ingest not configured" }, { status: 503 });
-  }
-  if (auth === "unauthorized") {
+  const header = request.headers.get("x-muse-ingest");
+  if (!authorizeMuseIngest(header, secret)) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
+  assertSource("real");
   const body = (await request.json().catch(() => ({}))) as {
     museId?: unknown;
     summary?: unknown;
@@ -32,6 +34,7 @@ export async function POST(request: Request) {
     return Response.json({ error: "do not invent fills" }, { status: 400 });
   }
   const museId = body.museId;
+  const source = grokIngestEventSource();
   patchWorld((world) => ({
     ...world,
     muses: {
@@ -50,11 +53,11 @@ export async function POST(request: Request) {
         kind: "GROK_RESPONSE",
         museId,
         museName: world.muses[museId].name,
-        source: "bot",
+        source,
         summary,
       }),
       ...world.events,
     ].slice(0, 24),
   }));
-  return Response.json({ ok: true, source: "bot" });
+  return Response.json({ ok: true, source });
 }

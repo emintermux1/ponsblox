@@ -1,4 +1,4 @@
-import { askGrok } from "@/lib/adapters/grok";
+import { wakeGrok } from "@/lib/adapters/grok";
 import { grokReplyFromWake, makeGrokEvent } from "@/lib/adapters/parse";
 import { peekMarketPulse } from "@/lib/adapters/market";
 import { applyActivity, pickTicker, setThought, tickSnapshot } from "@/lib/sim/tick";
@@ -33,7 +33,7 @@ export async function runGrokTick(): Promise<void> {
     ticker,
   );
   const previousGrok = world.muses.trader.mind.grok;
-  const wake = await askGrok({
+  const wake = await wakeGrok({
     museId: "trader",
     goal: asked.mind.goal,
     observation: `${ticker} is in the room`,

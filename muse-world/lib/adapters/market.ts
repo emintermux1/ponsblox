@@ -12,6 +12,7 @@ import {
   type MarketPulse,
   type ProviderStatus,
 } from "@/lib/adapters/parse";
+import { assertSource, honestyFromLabel } from "@/lib/adapters/source";
 
 export type { MarketPulse };
 
@@ -32,6 +33,11 @@ const STALE_LIVE_MS = 60_000;
 let lastPulse: MarketPulse = quietMarketPulse(quietProviders());
 let lastAt = 0;
 let lastLiveAt = 0;
+
+function stampPulse(pulse: MarketPulse): MarketPulse {
+  assertSource(honestyFromLabel(pulse.source === "sim" ? "sim" : "gecko"));
+  return pulse;
+}
 
 async function readJson(
   url: string,
@@ -165,7 +171,7 @@ async function confirmHelius(mint: string | null): Promise<HeliusConfirm | Provi
 export async function peekMarketPulse(): Promise<MarketPulse> {
   const now = Date.now();
   if (now - lastAt < LIVE_TTL_MS) {
-    return lastPulse;
+    return stampPulse(lastPulse);
   }
   lastAt = now;
   try {
@@ -181,19 +187,19 @@ export async function peekMarketPulse(): Promise<MarketPulse> {
     const helius = await confirmHelius(seed);
     const pulse = mergeMarketPulse({ gecko, birdeye, gmgn, helius });
     if (pulse.source === "sim" && lastPulse.source !== "sim" && now - lastLiveAt < STALE_LIVE_MS) {
-      return lastPulse;
+      return stampPulse(lastPulse);
     }
     lastPulse = pulse;
     if (pulse.source !== "sim") {
       lastLiveAt = now;
     }
-    return lastPulse;
+    return stampPulse(lastPulse);
   } catch {
     if (lastPulse.source !== "sim" && now - lastLiveAt < STALE_LIVE_MS) {
-      return lastPulse;
+      return stampPulse(lastPulse);
     }
     lastPulse = quietMarketPulse(quietProviders());
-    return lastPulse;
+    return stampPulse(lastPulse);
   }
 }
 

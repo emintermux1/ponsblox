@@ -1,26 +1,31 @@
 import "server-only";
 
-import type { MuseId } from "@/types/world";
 import {
   classifyGrokBias,
+  grokReplyFromWake,
   resolveWakeResult,
+  type GrokReply,
   type GrokToolReply,
   type GrokWakeResult,
 } from "@/lib/adapters/parse";
+import {
+  assertSource,
+  honestyFromLabel,
+  isGrokWebhookConfigured,
+  type GrokAsk,
+} from "@/lib/adapters/source";
 
-export type GrokAsk = {
-  museId: MuseId;
-  goal: string;
-  observation: string;
-};
-
-export type { GrokReply, GrokToolReply, GrokWakeResult } from "@/lib/adapters/parse";
+export type { GrokAsk, GrokReply } from "@/lib/adapters/source";
+export type { GrokToolReply, GrokWakeResult } from "@/lib/adapters/parse";
 
 const WAKE_COOLDOWN_MS = 20_000;
 let lastWakeAt = 0;
 let lastWakeOk = false;
 
 async function wakeGrokBot(ask: GrokAsk): Promise<boolean> {
+  if (!isGrokWebhookConfigured()) {
+    return false;
+  }
   const url = process.env.GROK_BOT_WEBHOOK_URL;
   const key = process.env.GROK_BOT_WEBHOOK_KEY;
   if (!url || !key) {
@@ -103,11 +108,15 @@ async function askXai(ask: GrokAsk): Promise<GrokToolReply | null> {
 }
 
 export async function wakeGrok(ask: GrokAsk): Promise<GrokWakeResult> {
-  const woken = await wakeGrokBot(ask).catch(() => false);
+  const webhookConfigured = isGrokWebhookConfigured();
+  const woken = webhookConfigured ? await wakeGrokBot(ask).catch(() => false) : false;
   const xai = await askXai(ask).catch(() => null);
   return resolveWakeResult(woken, xai);
 }
 
-export async function askGrok(ask: GrokAsk): Promise<GrokWakeResult> {
-  return wakeGrok(ask);
+export async function askGrok(ask: GrokAsk): Promise<GrokReply> {
+  const result = await wakeGrok(ask);
+  const reply = grokReplyFromWake(result);
+  assertSource(honestyFromLabel(reply.source));
+  return reply;
 }
