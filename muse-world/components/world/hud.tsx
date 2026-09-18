@@ -15,20 +15,19 @@ const fade = {
 export function WorldHud({
   world,
   introLine,
-  introDone,
   onPreset,
   onSelect,
   onEnterMind,
 }: {
   world: WorldSnapshot;
   introLine: string | null;
-  introDone: boolean;
   onPreset: (preset: CameraPreset) => void;
   onSelect: (id: MuseId | null) => void;
   onEnterMind: () => void;
 }) {
   const selected = world.selected ? world.muses[world.selected] : null;
   const latest = selected ? null : (world.events[0] ?? null);
+  const showChrome = !introLine;
 
   return (
     <div className="pointer-events-none absolute inset-0 text-[#efe6d4]">
@@ -41,7 +40,7 @@ export function WorldHud({
       </div>
 
       <AnimatePresence>
-        {introDone ? (
+        {showChrome ? (
           <motion.div
             key="presets"
             {...fade}
@@ -79,7 +78,7 @@ export function WorldHud({
       </AnimatePresence>
 
       <AnimatePresence>
-        {introDone && latest ? (
+        {showChrome && latest ? (
           <motion.p
             key={latest.id}
             {...fade}
@@ -91,7 +90,7 @@ export function WorldHud({
       </AnimatePresence>
 
       <AnimatePresence>
-        {introDone && selected ? (
+        {showChrome && selected ? (
           <motion.div
             key={selected.id}
             {...fade}
