@@ -15,6 +15,7 @@ import {
   type WakePayload,
 } from "@/lib/world/pick";
 import { quietTape, tapeFromPulse, type TapeView } from "@/lib/world/tape";
+import { rememberPulseName } from "@/lib/world/wall-copy";
 import type { CameraPreset, MuseId, ScreenId, WorldEvent, WorldSnapshot } from "@/types/world";
 
 function prefersReducedMotion(): boolean {
@@ -65,6 +66,7 @@ export function useLivingWorld() {
         if (market.ok) {
           const next = (await market.json()) as Pulse & Record<string, unknown>;
           if (!cancelled) {
+            rememberPulseName(typeof next.name === "string" ? next.name : null);
             setPulse({
               kind:
                 next.kind === "TREND_SPIKE" || next.kind === "VIRAL_POST"
