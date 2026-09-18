@@ -45,6 +45,9 @@ describe("public tape honesty", () => {
     assert.equal(formatChange(tape.changePct), "+2.4%");
     assert.equal(tapeHeadline(tape), "WIF  +2.4%");
     assert.deepEqual(tape.candles, []);
+    assert.equal(tape.rows.length, 1);
+    assert.equal(tape.rows[0]?.ticker, "WIF");
+    assert.equal(tape.rows[0]?.changePct, 2.41);
     assert.equal(tapeStamp("gecko"), "LIVE · gecko");
     const named = tapeFromPulse({
       kind: "TREND_SPIKE",
@@ -64,6 +67,30 @@ describe("public tape honesty", () => {
       changePct: 3,
     });
     assert.deepEqual(pad, quietTape());
+  });
+
+  it("uses public pulse tape rows and drops PAID without inventing %", () => {
+    const tape = tapeFromPulse({
+      kind: "TREND_SPIKE",
+      ticker: "WIF",
+      source: "gecko",
+      changePct: 2.4,
+      priceUsd: 1.25,
+      tape: [
+        { ticker: "WIF", priceChange24h: 2.4, priceUsd: 1.25, source: "gecko" },
+        { ticker: "PAID", priceChange24h: 99, priceUsd: 8, source: "birdeye" },
+        { ticker: "BONK", priceChange24h: -1.26, source: "dexscreener" },
+        { ticker: "TOOLONGSYM", priceChange24h: 4 },
+      ],
+    });
+    assert.deepEqual(
+      tape.rows.map((row) => row.ticker),
+      ["WIF", "BONK"],
+    );
+    assert.equal(tape.rows[1]?.changePct, -1.26);
+    assert.equal(tape.rows[1]?.source, "dexscreener");
+    assert.equal(tape.priceUsd, 1.25);
+    assert.deepEqual(tape.fills, []);
   });
 
   it("dexscreener can use public % and only real OHLCV bars", () => {

@@ -12,6 +12,13 @@ export type TapeSource = MarketProviderId | "sim";
 
 export type TapeKind = "TREND_SPIKE" | "VIRAL_POST" | "QUIET";
 
+export type TapeRowView = {
+  ticker: string;
+  changePct: number | null;
+  priceUsd: number | null;
+  source: TapeSource;
+};
+
 export type TapeView = {
   kind: TapeKind;
   ticker: string | null;
@@ -19,7 +26,9 @@ export type TapeView = {
   mint: string | null;
   source: TapeSource;
   changePct: number | null;
+  priceUsd: number | null;
   candles: readonly TapeCandle[];
+  rows: readonly TapeRowView[];
   fills: readonly [];
 };
 
@@ -31,7 +40,9 @@ export function quietTape(): TapeView {
     mint: null,
     source: "sim",
     changePct: null,
+    priceUsd: null,
     candles: [],
+    rows: [],
     fills: [],
   };
 }
@@ -91,6 +102,53 @@ export function sanitizeCandles(value: unknown): TapeCandle[] {
   return candlesFromOhlcvList(value);
 }
 
+function rowsFromPulse(
+  pulse: {
+    ticker?: unknown;
+    source?: unknown;
+    changePct?: unknown;
+    priceChange24h?: unknown;
+    priceUsd?: unknown;
+    tape?: unknown;
+  },
+  source: TapeSource,
+): TapeRowView[] {
+  const rows: TapeRowView[] = [];
+  const seen = new Set<string>();
+  const list = Array.isArray(pulse.tape) ? pulse.tape : [];
+  for (const row of list) {
+    if (!row || typeof row !== "object") {
+      continue;
+    }
+    const item = row as Record<string, unknown>;
+    const ticker = paidSafeTicker(typeof item.ticker === "string" ? item.ticker : null);
+    if (!ticker || seen.has(ticker)) {
+      continue;
+    }
+    seen.add(ticker);
+    const rowSource = asTapeSource(item.source);
+    rows.push({
+      ticker,
+      changePct: parseFiniteNumber(item.changePct) ?? parseFiniteNumber(item.priceChange24h),
+      priceUsd: parseFiniteNumber(item.priceUsd),
+      source: rowSource === "sim" ? source : rowSource,
+    });
+    if (rows.length >= 8) {
+      break;
+    }
+  }
+  const lead = paidSafeTicker(typeof pulse.ticker === "string" ? pulse.ticker : null);
+  if (lead && !seen.has(lead)) {
+    rows.unshift({
+      ticker: lead,
+      changePct: parseFiniteNumber(pulse.changePct) ?? parseFiniteNumber(pulse.priceChange24h),
+      priceUsd: parseFiniteNumber(pulse.priceUsd),
+      source,
+    });
+  }
+  return rows.slice(0, 8);
+}
+
 export function tapeFromPulse(pulse: {
   kind?: unknown;
   ticker?: unknown;
@@ -99,7 +157,9 @@ export function tapeFromPulse(pulse: {
   source?: unknown;
   changePct?: unknown;
   priceChange24h?: unknown;
+  priceUsd?: unknown;
   candles?: unknown;
+  tape?: unknown;
 }): TapeView {
   const ticker = paidSafeTicker(typeof pulse.ticker === "string" ? pulse.ticker : null);
   const name = pulseDisplayName(typeof pulse.name === "string" ? pulse.name : null, ticker);
@@ -114,7 +174,9 @@ export function tapeFromPulse(pulse: {
     mint: typeof pulse.mint === "string" && pulse.mint.length >= 32 ? pulse.mint : null,
     source,
     changePct: parseFiniteNumber(pulse.changePct) ?? parseFiniteNumber(pulse.priceChange24h),
+    priceUsd: parseFiniteNumber(pulse.priceUsd),
     candles: sanitizeCandles(pulse.candles),
+    rows: rowsFromPulse(pulse, source),
     fills: [],
   };
 }
@@ -147,6 +209,27 @@ export function formatChange(changePct: number | null): string | null {
   const rounded = Math.round(changePct * 10) / 10;
   const sign = rounded > 0 ? "+" : "";
   return `${sign}${rounded.toFixed(1)}%`;
+}
+
+export function formatPrice(priceUsd: number | null): string | null {
+  if (priceUsd == null || !Number.isFinite(priceUsd) || priceUsd <= 0) {
+    return null;
+  }
+  if (priceUsd >= 1000) {
+    return priceUsd.toFixed(0);
+  }
+  if (priceUsd >= 1) {
+    return priceUsd.toFixed(2);
+  }
+  if (priceUsd >= 0.01) {
+    return priceUsd.toFixed(4);
+  }
+  return priceUsd.toPrecision(2);
+}
+
+export function rowLabel(row: TapeRowView): string {
+  const change = formatChange(row.changePct);
+  return change ? `${row.ticker}  ${change}` : row.ticker;
 }
 
 export function tapeHeadline(tape: TapeView): string {

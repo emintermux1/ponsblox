@@ -601,7 +601,6 @@ function Desk({
         active={inspecting === "notes"}
         onInspect={onInspect}
       />
-      <DeskKeyboard x={-0.58} />
       <DeskKeyboard x={0.62} />
       <Panel args={[0.42, 0.02, 0.3]} position={[1.18, 0.8, 0.22]} color={PAPER} roughness={0.82} />
       <Panel args={[0.36, 0.015, 0.26]} position={[1.2, 0.82, 0.2]} color="#d7c6aa" roughness={0.8} />
