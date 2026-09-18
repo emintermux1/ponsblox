@@ -34,6 +34,66 @@ export function worldToWallLocal(position: [number, number, number]): [number, n
   ];
 }
 
+/**
+ * Furniture footprints where a muse reads as seated.
+ * The sim keeps muse anchors at y=0.62; the plush body is dropped from that
+ * anchor to the floor — or onto a cushion when the anchor sits over one.
+ */
+type SeatZone = {
+  minX: number;
+  maxX: number;
+  minZ: number;
+  maxZ: number;
+  /** world Y of the cushion top */
+  seatTop: number;
+};
+
+const SEAT_ZONES: SeatZone[] = [
+  { minX: -5.9, maxX: -2.4, minZ: 0.7, maxZ: 2.0, seatTop: 0.5 },
+  { minX: -2.3, maxX: -1.35, minZ: 3.0, maxZ: 3.85, seatTop: 0.38 },
+];
+
+/** Local Y of the plush head centre above the grounded body origin. */
+export const PLUSH_HEAD_LOCAL_Y = 1.02;
+/** Local Y of the plush seat (body underside) above the grounded body origin. */
+const PLUSH_SEAT_LOCAL_Y = 0.1;
+
+export function seatTopAt(
+  position: readonly [number, number, number],
+): number | null {
+  for (const zone of SEAT_ZONES) {
+    if (
+      position[0] >= zone.minX &&
+      position[0] <= zone.maxX &&
+      position[2] >= zone.minZ &&
+      position[2] <= zone.maxZ
+    ) {
+      return zone.seatTop;
+    }
+  }
+  return null;
+}
+
+export function museSeated(position: readonly [number, number, number]): boolean {
+  return seatTopAt(position) !== null;
+}
+
+/** Vertical offset from the sim anchor down to the grounded plush origin. */
+export function museGroundDrop(
+  position: readonly [number, number, number],
+): number {
+  const seat = seatTopAt(position);
+  if (seat !== null) {
+    return seat + 0.015 - position[1] - PLUSH_SEAT_LOCAL_Y;
+  }
+  return 0.015 - position[1];
+}
+
+/** World Y of the plush head centre for a muse anchored at `position`. */
+export function museHeadY(position: readonly [number, number, number]): number {
+  return position[1] + museGroundDrop(position) + PLUSH_HEAD_LOCAL_Y;
+}
+
 export function chillHome(now: number): [number, number, number] {
   const cycle = Math.floor(now / 14000) % 3;
   if (cycle === 0) return [-1.6, 0.62, 3.5];

@@ -5,6 +5,7 @@ import { Text } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { asCaption } from "@/components/watch/copy";
 import { usePerf } from "@/components/world/perf-context";
+import { museHeadY } from "@/lib/world/layout";
 import type { MuseState } from "@/types/world";
 
 export function ThoughtChip({
@@ -43,7 +44,7 @@ export function ThoughtChip({
 
   return (
     <Text
-      position={[muse.position[0], muse.position[1] + 1.38, muse.position[2]]}
+      position={[muse.position[0], museHeadY(muse.position) + 0.52, muse.position[2]]}
       fontSize={0.048}
       letterSpacing={0.08}
       color="#efe6d4"

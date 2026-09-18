@@ -12,8 +12,7 @@ import { TravelPacket } from "@/components/world/packet";
 import { usePerf } from "@/components/world/perf-context";
 import { CameraRig } from "@/components/world/rig";
 import { ThoughtChip } from "@/components/world/thoughts";
-import { wallSlotWorld } from "@/lib/world/layout";
-import { MIND_LIFT } from "@/lib/world/mind-graph";
+import { museHeadY, wallSlotWorld } from "@/lib/world/layout";
 import type { MuseId, PacketEndpoint, WorldSnapshot } from "@/types/world";
 import { MUSE_IDS } from "@/types/world";
 
@@ -132,6 +131,7 @@ export function LivingScene({
 }) {
   const selected = world.selected;
   const musePos = selected ? world.muses[selected].position : null;
+  const museFacing = selected ? world.muses[selected].facing : 0;
   const { contactShadows } = usePerf();
   const positions: Record<PacketEndpoint, [number, number, number]> = {
     scroller: world.muses.scroller.position,
@@ -149,6 +149,7 @@ export function LivingScene({
         preset={world.camera}
         selected={world.selected}
         musePos={musePos}
+        museFacing={museFacing}
         introDone={introDone}
         onIntroDone={onIntroDone}
       />
@@ -168,7 +169,7 @@ export function LivingScene({
             mind={world.muses[id].mind}
             origin={[
               world.muses[id].position[0],
-              world.muses[id].position[1] + MIND_LIFT,
+              museHeadY(world.muses[id].position) + 0.32,
               world.muses[id].position[2],
             ]}
             visible={world.mindOpen && selected === id}

@@ -1,5 +1,6 @@
 import gsap from "gsap";
 import { PerspectiveCamera, Vector3, type Camera } from "three";
+import { museHeadY } from "@/lib/world/layout";
 import type { CameraPreset, MuseId } from "@/types/world";
 import { assertNever } from "@/types/world";
 
@@ -28,10 +29,10 @@ export const INTRO_SETTLE_S = 0.4;
 export const INTRO_LEG_S = 3.05;
 
 export const INTRO_SHOTS: Shot[] = [
-  { position: [1.1, 3.15, 11.4], target: [0.15, 1.25, 0.35], fov: 36 },
-  { position: [-1.4, 2.4, 8.2], target: [-3.2, 1.1, 1.2], fov: 36 },
-  { position: [6.8, 2.6, 6.4], target: [3.2, 1.15, -0.2], fov: 34 },
-  { position: [2.4, 4.6, 9.8], target: [0.4, 1.2, 1.2], fov: 40 },
+  { position: [1.1, 3.15, 11.4], target: [0.15, 1.0, 0.35], fov: 36 },
+  { position: [-1.4, 2.4, 8.2], target: [-3.4, 0.95, 1.5], fov: 36 },
+  { position: [6.8, 2.6, 6.4], target: [3.3, 0.95, -0.3], fov: 34 },
+  { position: [2.8, 4.9, 11.2], target: [0, 1.0, 0.4], fov: 43 },
 ];
 
 const FOLLOW_LAMBDA = {
@@ -50,30 +51,50 @@ export function armCinema(): void {
   gsap.ticker.lagSmoothing(1000, 33);
 }
 
+/**
+ * Each preset is a deliberately different piece of coverage — height, side,
+ * and focal length all move so switching never feels like a no-op.
+ */
 export function shotForPreset(
   preset: CameraPreset,
   _selected: MuseId | null,
   musePos: [number, number, number] | null,
+  museFacing = 0,
 ): Shot {
   switch (preset) {
-    case "LOUNGE":
-      return { position: [-6.2, 2.5, 7.1], target: [-3.2, 0.9, 1.6], fov: 38 };
-    case "SCROLLER":
-      return { position: [-6.4, 1.9, 3.8], target: [-4.1, 0.95, 1.15], fov: 32 };
-    case "TRADER":
-      return { position: [6.6, 2.1, 3.4], target: [3.35, 1.05, -0.2], fov: 32 };
-    case "BUILDER":
-      return { position: [3.8, 2.2, 6.2], target: [6.3, 1.1, 2.8], fov: 34 };
-    case "MIND": {
-      const [x, y, z] = musePos ?? [0, 1, 0];
-      return { position: [x + 1.6, y + 1.72, z + 2.55], target: [x, y + 1.08, z], fov: 32 };
-    }
     case "ROOM":
-      return { position: [2.4, 4.6, 9.8], target: [0.4, 1.2, 1.2], fov: 40 };
+      return { position: [2.8, 4.9, 11.2], target: [0, 1.0, 0.4], fov: 43 };
+    case "LOUNGE":
+      return { position: [-6.5, 1.5, 6.5], target: [-3.1, 0.95, 1.8], fov: 33 };
+    case "SCROLLER":
+      return { position: [-0.9, 1.6, 1.7], target: [-4.5, 1.05, 0.2], fov: 33 };
+    case "TRADER":
+      return { position: [6.2, 2.0, -1.6], target: [3.2, 0.9, 0.35], fov: 30 };
+    case "BUILDER":
+      return { position: [4.0, 2.2, 5.2], target: [7.5, 1.5, 2.6], fov: 36 };
+    case "MIND": {
+      // A front three-quarter portrait relative to where the muse faces, so
+      // the shot never lands inside a wall behind them.
+      const anchor = musePos ?? [0, 0.62, 0];
+      const head = museHeadY(anchor);
+      const angle = museFacing + 0.45;
+      return {
+        position: [
+          anchor[0] + Math.sin(angle) * 2.4,
+          head + 0.68,
+          anchor[2] + Math.cos(angle) * 2.4,
+        ],
+        target: [anchor[0], head + 0.24, anchor[2]],
+        fov: 32,
+      };
+    }
     default:
       return assertNever(preset);
   }
 }
+
+/** How long a user-initiated preset cut should take — snappy but still cinematic. */
+export const PRESET_CUT_S = 2.05;
 
 export function presetForMuse(id: MuseId): CameraPreset {
   switch (id) {
