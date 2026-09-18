@@ -1,12 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { INTRO_COPY, mostAwakeId } from "@/components/watch/copy";
 import { tickSnapshot, type Pulse } from "@/lib/sim/tick";
 import { INTRO_CLEAR_MS, INTRO_COPY_AT_MS, presetForMuse } from "@/lib/world/camera";
 import { seedWorld } from "@/lib/world/defaults";
 import { PERF_BUDGET } from "@/lib/world/perf";
-import type { CameraPreset, MuseId, WorldEvent, WorldSnapshot } from "@/types/world";
+import {
+  applyGrokFocus,
+  applyGrokWake,
+  applyMuseSelect,
+  applyScreenInspect,
+  type WakePayload,
+} from "@/lib/world/pick";
+import { quietTape, tapeFromPulse, type TapeView } from "@/lib/world/tape";
+import type { CameraPreset, MuseId, ScreenId, WorldEvent, WorldSnapshot } from "@/types/world";
 
 function prefersReducedMotion(): boolean {
   return (
@@ -22,6 +30,7 @@ export function useLivingWorld() {
     prefersReducedMotion() ? null : INTRO_COPY[0],
   );
   const [pulse, setPulse] = useState<Pulse>({ kind: "QUIET", ticker: null });
+  const [tape, setTape] = useState<TapeView>(quietTape);
 
   useEffect(() => {
     if (prefersReducedMotion()) {
@@ -53,7 +62,10 @@ export function useLivingWorld() {
         const market = await fetch("/api/market", { cache: "no-store" });
         if (market.ok) {
           const next = (await market.json()) as Pulse;
-          if (!cancelled) setPulse(next);
+          if (!cancelled) {
+            setPulse(next);
+            setTape(tapeFromPulse(next));
+          }
         }
       } catch {
         /* fail-open local sim */
@@ -88,17 +100,23 @@ export function useLivingWorld() {
     };
   }, []);
 
+  const wakingRef = useRef(false);
+
   const select = (id: MuseId | null) => {
-    setWorld((current) => ({
-      ...current,
-      selected: id,
-      mindOpen: id ? current.mindOpen : false,
-      camera: id ? presetForMuse(id) : "ROOM",
-    }));
+    setWorld((current) => applyMuseSelect(current, id));
+  };
+
+  const inspect = (id: ScreenId | null) => {
+    setWorld((current) => applyScreenInspect(current, id));
   };
 
   const setCamera = (camera: CameraPreset) => {
-    setWorld((current) => ({ ...current, camera, mindOpen: camera === "MIND" }));
+    setWorld((current) => ({
+      ...current,
+      camera,
+      mindOpen: camera === "MIND",
+      inspecting: camera === "TRADER" ? current.inspecting : null,
+    }));
   };
 
   const toggleMind = () => {
@@ -108,18 +126,51 @@ export function useLivingWorld() {
       return {
         ...current,
         selected,
+        inspecting: null,
         mindOpen: next,
         camera: next ? "MIND" : presetForMuse(selected),
       };
     });
   };
 
+  const wakeGrok = () => {
+    if (wakingRef.current) {
+      return;
+    }
+    const subject = world.selected ?? mostAwakeId(world);
+    const muse = world.muses[subject];
+    wakingRef.current = true;
+    setWorld((current) => applyGrokFocus(current, subject));
+    void (async () => {
+      try {
+        const response = await fetch("/api/grok/wake", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            museId: subject,
+            goal: muse.mind.goal,
+            observation: muse.mind.observed,
+          }),
+        });
+        const payload = (response.ok ? await response.json() : null) as WakePayload | null;
+        setWorld((current) => applyGrokWake(current, payload, subject));
+      } catch {
+        setWorld((current) => applyGrokWake(current, null, subject));
+      } finally {
+        wakingRef.current = false;
+      }
+    })();
+  };
+
   return {
     world,
+    tape,
     introDone,
     introLine,
     setIntroDone,
     select,
+    inspect,
+    wakeGrok,
     setCamera,
     toggleMind,
   };

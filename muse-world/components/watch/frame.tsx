@@ -24,17 +24,27 @@ export function SpectatorFrame() {
           compact={compact}
           onPreset={living.setCamera}
           onSelect={living.select}
+          onInspect={living.inspect}
           onEnterMind={living.toggleMind}
         />
         <SceneGate
           onFail={markWebglLost}
-          fallback={<WatchMode world={living.world} onSelect={living.select} />}
+          fallback={
+            <WatchMode
+              world={living.world}
+              onSelect={living.select}
+              onInspect={living.inspect}
+              onWakeGrok={living.wakeGrok}
+            />
+          }
         >
           <MuseWorld
             world={living.world}
             introDone={living.introDone}
             onIntroDone={() => living.setIntroDone(true)}
             onSelect={living.select}
+            onInspect={living.inspect}
+            onWakeGrok={living.wakeGrok}
             ready={ready}
             markWebglLost={markWebglLost}
           />

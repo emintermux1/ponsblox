@@ -1,4 +1,5 @@
 import { peekMarketPulse } from "@/lib/adapters/market";
+import { quietMarketPulse, quietProviders } from "@/lib/adapters/parse";
 
 export const dynamic = "force-dynamic";
 
@@ -8,16 +9,7 @@ export async function GET() {
     return Response.json({ ...pulse, fills: [] });
   } catch {
     return Response.json({
-      kind: "QUIET",
-      ticker: null,
-      mint: null,
-      source: "sim",
-      providers: {
-        gecko: "error",
-        birdeye: "skip",
-        helius: "skip",
-        gmgn: "skip",
-      },
+      ...quietMarketPulse(quietProviders()),
       fills: [],
     });
   }

@@ -5,7 +5,8 @@ export default function Home() {
   return (
     <div className="loft-root">
       <h1 className="sr-only">
-        {WORDMARK} at {new URL(SITE_ORIGIN).host}. {PAGE_DESCRIPTION}
+        {WORDMARK} at {new URL(SITE_ORIGIN).host}. Scroller, Trader, Chill, Builder, and Grok.{" "}
+        {PAGE_DESCRIPTION}
       </h1>
       <SpectatorFrame />
       <div className="loft-grain" aria-hidden />

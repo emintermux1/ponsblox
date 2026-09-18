@@ -1,5 +1,6 @@
 import gsap from "gsap";
 import { PerspectiveCamera, Vector3, type Camera } from "three";
+import { GROK_ORB_POS } from "@/lib/world/layout";
 import type { CameraPreset, MuseId } from "@/types/world";
 import { assertNever } from "@/types/world";
 
@@ -41,6 +42,14 @@ export const INTRO_SHOTS: Shot[] = [
   HOME_SHOT,
 ];
 
+/** Short look into the loft — phones skip the long cinema crawl. */
+export const MOBILE_INTRO_SHOTS: Shot[] = [
+  { position: [1.35, 3.4, 13.1], target: [0.45, 1.12, 0.9], fov: 50 },
+  { position: [1.85, 3.55, 12.2], target: [0.7, 1.08, 1.2], fov: 52 },
+];
+
+export const NARROW_VIEWPORT = 768;
+
 export const LOOK_CAM = {
   minDistance: 2.8,
   maxDistance: 22,
@@ -51,6 +60,17 @@ export const LOOK_CAM = {
   zoomSpeed: 0.88,
   panSpeed: 0.72,
 } as const;
+
+export type LookLimits = {
+  minDistance: number;
+  maxDistance: number;
+  minPolarAngle: number;
+  maxPolarAngle: number;
+  dampingFactor: number;
+  rotateSpeed: number;
+  zoomSpeed: number;
+  panSpeed: number;
+};
 
 const FOLLOW_LAMBDA = {
   position: 1.12,
@@ -68,6 +88,20 @@ export function armCinema(): void {
   gsap.ticker.lagSmoothing(1000, 33);
 }
 
+function lookAtMuse(
+  position: [number, number, number],
+  fallback: [number, number, number],
+  musePos: [number, number, number] | null,
+  fov: number,
+): Shot {
+  const [x, y, z] = musePos ?? fallback;
+  return {
+    position,
+    target: [x, y + 0.36, z],
+    fov,
+  };
+}
+
 export function shotForPreset(
   preset: CameraPreset,
   _selected: MuseId | null,
@@ -75,13 +109,19 @@ export function shotForPreset(
 ): Shot {
   switch (preset) {
     case "LOUNGE":
-      return { position: [-6.2, 2.5, 7.1], target: [-3.2, 0.9, 1.6], fov: 38 };
+      return lookAtMuse([-6.2, 2.5, 7.1], [-3.2, 0.54, 1.6], musePos, 38);
     case "SCROLLER":
-      return { position: [-6.4, 1.9, 3.8], target: [-4.1, 0.95, 1.15], fov: 32 };
+      return lookAtMuse([-6.4, 1.9, 3.8], [-4.1, 0.59, 1.15], musePos, 32);
     case "TRADER":
-      return { position: [6.6, 2.1, 3.4], target: [3.35, 1.05, -0.2], fov: 32 };
+      return lookAtMuse([6.6, 2.1, 3.4], [3.35, 0.69, -0.2], musePos, 32);
     case "BUILDER":
-      return { position: [3.8, 2.2, 6.2], target: [6.3, 1.1, 2.8], fov: 34 };
+      return lookAtMuse([3.8, 2.2, 6.2], [6.3, 0.74, 2.8], musePos, 34);
+    case "GROK":
+      return {
+        position: [2.05, 2.08, 4.85],
+        target: [GROK_ORB_POS[0], GROK_ORB_POS[1], GROK_ORB_POS[2]],
+        fov: 30,
+      };
     case "MIND": {
       const [x, y, z] = musePos ?? [0, 1, 0];
       return { position: [x + 1.6, y + 1.72, z + 2.55], target: [x, y + 1.08, z], fov: 32 };
@@ -245,17 +285,59 @@ export function tweenShot(
   });
 }
 
+export function isNarrowViewport(width: number, height = 844): boolean {
+  return width < NARROW_VIEWPORT || height / Math.max(1, width) > 1.35;
+}
+
+export function introShotsFor(width: number, height = 844): Shot[] {
+  return isNarrowViewport(width, height) ? MOBILE_INTRO_SHOTS : INTRO_SHOTS;
+}
+
+/** Keep the four muses in a portrait frame — vertical FOV alone is too tight. */
+export function fitShotToViewport(shot: Shot, width: number, height: number): Shot {
+  if (!isNarrowViewport(width, height)) {
+    return shot;
+  }
+  const aspect = Math.max(0.42, width / Math.max(1, height));
+  const extraFov = aspect < 0.62 ? 18 : 12;
+  const pull = aspect < 0.62 ? 2.35 : 1.45;
+  return {
+    position: [shot.position[0] * 0.82, shot.position[1] + 0.18, shot.position[2] + pull],
+    target: [shot.target[0] * 0.72, shot.target[1] + 0.02, shot.target[2]],
+    fov: Math.min(64, shot.fov + extraFov),
+  };
+}
+
+export function lookLimits(compact: boolean): LookLimits {
+  if (!compact) {
+    return LOOK_CAM;
+  }
+  return {
+    minDistance: 5.4,
+    maxDistance: 16.8,
+    minPolarAngle: Math.PI * 0.3,
+    maxPolarAngle: Math.PI * 0.5,
+    dampingFactor: LOOK_CAM.dampingFactor,
+    rotateSpeed: 0.78,
+    zoomSpeed: LOOK_CAM.zoomSpeed,
+    panSpeed: LOOK_CAM.panSpeed,
+  };
+}
+
 export function playIntro(
   proxy: ShotProxy,
   onComplete: () => void,
+  shots: Shot[] = INTRO_SHOTS,
 ): gsap.core.Timeline {
   armCinema();
+  const path = shots.length > 0 ? shots : INTRO_SHOTS;
+  const home = path[path.length - 1] ?? HOME_SHOT;
   const tl = gsap.timeline({ onComplete });
   const start = readShot(proxy);
-  if (shotDistance(start, HOME_SHOT) > 0.05) {
+  if (shotDistance(start, home) > 0.05) {
     tl.to(proxy, {
-      ...flattenShot(HOME_SHOT),
-      duration: introEaseDuration(start, HOME_SHOT),
+      ...flattenShot(home),
+      duration: introEaseDuration(start, home),
       ease: CINEMA_EASE,
     });
   }

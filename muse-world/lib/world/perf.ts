@@ -256,6 +256,8 @@ export function watchFrame(preset: CameraPreset): {
       return { x: -18, y: 6, scale: 1.36 };
     case "BUILDER":
       return { x: -24, y: -2, scale: 1.34 };
+    case "GROK":
+      return { x: 0, y: 4, scale: 1.28 };
     case "MIND":
       return { x: 0, y: 8, scale: 1.48 };
     default:

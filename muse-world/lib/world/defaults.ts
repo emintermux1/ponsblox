@@ -1,5 +1,23 @@
 import { CAST } from "@/lib/world/cast";
+import { SEAT } from "@/lib/world/layout";
+import { emptyGrokWake } from "@/lib/world/pick";
 import type { MuseId, MuseMind, MuseState, WorldSnapshot } from "@/types/world";
+import { assertNever } from "@/types/world";
+
+export function museGivenName(id: MuseId): string {
+  switch (id) {
+    case "scroller":
+      return CAST.scroller.name;
+    case "trader":
+      return CAST.trader.name;
+    case "chill":
+      return CAST.chill.name;
+    case "builder":
+      return CAST.builder.name;
+    default:
+      return assertNever(id);
+  }
+}
 
 export function emptyMind(goal: string): MuseMind {
   return {
@@ -33,8 +51,8 @@ export function seedMuses(): Record<MuseId, MuseState> {
       activity: "SCROLLING",
       thought: null,
       thoughtUntil: 0,
-      position: [-4.2, 0.62, 1.1],
-      facing: 0.4,
+      position: SEAT.scroller.position,
+      facing: SEAT.scroller.facing,
       mind: emptyMind("notice what is actually moving"),
     },
     trader: {
@@ -44,8 +62,8 @@ export function seedMuses(): Record<MuseId, MuseState> {
       activity: "WATCHING",
       thought: null,
       thoughtUntil: 0,
-      position: [3.35, 0.62, -0.15],
-      facing: Math.PI,
+      position: SEAT.trader.position,
+      facing: SEAT.trader.facing,
       mind: emptyMind("find asymmetric setups"),
     },
     chill: {
@@ -55,8 +73,8 @@ export function seedMuses(): Record<MuseId, MuseState> {
       activity: "CHILLING",
       thought: null,
       thoughtUntil: 0,
-      position: [-1.8, 0.62, 3.4],
-      facing: -0.6,
+      position: SEAT.chill.position,
+      facing: SEAT.chill.facing,
       mind: emptyMind("be bored on purpose"),
     },
     builder: {
@@ -66,8 +84,8 @@ export function seedMuses(): Record<MuseId, MuseState> {
       activity: "RESEARCHING",
       thought: null,
       thoughtUntil: 0,
-      position: [6.4, 0.62, 2.8],
-      facing: -2.1,
+      position: SEAT.builder.position,
+      facing: SEAT.builder.facing,
       mind: emptyMind("write a thesis worth sending"),
     },
   };
@@ -78,6 +96,8 @@ export function seedWorld(): WorldSnapshot {
     live: true,
     startedAt: Date.now(),
     selected: null,
+    inspecting: null,
+    grokWake: emptyGrokWake(),
     mindOpen: false,
     camera: "ROOM",
     muses: seedMuses(),

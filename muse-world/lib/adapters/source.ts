@@ -4,7 +4,14 @@ import { assertNever } from "@/types/world";
 
 export type HonestySource = "real" | "sim";
 
-export type MarketOrigin = "gecko" | "sim";
+export type MarketOrigin =
+  | "gecko"
+  | "dexscreener"
+  | "birdeye"
+  | "helius"
+  | "gmgn"
+  | "solana"
+  | "sim";
 
 export type MarketPulse = {
   kind: WorldEventKind | "QUIET";
@@ -60,6 +67,11 @@ export function honestyFromLabel(source: PacketLabel): HonestySource {
     case "bot":
     case "xai":
     case "gecko":
+    case "dexscreener":
+    case "birdeye":
+    case "helius":
+    case "gmgn":
+    case "solana":
       return assertSource("real");
     case "sim":
     case "world":

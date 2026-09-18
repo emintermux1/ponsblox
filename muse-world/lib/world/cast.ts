@@ -19,26 +19,26 @@ export type CastCard = {
 
 export const CAST: Record<MuseId, CastCard> = {
   scroller: {
-    name: "PIP",
-    role: "scroller",
+    name: "Scroller",
+    role: "SCROLLER",
     portrait: "/cast/pip.jpg",
     focus: "center 18%",
   },
   trader: {
-    name: "TAPE",
-    role: "trader",
+    name: "Trader",
+    role: "TRADER",
     portrait: "/cast/tape.jpg",
     focus: "center 22%",
   },
   chill: {
-    name: "SABLE",
-    role: "chill",
+    name: "Chill",
+    role: "CHILL",
     portrait: "/cast/sable.jpg",
     focus: "center 28%",
   },
   builder: {
-    name: "HALO",
-    role: "builder",
+    name: "Builder",
+    role: "BUILDER",
     portrait: "/cast/halo.jpg",
     focus: "center 20%",
   },

@@ -12,6 +12,7 @@ import {
   SRGBColorSpace,
 } from "three";
 import type { ColorRepresentation, Mesh } from "three";
+import { loftPickHandlers } from "@/components/world/loft-cursor";
 import { usePerf } from "@/components/world/perf-context";
 import {
   IDEA_WALL_CARDS,
@@ -22,7 +23,7 @@ import {
 } from "@/lib/world/layout";
 import { wallCardText } from "@/lib/world/wall-copy";
 import type { CityLod, GlassQuality } from "@/lib/world/perf";
-import type { SpatialPacket, WallPin } from "@/types/world";
+import type { ScreenId, SpatialPacket, WallPin } from "@/types/world";
 import { assertNever } from "@/types/world";
 
 function physicalGlass(glass: GlassQuality): boolean {
@@ -522,7 +523,55 @@ function FloorLamp() {
   );
 }
 
-function Desk({ wood }: { wood: CanvasTexture }) {
+function DeskScreen({
+  id,
+  position,
+  active,
+  onInspect,
+}: {
+  id: ScreenId;
+  position: [number, number, number];
+  active: boolean;
+  onInspect: (id: ScreenId) => void;
+}) {
+  return (
+    <group
+      position={position}
+      rotation={[-0.1, 0, 0]}
+      {...loftPickHandlers(() => onInspect(id))}
+    >
+      <mesh position={[0, 0, 0.04]} visible={false}>
+        <planeGeometry args={[1.08, 0.72]} />
+      </mesh>
+      <mesh castShadow>
+        <boxGeometry args={[0.92, 0.56, 0.03]} />
+        <meshStandardMaterial color="#161513" metalness={0.72} roughness={0.26} />
+      </mesh>
+      <mesh position={[0, 0, 0.018]}>
+        <planeGeometry args={[0.86, 0.5]} />
+        <meshPhysicalMaterial
+          color={active ? "#121820" : "#0e1216"}
+          emissive={active ? "#4a6a82" : "#1a2430"}
+          emissiveIntensity={active ? 0.72 : 0.38}
+          metalness={0.35}
+          roughness={0.08}
+          transparent
+          opacity={0.88}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+function Desk({
+  wood,
+  inspecting,
+  onInspect,
+}: {
+  wood: CanvasTexture;
+  inspecting: ScreenId | null;
+  onInspect: (id: ScreenId) => void;
+}) {
   return (
     <group position={[3.4, 0, -0.85]}>
       <Panel
@@ -536,24 +585,18 @@ function Desk({ wood }: { wood: CanvasTexture }) {
       <Panel args={[3.28, 0.018, 1.18]} position={[0, 0.73, 0]} color={ALUMINUM_DARK} metalness={0.8} roughness={0.35} />
       <Panel args={[0.05, 0.7, 1.12]} position={[-1.52, 0.36, 0]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
       <Panel args={[0.05, 0.7, 1.12]} position={[1.52, 0.36, 0]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
-      {[-0.58, 0.62].map((x) => (
-        <group key={x} position={[x, 1.2, -0.28]} rotation={[-0.1, 0, 0]}>
-          <mesh castShadow>
-            <boxGeometry args={[0.92, 0.56, 0.03]} />
-            <meshStandardMaterial color="#161513" metalness={0.72} roughness={0.26} />
-          </mesh>
-          <mesh position={[0, 0, 0.018]}>
-            <planeGeometry args={[0.86, 0.5]} />
-            <meshPhysicalMaterial
-              color="#0e1216"
-              metalness={0.35}
-              roughness={0.08}
-              transparent
-              opacity={0.88}
-            />
-          </mesh>
-        </group>
-      ))}
+      <DeskScreen
+        id="tape"
+        position={[-0.58, 1.2, -0.28]}
+        active={inspecting === "tape"}
+        onInspect={onInspect}
+      />
+      <DeskScreen
+        id="notes"
+        position={[0.62, 1.2, -0.28]}
+        active={inspecting === "notes"}
+        onInspect={onInspect}
+      />
       <Panel args={[0.42, 0.02, 0.3]} position={[1.18, 0.8, 0.22]} color={PAPER} roughness={0.82} />
       <Panel args={[0.36, 0.015, 0.26]} position={[1.2, 0.82, 0.2]} color="#d7c6aa" roughness={0.8} />
     </group>
@@ -754,10 +797,14 @@ export function Penthouse({
   packet = null,
   wallPins = [],
   builderPos = [6.4, 0.62, 2.8],
+  inspecting = null,
+  onInspect,
 }: {
   packet?: SpatialPacket | null;
   wallPins?: WallPin[];
   builderPos?: [number, number, number];
+  inspecting?: ScreenId | null;
+  onInspect?: (id: ScreenId) => void;
 }) {
   const { cityCount, cityLod } = usePerf();
   const dense = showDenseProps(cityLod);
@@ -781,7 +828,11 @@ export function Penthouse({
       <CoffeeTable />
       {dense ? <Hookah /> : null}
       {dense ? <FloorLamp /> : null}
-      <Desk wood={wood} />
+      <Desk
+        wood={wood}
+        inspecting={inspecting}
+        onInspect={onInspect ?? (() => undefined)}
+      />
       <IdeaWall packet={packet} pins={wallPins} builderPos={builderPos} />
       <City count={cityCount} />
       {dense ? <Haze /> : null}

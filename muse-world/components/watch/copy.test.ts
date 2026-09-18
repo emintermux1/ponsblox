@@ -68,10 +68,10 @@ test("mind is a quiet later word, never brass ENTER MIND", () => {
 });
 
 test("cast first names stay on the HUD copy side", () => {
-  assert.equal(CAST.scroller.name, "PIP");
-  assert.equal(CAST.trader.name, "TAPE");
-  assert.equal(CAST.chill.name, "SABLE");
-  assert.equal(CAST.builder.name, "HALO");
+  assert.equal(CAST.scroller.name, "Scroller");
+  assert.equal(CAST.trader.name, "Trader");
+  assert.equal(CAST.chill.name, "Chill");
+  assert.equal(CAST.builder.name, "Builder");
 });
 
 test("literary activities stay awake except rest", () => {

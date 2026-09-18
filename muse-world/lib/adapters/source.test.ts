@@ -112,10 +112,15 @@ describe("events never mark SIM packets as REAL", () => {
     assert.equal(honestyFromLabel("sim"), "sim");
   });
 
-  it("maps bot, xai, and gecko labels to real", () => {
+  it("maps bot, xai, and live market labels to real", () => {
     assert.equal(honestyFromLabel("bot"), "real");
     assert.equal(honestyFromLabel("xai"), "real");
     assert.equal(honestyFromLabel("gecko"), "real");
+    assert.equal(honestyFromLabel("dexscreener"), "real");
+    assert.equal(honestyFromLabel("birdeye"), "real");
+    assert.equal(honestyFromLabel("helius"), "real");
+    assert.equal(honestyFromLabel("gmgn"), "real");
+    assert.equal(honestyFromLabel("solana"), "real");
   });
 
   it("refuses to upgrade a SIM packet to a live label", () => {

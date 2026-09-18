@@ -11,8 +11,12 @@ import {
   labeledLoftThought,
   loftCaptionFromText,
   loftThoughtFromWake,
+  asHttpsLogo,
+  candlesFromOhlcvList,
+  dedupeMarketHits,
   mergeMarketPulse,
   mintFromGeckoTokenId,
+  providerStatusFromHttp,
   quietMarketPulse,
   quietProviders,
   resolveWakeResult,
@@ -20,6 +24,7 @@ import {
   tickerFromName,
   tickerFromSymbol,
   isPaidTicker,
+  isQuoteTicker,
 } from "./parse.ts";
 
 describe("grok wake/ingest", () => {
@@ -125,7 +130,10 @@ describe("market pulse", () => {
     });
     assert.equal(gecko.source, "gecko");
     assert.equal(gecko.kind, "TREND_SPIKE");
+    assert.equal(gecko.live, true);
+    assert.equal(gecko.tape.length, 2);
     assert.deepEqual(gecko.fills, []);
+    assert.deepEqual(gecko.candles, []);
 
     const fallback = mergeMarketPulse({
       gecko: "error",
@@ -186,5 +194,54 @@ describe("market pulse", () => {
     assert.equal(pulse.source, "gecko");
     assert.equal(pulse.ticker, "JUP");
     assert.deepEqual(pulse.fills, []);
+  });
+
+  it("skips 401/402 as fail-open and never pads dumps or $PAID", () => {
+    assert.equal(providerStatusFromHttp(401), "skip");
+    assert.equal(providerStatusFromHttp(402), "skip");
+    assert.equal(providerStatusFromHttp(500), "error");
+    assert.equal(providerStatusFromHttp(200), "ok");
+    assert.equal(isQuoteTicker("SOL"), true);
+    assert.equal(asHttpsLogo("http://cdn.dexscreener.com/wif.png"), "https://cdn.dexscreener.com/wif.png");
+    const paid = mergeMarketPulse({
+      gecko: { source: "gecko", ticker: "$PAID", mint: "mint-paid", volumeUsd: 90_000 },
+      dexscreener: { source: "dexscreener", ticker: "SOL", mint: "So11111111111111111111111111111111111111112", volumeUsd: 1 },
+      birdeye: "skip",
+      gmgn: "skip",
+      helius: "skip",
+    });
+    assert.equal(paid.kind, "QUIET");
+    assert.deepEqual(paid.tape, []);
+    assert.deepEqual(paid.fills, []);
+    assert.deepEqual(paid.candles, []);
+  });
+
+  it("dedupes the same mint and prefers gecko fields", () => {
+    const hits = dedupeMarketHits([
+      { source: "gecko", ticker: "WIF", mint: "mint1", volumeUsd: 12_000, priceUsd: null },
+      { source: "birdeye", ticker: "WIF", mint: "mint1", volumeUsd: 90_000, priceUsd: 1.2 },
+      { source: "dexscreener", ticker: "WIF", mint: "mint1", volumeUsd: 8_000, imageUrl: "https://cdn.dexscreener.com/wif.png" },
+    ]);
+    assert.equal(hits.length, 1);
+    assert.equal(hits[0]?.source, "gecko");
+    assert.equal(hits[0]?.priceUsd, 1.2);
+    assert.equal(hits[0]?.imageUrl, "https://cdn.dexscreener.com/wif.png");
+    const pulse = mergeMarketPulse({
+      gecko: { source: "gecko", ticker: "WIF", mint: "mint1", volumeUsd: 12_000 },
+      dexscreener: { source: "dexscreener", ticker: "WIF", mint: "mint1", volumeUsd: 8_000, priceUsd: 1.2 },
+      birdeye: "skip",
+      gmgn: "skip",
+      helius: "skip",
+    });
+    assert.equal(pulse.source, "gecko");
+    assert.equal(pulse.tape.length, 1);
+    assert.equal(pulse.priceUsd, 1.2);
+    assert.deepEqual(pulse.fills, []);
+  });
+
+  it("never invents candles from an empty ohlcv list", () => {
+    assert.deepEqual(candlesFromOhlcvList(null), []);
+    assert.deepEqual(candlesFromOhlcvList([[1, 2, 3]]), []);
+    assert.deepEqual(candlesFromOhlcvList([[10, 1, 3, 0.5, 2]]), [{ t: 10, o: 1, h: 3, l: 0.5, c: 2 }]);
   });
 });

@@ -3,12 +3,17 @@ import { test } from "node:test";
 import {
   cinemaDt,
   dampShot,
+  fitShotToViewport,
   flattenShot,
   HOME_SHOT,
   introEaseDuration,
+  introShotsFor,
   INTRO_EASE_S,
   INTRO_SHOTS,
+  isNarrowViewport,
   LOOK_CAM,
+  lookLimits,
+  MOBILE_INTRO_SHOTS,
   playIntro,
   readShot,
   shotForPreset,
@@ -60,4 +65,31 @@ test("look-cam keeps a usable orbit range", () => {
   assert.ok(LOOK_CAM.minDistance < LOOK_CAM.maxDistance);
   assert.ok(LOOK_CAM.minPolarAngle < LOOK_CAM.maxPolarAngle);
   assert.ok(LOOK_CAM.dampingFactor > 0);
+});
+
+test("narrow portrait phones get a real look-in intro", () => {
+  assert.equal(isNarrowViewport(390, 844), true);
+  assert.equal(isNarrowViewport(430, 932), true);
+  assert.equal(isNarrowViewport(1280, 800), false);
+  assert.equal(introShotsFor(390, 844), MOBILE_INTRO_SHOTS);
+  assert.ok(introShotsFor(390, 844).length >= 2);
+});
+
+test("fitShotToViewport widens portrait ROOM so muses stay in frame", () => {
+  const room = shotForPreset("ROOM", null, null);
+  const phone = fitShotToViewport(room, 390, 844);
+  const plus = fitShotToViewport(room, 430, 932);
+  assert.ok(phone.fov > room.fov);
+  assert.ok(phone.position[2] > room.position[2]);
+  assert.ok(plus.fov > room.fov);
+  assert.deepEqual(fitShotToViewport(room, 1280, 800), room);
+});
+
+test("tap-to-look presets still resolve at narrow width", () => {
+  const lounge = fitShotToViewport(shotForPreset("LOUNGE", "chill", [-1.8, 0.62, 3.4]), 390, 844);
+  const trader = fitShotToViewport(shotForPreset("TRADER", "trader", [3.35, 0.62, -0.15]), 390, 844);
+  assert.ok(lounge.target[0] < 0);
+  assert.ok(trader.target[0] > 0);
+  assert.ok(lookLimits(true).minDistance > 4);
+  assert.ok(lookLimits(true).maxPolarAngle < Math.PI * 0.7);
 });

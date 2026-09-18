@@ -1,5 +1,19 @@
-import type { PacketEndpoint } from "@/types/world";
+import type { PacketEndpoint, ScreenId } from "@/types/world";
 import { assertNever } from "@/types/world";
+
+export const GROK_ORB_POS: [number, number, number] = [0.18, 1.36, 2.08];
+
+export const SCREEN_POS: Record<ScreenId, [number, number, number]> = {
+  tape: [2.82, 1.2, -1.13],
+  notes: [4.02, 1.2, -1.13],
+};
+
+export const SEAT = {
+  scroller: { position: [-3.52, 0.54, 1.52] as [number, number, number], facing: 0.62 },
+  trader: { position: [2.78, 0.58, 0.28] as [number, number, number], facing: Math.PI },
+  builder: { position: [4.08, 0.58, 0.28] as [number, number, number], facing: Math.PI },
+  chill: { position: [-1.78, 0.54, 3.36] as [number, number, number], facing: -0.55 },
+} as const;
 
 export const PACKET_TRAVEL_MS = 2200;
 export const PACKET_HOLD_MS = 2400;

@@ -9,11 +9,12 @@ import { usePerf } from "@/components/world/perf-context";
 import {
   applyProxyToCamera,
   dampShot,
+  fitShotToViewport,
   flattenShot,
   HOME_SHOT,
   INTRO_FAILSAFE_MS,
-  INTRO_SHOTS,
-  LOOK_CAM,
+  introShotsFor,
+  lookLimits,
   playIntro,
   proxyFromCamera,
   readShot,
@@ -54,22 +55,22 @@ export function CameraRig({
 }) {
   const camera = useThree((state) => state.camera);
   const gl = useThree((state) => state.gl);
-  const { reducedMotion, hidden, cameraFar } = usePerf();
+  const size = useThree((state) => state.size);
+  const { reducedMotion, hidden, cameraFar, tier } = usePerf();
+  const compact = tier === "phone" || size.width < 768;
+  const limits = lookLimits(compact);
+  const fit = (shot: Shot): Shot => fitShotToViewport(shot, size.width, size.height);
+  const home = (): Shot => fit(HOME_SHOT);
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
-  const proxy = useRef<ShotProxy>(
-    flattenShot(introDone || reducedMotion ? HOME_SHOT : INTRO_SHOTS[0]),
-  );
-  const drive = useRef<Drive>(
-    introDone || reducedMotion ? { kind: "free" } : { kind: "intro" },
-  );
+  const startShot = fit(introShotsFor(size.width, size.height)[0] ?? HOME_SHOT);
+  const proxy = useRef<ShotProxy>(flattenShot(introDone || reducedMotion ? home() : startShot));
+  const drive = useRef<Drive>(introDone || reducedMotion ? { kind: "free" } : { kind: "intro" });
   const dragging = useRef(false);
   const skipPreset = useRef(true);
   const finished = useRef(introDone || reducedMotion);
   const musePosRef = useRef(musePos);
   const onIntroDoneRef = useRef(onIntroDone);
-  const releaseRef = useRef<(fromCamera: boolean, finishIntro: boolean) => void>(
-    () => undefined,
-  );
+  const releaseRef = useRef<(fromCamera: boolean, finishIntro: boolean) => void>(() => undefined);
   const [lookFree, setLookFree] = useState(introDone || reducedMotion);
 
   useEffect(() => {
@@ -82,7 +83,7 @@ export function CameraRig({
 
   releaseRef.current = (fromCamera, finishIntro) => {
     if (fromCamera) {
-      proxy.current = proxyFromCamera(camera, HOME_SHOT);
+      proxy.current = proxyFromCamera(camera, home());
     }
     applyProxyToCamera(camera, proxy.current);
     const controls = controlsRef.current;
@@ -102,7 +103,7 @@ export function CameraRig({
     if (!reducedMotion) {
       return;
     }
-    writeShot(proxy.current, HOME_SHOT);
+    writeShot(proxy.current, home());
     applyProxyToCamera(camera, proxy.current);
     syncLook(controlsRef.current, proxy.current);
     drive.current = { kind: "free" };
@@ -110,7 +111,7 @@ export function CameraRig({
     if (!introDone) {
       onIntroDone();
     }
-  }, [camera, introDone, onIntroDone, reducedMotion]);
+  }, [camera, introDone, onIntroDone, reducedMotion, size.height, size.width]);
 
   useEffect(() => {
     if (introDone || reducedMotion) {
@@ -118,18 +119,25 @@ export function CameraRig({
     }
     drive.current = { kind: "intro" };
     setLookFree(false);
-    const timeline = playIntro(proxy.current, () => {
-      releaseRef.current(false, true);
-    });
+    const shots = introShotsFor(size.width, size.height).map((shot) =>
+      fitShotToViewport(shot, size.width, size.height),
+    );
+    const timeline = playIntro(
+      proxy.current,
+      () => {
+        releaseRef.current(false, true);
+      },
+      shots,
+    );
     const failSafe = window.setTimeout(() => {
       timeline.kill();
       releaseRef.current(false, true);
-    }, INTRO_FAILSAFE_MS);
+    }, compact ? INTRO_FAILSAFE_MS : INTRO_FAILSAFE_MS + 1_200);
     return () => {
       window.clearTimeout(failSafe);
       timeline.kill();
     };
-  }, [introDone, reducedMotion]);
+  }, [compact, introDone, reducedMotion, size.height, size.width]);
 
   useEffect(() => {
     if (!introDone) {
@@ -142,11 +150,11 @@ export function CameraRig({
       syncLook(controlsRef.current, proxy.current);
       return;
     }
-    const next = shotForPreset(preset, selected, musePosRef.current);
+    const next = fit(shotForPreset(preset, selected, musePosRef.current));
     proxy.current = proxyFromCamera(camera, next);
     drive.current = { kind: "ease", to: next };
     setLookFree(true);
-  }, [camera, introDone, preset, selected]);
+  }, [camera, introDone, preset, selected, size.height, size.width]);
 
   useEffect(() => {
     const el = gl.domElement;
@@ -215,20 +223,20 @@ export function CameraRig({
         }
       }}
       makeDefault
-      enabled={lookFree}
+      enabled={lookFree && !hidden}
       enableDamping
-      dampingFactor={LOOK_CAM.dampingFactor}
-      enablePan
+      dampingFactor={limits.dampingFactor}
+      enablePan={!compact}
       enableZoom
       enableRotate
       screenSpacePanning
-      minDistance={LOOK_CAM.minDistance}
-      maxDistance={LOOK_CAM.maxDistance}
-      minPolarAngle={LOOK_CAM.minPolarAngle}
-      maxPolarAngle={LOOK_CAM.maxPolarAngle}
-      rotateSpeed={LOOK_CAM.rotateSpeed}
-      zoomSpeed={LOOK_CAM.zoomSpeed}
-      panSpeed={LOOK_CAM.panSpeed}
+      minDistance={limits.minDistance}
+      maxDistance={limits.maxDistance}
+      minPolarAngle={limits.minPolarAngle}
+      maxPolarAngle={limits.maxPolarAngle}
+      rotateSpeed={limits.rotateSpeed}
+      zoomSpeed={limits.zoomSpeed}
+      panSpeed={limits.panSpeed}
       mouseButtons={{
         LEFT: MOUSE.ROTATE,
         MIDDLE: MOUSE.DOLLY,

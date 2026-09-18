@@ -15,17 +15,17 @@ import {
 
 test("the loft uses living names, not Muse 02", () => {
   const muses = seedMuses();
-  assert.equal(CAST.scroller.name, "PIP");
-  assert.equal(CAST.trader.name, "TAPE");
-  assert.equal(CAST.chill.name, "SABLE");
-  assert.equal(CAST.builder.name, "HALO");
+  assert.equal(CAST.scroller.name, "Scroller");
+  assert.equal(CAST.trader.name, "Trader");
+  assert.equal(CAST.chill.name, "Chill");
+  assert.equal(CAST.builder.name, "Builder");
   assert.equal(GROK_NAME, "GROK");
   assert.equal(GROK_ROLE, "tool");
-  assert.equal(muses.scroller.name, "PIP");
-  assert.equal(muses.trader.name, "TAPE");
-  assert.equal(muses.chill.name, "SABLE");
-  assert.equal(muses.builder.name, "HALO");
-  assert.equal(castName("trader"), "TAPE");
+  assert.equal(muses.scroller.name, "Scroller");
+  assert.equal(muses.trader.name, "Trader");
+  assert.equal(muses.chill.name, "Chill");
+  assert.equal(muses.builder.name, "Builder");
+  assert.equal(castName("trader"), "Trader");
   assert.notEqual(muses.trader.name, "MUSE 02");
   assert.notEqual(muses.scroller.name, "MUSE 01");
   for (const id of MUSE_IDS) {
@@ -67,6 +67,6 @@ test("Grok presence is SIM until a real ingest exists", () => {
 });
 
 test("packets name who is passing what", () => {
-  assert.equal(packetLine("scroller", "trader", "look"), "PIP → TAPE · look");
-  assert.equal(packetLine("builder", "wall", "note"), "HALO → wall · note");
+  assert.equal(packetLine("scroller", "trader", "look"), "Scroller → Trader · look");
+  assert.equal(packetLine("builder", "wall", "note"), "Builder → wall · note");
 });

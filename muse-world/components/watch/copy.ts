@@ -1,3 +1,4 @@
+import { grokPresence } from "@/lib/world/cast";
 import { isPaidTicker, isTickerSlopHeadline } from "@/lib/world/wall-copy";
 import type {
   CameraPreset,
@@ -12,18 +13,19 @@ import { assertNever, MUSE_IDS } from "@/types/world";
 export const WORDMARK = "Muse Grok";
 export const WORLD_MARK = "musegrok.world";
 export const SITE_ORIGIN = "https://musegrok.world";
-export const PAGE_DESCRIPTION = "A living penthouse. Four muses. You watch.";
+export const PAGE_DESCRIPTION = "PIP, TAPE, SABLE, HALO and GROK in a living loft.";
+export const FIRST_PAINT_MS = 3000;
 export const ENTRY_CAPTION = "the penthouse is occupied";
 export const INTRO_COPY = [
   WORDMARK,
   "They don't wait for prompts",
   "Watch them live.",
 ] as const;
-export const ENTER_MIND = "ENTER MIND";
-export const LEAVE_MIND = "LEAVE MIND";
+export const ENTER_MIND = "mind";
+export const LEAVE_MIND = "close";
+export const MIND_HINT = "mind";
 export const EMPTY_ROOM = "the loft has not spoken";
-export const EMPTY_SELECTION =
-  "stand in the room. they already know you are here.";
+export const EMPTY_SELECTION = "watch";
 
 export const ROOM_PRESETS: CameraPreset[] = [
   "ROOM",
@@ -31,6 +33,7 @@ export const ROOM_PRESETS: CameraPreset[] = [
   "TRADER",
   "BUILDER",
   "SCROLLER",
+  "GROK",
 ];
 
 const COT_MARK =
@@ -97,6 +100,8 @@ export function locationLabel(preset: CameraPreset): string {
       return "Bench";
     case "SCROLLER":
       return "Window";
+    case "GROK":
+      return "Grok";
     case "MIND":
       return "Mind";
     default:
@@ -235,6 +240,14 @@ export function watchingLine(
     return `held on ${watching}`;
   }
   return "looking, without an outside name";
+}
+
+export function hudMark(mark: "REAL" | "SIM" | "—"): "REAL" | "SIM" {
+  return mark === "REAL" ? "REAL" : "SIM";
+}
+
+export function grokHonestyMark(events: WorldEvent[]): "GROK LIVE" | "SIM" {
+  return grokPresence(events) === "LIVE" ? "GROK LIVE" : "SIM";
 }
 
 export function grokLine(grok: string): string | null {
