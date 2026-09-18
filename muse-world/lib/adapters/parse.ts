@@ -73,9 +73,9 @@ export function classifyGrokBias(text: string): GrokBias {
 export function grokSourceLabel(source: GrokSource): string {
   switch (source) {
     case "bot":
-      return "Grok Bot";
+      return "bot/REAL";
     case "xai":
-      return "xAI";
+      return "xai/REAL";
     case "sim":
       return "SIM";
     default: {
@@ -121,6 +121,67 @@ export function grokReplyFromWake(result: GrokWakeResult): GrokReply {
       : "no Grok key — SIM context only",
     bias: "watch",
   };
+}
+
+const COT_MARK =
+  /\b(because|therefore|firstly|secondly|step\s+\d|chain of thought|let me think|as an ai|reasoning)\b/i;
+
+export const SIM_LITERARY_STUBS = [
+  "mid",
+  "wait",
+  "later",
+  "watching",
+  "nah",
+  "window",
+] as const;
+
+export function loftCaptionFromText(text: string): string | null {
+  const trimmed = text.replace(/\s+/g, " ").trim();
+  if (!trimmed || claimsExecutedFill(trimmed) || COT_MARK.test(trimmed)) {
+    return null;
+  }
+  if (trimmed.length <= 64) {
+    return trimmed;
+  }
+  const clause = trimmed.split(/[.!?;]/)[0]?.trim() ?? "";
+  if (
+    clause &&
+    clause.length <= 40 &&
+    !COT_MARK.test(clause) &&
+    !claimsExecutedFill(clause)
+  ) {
+    return clause;
+  }
+  return null;
+}
+
+export function labeledLoftThought(source: GrokSource, caption: string): string | null {
+  const clean = loftCaptionFromText(caption);
+  if (!clean) {
+    return null;
+  }
+  const tag = grokSourceLabel(source);
+  if (clean.startsWith(`${tag} · `)) {
+    return clean.length <= 64 ? clean : null;
+  }
+  const labeled = `${tag} · ${clean}`;
+  return labeled.length <= 64 ? labeled : clean;
+}
+
+export function simLiteraryThought(now = Date.now()): string {
+  const stub = SIM_LITERARY_STUBS[now % SIM_LITERARY_STUBS.length] ?? "wait";
+  return `SIM · ${stub}`;
+}
+
+export function loftThoughtFromWake(
+  result: GrokWakeResult,
+  now = Date.now(),
+): { thought: string; source: GrokSource } {
+  const caption = result.xai ? labeledLoftThought("xai", result.xai.summary) : null;
+  if (caption) {
+    return { thought: caption, source: "xai" };
+  }
+  return { thought: simLiteraryThought(now), source: "sim" };
 }
 
 export function grokEventText(

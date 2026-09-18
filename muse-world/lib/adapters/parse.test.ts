@@ -8,11 +8,15 @@ import {
   grokReplyFromWake,
   grokSourceLabel,
   ingestAuthorized,
+  labeledLoftThought,
+  loftCaptionFromText,
+  loftThoughtFromWake,
   mergeMarketPulse,
   mintFromGeckoTokenId,
   quietMarketPulse,
   quietProviders,
   resolveWakeResult,
+  simLiteraryThought,
   tickerFromName,
   tickerFromSymbol,
 } from "./parse.ts";
@@ -36,15 +40,16 @@ describe("grok wake/ingest", () => {
       }),
     );
     assert.equal(xai.source, "xai");
-    assert.equal(grokSourceLabel("xai"), "xAI");
-    assert.equal(grokSourceLabel("bot"), "Grok Bot");
+    assert.equal(grokSourceLabel("xai"), "xai/REAL");
+    assert.equal(grokSourceLabel("bot"), "bot/REAL");
+    assert.equal(grokSourceLabel("sim"), "SIM");
     assert.match(
       grokEventText("MUSE 02", "GROK_RESPONSE", "xai", "thin book, PASS"),
-      /xAI/,
+      /xai\/REAL/,
     );
     assert.doesNotMatch(
       grokEventText("MUSE 02", "GROK_RESPONSE", "xai", "thin book, PASS"),
-      /Grok Bot/,
+      /bot\/REAL/,
     );
   });
 
@@ -63,6 +68,34 @@ describe("grok wake/ingest", () => {
     assert.equal(claimsExecutedFill("executed the trade"), true);
     assert.equal(claimsExecutedFill("txid abc"), true);
     assert.equal(claimsExecutedFill("thin book, WATCH"), false);
+  });
+
+  it("keeps loft captions short and drops CoT or fill claims", () => {
+    assert.equal(loftCaptionFromText("thin book, PASS"), "thin book, PASS");
+    assert.equal(loftCaptionFromText("let me think through the book first"), null);
+    assert.equal(loftCaptionFromText("opened a position on WIF"), null);
+    assert.equal(labeledLoftThought("xai", "thin book, PASS"), "xai/REAL · thin book, PASS");
+    assert.equal(labeledLoftThought("bot", "thin book, WATCH"), "bot/REAL · thin book, WATCH");
+    assert.equal(labeledLoftThought("xai", "because funding flipped"), null);
+    assert.match(simLiteraryThought(1), /^SIM · /);
+  });
+
+  it("uses xAI as the loft thought and otherwise a labeled SIM stub", () => {
+    const live = loftThoughtFromWake(
+      resolveWakeResult(true, {
+        source: "xai",
+        summary: "thin book, PASS",
+        bias: "pass",
+      }),
+    );
+    assert.equal(live.source, "xai");
+    assert.equal(live.thought, "xai/REAL · thin book, PASS");
+
+    const pending = loftThoughtFromWake(resolveWakeResult(true, null), 2);
+    assert.equal(pending.source, "sim");
+    assert.match(pending.thought, /^SIM · /);
+    assert.doesNotMatch(pending.thought, /Grok Bot/);
+    assert.doesNotMatch(pending.thought, /waiting on ingest/);
   });
 });
 

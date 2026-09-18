@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  GROK_ENV_NAMES,
   SIM_GROK_SUMMARY,
   assertSimNotReal,
   assertSource,
@@ -10,7 +11,9 @@ import {
   grokReplyAfterWake,
   honestyFromLabel,
   isGrokWebhookConfigured,
+  isXaiConfigured,
   marketPulseFromFetch,
+  readEnvName,
   simGrokReply,
   simMarketPulse,
 } from "./source";
@@ -68,6 +71,18 @@ describe("grok wake without webhook", () => {
     assert.equal(reply.source, "sim");
     assert.equal(honestyFromLabel(reply.source), "sim");
   });
+
+  it("does not label a webhook 200 as Bot text", () => {
+    const reply = grokReplyAfterWake({
+      webhookConfigured: true,
+      woken: true,
+      xai: null,
+    });
+    assert.equal(reply.source, "sim");
+    assert.notEqual(reply.source, "bot");
+    assert.equal(honestyFromLabel(reply.source), "sim");
+    assert.match(reply.summary, /waiting on ingest/);
+  });
 });
 
 describe("events never mark SIM packets as REAL", () => {
@@ -113,6 +128,30 @@ describe("ingest auth helper", () => {
 
   it("rejects when GROK_INGEST_SECRET is unset", () => {
     assert.equal(authorizeMuseIngest("test-ingest-fixture", undefined), false);
+  });
+});
+
+describe("env names already in .env.example", () => {
+  it("reads trimmed process.env names and does not invent keys", () => {
+    assert.equal(GROK_ENV_NAMES.webhookUrl, "GROK_BOT_WEBHOOK_URL");
+    assert.equal(GROK_ENV_NAMES.webhookKey, "GROK_BOT_WEBHOOK_KEY");
+    assert.equal(GROK_ENV_NAMES.ingestSecret, "GROK_INGEST_SECRET");
+    assert.equal(GROK_ENV_NAMES.xaiKey, "XAI_API_KEY");
+    assert.equal(GROK_ENV_NAMES.xaiUrl, "XAI_API_URL");
+    assert.equal(isXaiConfigured(undefined), false);
+    assert.equal(isXaiConfigured("  "), false);
+    assert.equal(isXaiConfigured("test-xai-fixture"), true);
+    const prior = process.env.XAI_API_KEY;
+    process.env.XAI_API_KEY = "  fixture-key  ";
+    try {
+      assert.equal(readEnvName("XAI_API_KEY"), "fixture-key");
+    } finally {
+      if (prior === undefined) {
+        delete process.env.XAI_API_KEY;
+      } else {
+        process.env.XAI_API_KEY = prior;
+      }
+    }
   });
 });
 

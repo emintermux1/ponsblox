@@ -3,31 +3,53 @@ import "server-only";
 import {
   classifyGrokBias,
   grokReplyFromWake,
+  loftCaptionFromText,
   resolveWakeResult,
   type GrokReply,
   type GrokToolReply,
   type GrokWakeResult,
 } from "@/lib/adapters/parse";
 import {
+  GROK_ENV_NAMES,
   assertSource,
   honestyFromLabel,
   isGrokWebhookConfigured,
+  isXaiConfigured,
+  readEnvName,
   type GrokAsk,
 } from "@/lib/adapters/source";
 
 export type { GrokAsk, GrokReply } from "@/lib/adapters/source";
 export type { GrokToolReply, GrokWakeResult } from "@/lib/adapters/parse";
 
+export type GrokWakeReason = "interval" | "click";
+
 const WAKE_COOLDOWN_MS = 20_000;
+const INTERVAL_WAKE_MS = 20_000;
 let lastWakeAt = 0;
 let lastWakeOk = false;
+let lastIntervalWakeAt = 0;
+
+export function isIntervalWakeDue(now = Date.now()): boolean {
+  return now - lastIntervalWakeAt >= INTERVAL_WAKE_MS;
+}
+
+export function noteIntervalWake(now = Date.now()): void {
+  lastIntervalWakeAt = now;
+}
+
+export function resetGrokWakeClocksForTests(): void {
+  lastWakeAt = 0;
+  lastWakeOk = false;
+  lastIntervalWakeAt = 0;
+}
 
 async function wakeGrokBot(ask: GrokAsk): Promise<boolean> {
   if (!isGrokWebhookConfigured()) {
     return false;
   }
-  const url = process.env.GROK_BOT_WEBHOOK_URL;
-  const key = process.env.GROK_BOT_WEBHOOK_KEY;
+  const url = readEnvName(GROK_ENV_NAMES.webhookUrl);
+  const key = readEnvName(GROK_ENV_NAMES.webhookKey);
   if (!url || !key) {
     return false;
   }
@@ -62,11 +84,11 @@ async function wakeGrokBot(ask: GrokAsk): Promise<boolean> {
 }
 
 async function askXai(ask: GrokAsk): Promise<GrokToolReply | null> {
-  const key = process.env.XAI_API_KEY;
-  if (!key) {
+  const key = readEnvName(GROK_ENV_NAMES.xaiKey);
+  if (!key || !isXaiConfigured(key)) {
     return null;
   }
-  const base = process.env.XAI_API_URL ?? "https://api.x.ai/v1";
+  const base = readEnvName(GROK_ENV_NAMES.xaiUrl) ?? "https://api.x.ai/v1";
   const response = await fetch(`${base}/chat/completions`, {
     method: "POST",
     headers: {
@@ -96,13 +118,17 @@ async function askXai(ask: GrokAsk): Promise<GrokToolReply | null> {
   const data = (await response.json()) as {
     choices?: { message?: { content?: string } }[];
   };
-  const summary = data.choices?.[0]?.message?.content?.trim();
+  const raw = data.choices?.[0]?.message?.content?.trim();
+  if (!raw) {
+    return null;
+  }
+  const summary = loftCaptionFromText(raw);
   if (!summary) {
     return null;
   }
   return {
     source: "xai",
-    summary: summary.slice(0, 140),
+    summary,
     bias: classifyGrokBias(summary),
   };
 }
@@ -117,6 +143,16 @@ export async function wakeGrok(ask: GrokAsk): Promise<GrokWakeResult> {
 export async function askGrok(ask: GrokAsk): Promise<GrokReply> {
   const result = await wakeGrok(ask);
   const reply = grokReplyFromWake(result);
-  assertSource(honestyFromLabel(reply.source));
-  return reply;
+  switch (reply.source) {
+    case "xai":
+      assertSource(honestyFromLabel("xai"));
+      return reply;
+    case "sim":
+      assertSource(honestyFromLabel("sim"));
+      return reply;
+    default: {
+      const _never: never = reply;
+      return _never;
+    }
+  }
 }
