@@ -29,9 +29,26 @@ export const STATIONS = {
   builderWall: { position: [6.42, STAND_Y, 2.68], facing: 1.64 } satisfies MuseStation,
   builderDesk: { position: [4.12, 0.42, 0], facing: Math.PI } satisfies MuseStation,
   builderToTrader: { position: [4.55, STAND_Y, 0.85], facing: -1.2 } satisfies MuseStation,
+  traderPatrol: { position: [0.55, STAND_Y, 1.92], facing: -0.85 } satisfies MuseStation,
+  builderPatrol: { position: [2.05, STAND_Y, 1.78], facing: -0.35 } satisfies MuseStation,
   chillArmchair: { position: [-1.8, 0.34, 3.5], facing: -0.55 } satisfies MuseStation,
   chillWindow: { position: [-5.15, STAND_Y, -2.2], facing: Math.PI } satisfies MuseStation,
 } as const;
+
+export function roamStation(id: MuseId): MuseStation {
+  switch (id) {
+    case "scroller":
+      return STATIONS.loungeCross;
+    case "trader":
+      return STATIONS.traderPatrol;
+    case "chill":
+      return STATIONS.chillWindow;
+    case "builder":
+      return STATIONS.builderPatrol;
+    default:
+      return assertNever(id);
+  }
+}
 
 export const SEAT = {
   scroller: STATIONS.scrollerSofa,
@@ -94,8 +111,9 @@ export function stationFor(id: MuseId, activity: MuseActivity): MuseStation {
           return STATIONS.loungeCross;
         case "REACTING":
           return STATIONS.traderGrok;
-        case "IDLE":
         case "WALKING":
+          return roamStation("scroller");
+        case "IDLE":
         case "SCROLLING":
         case "RESEARCHING":
         case "TRADING":
@@ -112,8 +130,9 @@ export function stationFor(id: MuseId, activity: MuseActivity): MuseStation {
           return STATIONS.traderGrok;
         case "REACTING":
           return STATIONS.loungeCross;
-        case "IDLE":
         case "WALKING":
+          return roamStation("trader");
+        case "IDLE":
         case "SCROLLING":
         case "RESEARCHING":
         case "WATCHING":
@@ -127,9 +146,10 @@ export function stationFor(id: MuseId, activity: MuseActivity): MuseStation {
     case "chill":
       switch (activity) {
         case "WATCHING":
+        case "SMOKING":
           return STATIONS.chillWindow;
         case "WALKING":
-          return STATIONS.chillArmchair;
+          return roamStation("chill");
         case "IDLE":
         case "SCROLLING":
         case "THINKING":
@@ -137,7 +157,6 @@ export function stationFor(id: MuseId, activity: MuseActivity): MuseStation {
         case "TALKING":
         case "TRADING":
         case "CHILLING":
-        case "SMOKING":
         case "REACTING":
           return STATIONS.chillArmchair;
         default:
@@ -150,8 +169,9 @@ export function stationFor(id: MuseId, activity: MuseActivity): MuseStation {
         case "TALKING":
         case "REACTING":
           return STATIONS.builderToTrader;
-        case "IDLE":
         case "WALKING":
+          return roamStation("builder");
+        case "IDLE":
         case "SCROLLING":
         case "RESEARCHING":
         case "WATCHING":

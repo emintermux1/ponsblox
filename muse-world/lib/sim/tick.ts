@@ -27,7 +27,7 @@ export type Pulse = {
   source?: string;
 };
 
-const WALK_SPEED = 0.72;
+const WALK_SPEED = 0.88;
 
 const THOUGHTS: Record<MuseId, string[]> = {
   scroller: [
@@ -195,19 +195,26 @@ function nextActivity(muse: MuseState, pulse: boolean, random: () => number): Mu
   switch (muse.id) {
     case "scroller":
       if (pulse && random() < 0.55) return "REACTING";
-      return random() < 0.82 ? "SCROLLING" : random() < 0.55 ? "WATCHING" : "THINKING";
+      if (random() < 0.34) return "SCROLLING";
+      if (random() < 0.5) return "WATCHING";
+      if (random() < 0.5) return "WALKING";
+      return "THINKING";
     case "trader":
       if (pulse) return random() < 0.55 ? "WATCHING" : "TRADING";
-      if (random() < 0.62) return "TRADING";
-      if (random() < 0.7) return "WATCHING";
-      return "THINKING";
-    case "chill":
-      if (random() < 0.48) return "SMOKING";
-      if (random() < 0.9) return "CHILLING";
+      if (random() < 0.34) return "TRADING";
+      if (random() < 0.45) return "WALKING";
+      if (random() < 0.55) return "THINKING";
       return "WATCHING";
+    case "chill":
+      if (random() < 0.28) return "SMOKING";
+      if (random() < 0.4) return "WATCHING";
+      if (random() < 0.5) return "WALKING";
+      return "CHILLING";
     case "builder":
       if (pulse && random() < 0.4) return "REACTING";
-      return random() < 0.7 ? "RESEARCHING" : "THINKING";
+      if (random() < 0.34) return "RESEARCHING";
+      if (random() < 0.5) return "WALKING";
+      return "THINKING";
     default:
       return assertNever(muse.id);
   }
@@ -226,7 +233,7 @@ function shouldSwitch(muse: MuseState, spiked: boolean, random: () => number): b
   if (muse.activity === "IDLE") {
     return true;
   }
-  return random() < 0.28;
+  return random() < 0.42;
 }
 
 function desiredActivity(muse: MuseState, spiked: boolean, random: () => number): MuseActivity {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { dexEmbedSrc, dexPairAddress } from "./dex-embed";
+import { dexEmbedSrc, dexHonesty, dexPairAddress } from "./dex-embed";
 
 describe("DexScreener embed", () => {
   it("builds a solana embed from a real pair, never a fake ticker page", () => {
@@ -14,5 +14,8 @@ describe("DexScreener embed", () => {
     assert.equal(dexPairAddress("Catecoin"), null);
     assert.equal(dexPairAddress("PAID"), null);
     assert.equal(dexEmbedSrc({ pairAddress: "PAID", mint: "WIF" }), null);
+    assert.equal(dexHonesty("sim"), "SIM");
+    assert.equal(dexHonesty("gecko"), "REAL");
+    assert.equal(dexHonesty("dexscreener"), "REAL");
   });
 });

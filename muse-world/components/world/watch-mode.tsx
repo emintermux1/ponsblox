@@ -6,6 +6,7 @@ import { activityLine, asCaption } from "@/components/watch/copy";
 import { usePerf } from "@/components/world/perf-context";
 import { useTape } from "@/components/world/tape-context";
 import { GROK_ORB_POS, SCREEN_POS, wallSlotWorld } from "@/lib/world/layout";
+import { musePlushBillboard } from "@/lib/world/muse-face";
 import { tapeHeadline } from "@/lib/world/tape";
 import { projectLoft, watchFrame } from "@/lib/world/perf";
 import { screenView, type ScreenPulse } from "@/lib/world/screen-texture";
@@ -45,7 +46,9 @@ function MuseFigure({
   const view = screenView(pulse);
   const seated =
     muse.activity === "CHILLING" ||
-    muse.activity === "SMOKING" ||
+    muse.activity === "TRADING" ||
+    muse.activity === "SCROLLING" ||
+    muse.activity === "RESEARCHING" ||
     muse.activity === "IDLE";
 
   return (
@@ -72,33 +75,16 @@ function MuseFigure({
       {caption ? (
         <span className="thought-caption mb-2 block text-center">{caption}</span>
       ) : null}
-      <span className="relative mx-auto block h-[78px] w-12">
+      <span className="relative mx-auto block h-[86px] w-[86px]">
         {muse.id === "chill" ? (
           <span className="absolute bottom-1 left-1/2 h-7 w-10 -translate-x-1/2 rounded-sm bg-[#5c4a3e]" />
         ) : null}
-        <span className="absolute left-1/2 top-2 h-[46px] w-10 -translate-x-1/2 rounded-[20px] bg-[#f6f1e8] shadow-[0_0_14px_rgba(246,241,232,0.22)]" />
-        {muse.id === "trader" ? (
-          <span className="absolute left-1/2 top-[22px] h-7 w-10 -translate-x-1/2 rounded-b-[16px] bg-[#1a1d24]" />
-        ) : null}
-        <span className="absolute left-[14px] top-[18px] h-[3px] w-[7px] rounded-full bg-[#1a1d33]" />
-        <span className="absolute right-[14px] top-[18px] h-[3px] w-[7px] rounded-full bg-[#1a1d33]" />
-        <span className="absolute left-[13px] top-[26px] h-1.5 w-1.5 rounded-full bg-[#f0b4ae]/80" />
-        <span className="absolute right-[13px] top-[26px] h-1.5 w-1.5 rounded-full bg-[#f0b4ae]/80" />
-        {muse.id === "scroller" ? (
-          <span className="absolute left-1/2 top-1 h-3 w-9 -translate-x-1/2 rounded-full border border-[#14161c]" />
-        ) : null}
-        {muse.id === "trader" ? (
-          <span className="absolute left-1/2 top-0.5 h-2.5 w-7 -translate-x-1/2 rounded-t-full bg-[#14161c]" />
-        ) : null}
-        {muse.id === "chill" ? (
-          <span className="absolute left-1/2 top-[30px] h-1.5 w-8 -translate-x-1/2 rounded-full bg-[#3f7a4a]" />
-        ) : null}
-        {muse.id === "builder" ? (
-          <span className="absolute bottom-3 right-0 h-3 w-4 rounded-[2px] bg-[#ead9c0]" />
-        ) : null}
-        {muse.id === "scroller" || muse.id === "trader" ? (
-          <span className="absolute bottom-2 left-1/2 h-3 w-5 -translate-x-1/2 rounded-[2px] bg-[#3a3d42]" />
-        ) : null}
+        <img
+          src={musePlushBillboard(muse.id)}
+          alt={muse.name}
+          data-muse-plush={muse.id}
+          className="relative mx-auto block h-[86px] w-[86px] object-contain"
+        />
         {selected ? (
           <span className="absolute -bottom-0.5 left-1/2 h-1.5 w-8 -translate-x-1/2 rounded-full bg-[#e6d3a8]/55" />
         ) : null}

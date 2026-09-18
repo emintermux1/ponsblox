@@ -2,6 +2,10 @@ import { looksLikeMint } from "@/lib/adapters/parse";
 
 export const DEX_CHAIN = "solana";
 
+export function dexHonesty(source: string): "SIM" | "REAL" {
+  return source === "sim" ? "SIM" : "REAL";
+}
+
 export function dexPairAddress(value: unknown): string | null {
   if (typeof value !== "string") {
     return null;

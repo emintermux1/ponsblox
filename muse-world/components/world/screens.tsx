@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
-import { Html, RoundedBox } from "@react-three/drei";
+import { RoundedBox } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { CanvasTexture, SRGBColorSpace, type MeshStandardMaterial } from "three";
 import { loftPickHandlers } from "@/components/world/loft-cursor";
 import { usePerf } from "@/components/world/perf-context";
 import { useGrokPane, useTape } from "@/components/world/tape-context";
-import { dexEmbedSrc } from "@/lib/world/dex-embed";
 import {
   feedCards,
   feedCardY,
@@ -470,72 +469,6 @@ function asMap(canvas: HTMLCanvasElement): CanvasTexture {
   return tex;
 }
 
-function showDexEmbed(kind: LcdKind): boolean {
-  switch (kind) {
-    case "tape":
-    case "tv":
-    case "feed":
-      return true;
-    case "phone":
-    case "notes":
-    case "grok":
-      return false;
-    default:
-      return assertNever(kind);
-  }
-}
-
-function DexScreenerPane({ width, height }: { width: number; height: number }) {
-  const tape = useTape();
-  const { tier } = usePerf();
-  const src = dexEmbedSrc(tape);
-  const pxW = Math.max(320, Math.round(width * 1000));
-  const pxH = Math.max(180, Math.round(height * 1000));
-  if (!src || tier !== "desktop") {
-    return null;
-  }
-  return (
-    <Html
-      transform
-      occlude={false}
-      center
-      distanceFactor={1.15}
-      zIndexRange={[8, 0]}
-      style={{
-        width: pxW,
-        height: pxH,
-        pointerEvents: "none",
-        background: "#0b1117",
-      }}
-    >
-      <iframe
-        title="DexScreener"
-        src={src}
-        width={pxW}
-        height={pxH}
-        style={{
-          border: 0,
-          width: pxW,
-          height: pxH,
-          background: "#0b1117",
-          pointerEvents: "none",
-        }}
-      />
-      <span
-        style={{
-          position: "absolute",
-          left: 12,
-          top: 8,
-          color: "#67f0b2",
-          font: "700 11px ui-sans-serif, system-ui",
-        }}
-      >
-        DEXSCREENER
-      </span>
-    </Html>
-  );
-}
-
 function LcdGlass({ width, height }: { width: number; height: number }) {
   return (
     <mesh position={[0, 0, 0.0012]}>
@@ -628,7 +561,6 @@ export function LiveLcd({
           toneMapped={false}
         />
       </mesh>
-      {showDexEmbed(kind) ? <DexScreenerPane width={width} height={height} /> : null}
       <LcdGlass width={width} height={height} />
       {extraLights ? (
         <pointLight

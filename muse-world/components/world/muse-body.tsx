@@ -4,14 +4,14 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group, Mesh } from "three";
 import { loftPickHandlers } from "@/components/world/loft-cursor";
-import { OfficialMuse } from "@/components/world/muse-figure";
+import { MusePlushCard } from "@/components/world/muse-plush";
 import { NameTag } from "@/components/world/name-tag";
 import { usePerf } from "@/components/world/perf-context";
 import { damp } from "@/lib/world/camera";
+import { SEAT, stationFor } from "@/lib/world/layout";
 import type { MuseActivity, MuseId, MuseState } from "@/types/world";
 import { assertNever } from "@/types/world";
 
-const PAPER = "#ead9c0";
 const LEATHER = "#5c4a3e";
 const WOOD = "#4a3426";
 const LAPTOP = "#3a3d42";
@@ -45,24 +45,13 @@ function holdsLaptop(id: MuseId): boolean {
   }
 }
 
-function isSeated(activity: MuseActivity): boolean {
-  switch (activity) {
-    case "CHILLING":
-    case "SMOKING":
-    case "WATCHING":
-    case "TRADING":
-    case "SCROLLING":
-    case "RESEARCHING":
-    case "IDLE":
-      return true;
-    case "WALKING":
-    case "THINKING":
-    case "TALKING":
-    case "REACTING":
-      return false;
-    default:
-      return assertNever(activity);
+function isSeated(id: MuseId, activity: MuseActivity): boolean {
+  if (activity === "WALKING") {
+    return false;
   }
+  const dest = stationFor(id, activity);
+  const seat = SEAT[id];
+  return dest.position[0] === seat.position[0] && dest.position[2] === seat.position[2];
 }
 
 function MuseMark({
@@ -111,29 +100,6 @@ function Laptop() {
       <group position={[0, 0.012, 0.148]} rotation={[Math.PI / 2, 0, 0]}>
         <MuseMark scale={1.8} color="#e8e4dc" />
       </group>
-    </group>
-  );
-}
-
-function Notes() {
-  return (
-    <group>
-      <mesh rotation={[-0.5, 0.18, 0.06]}>
-        <boxGeometry args={[0.3, 0.018, 0.22]} />
-        <meshStandardMaterial color={PAPER} roughness={0.86} />
-      </mesh>
-      <mesh position={[0.02, 0.016, 0.012]} rotation={[-0.46, 0.26, 0.1]}>
-        <boxGeometry args={[0.28, 0.016, 0.2]} />
-        <meshStandardMaterial color="#f3ead8" roughness={0.84} />
-      </mesh>
-      <mesh position={[-0.012, 0.032, 0.02]} rotation={[-0.4, 0.1, 0.04]}>
-        <boxGeometry args={[0.26, 0.014, 0.18]} />
-        <meshStandardMaterial color="#f7f0e2" roughness={0.82} />
-      </mesh>
-      <mesh position={[0.12, 0.04, 0.03]} rotation={[0.2, 0.3, 0.5]}>
-        <cylinderGeometry args={[0.008, 0.008, 0.22, 8]} />
-        <meshStandardMaterial color="#c4a46a" roughness={0.55} />
-      </mesh>
     </group>
   );
 }
@@ -309,7 +275,7 @@ export function MuseBody({
   const ring = useRef<Mesh>(null);
   const phase = phaseFor(muse.id);
   const { pauseExtras } = usePerf();
-  const seated = isSeated(muse.activity);
+  const seated = isSeated(muse.id, muse.activity);
   const laptop = holdsLaptop(muse.id);
   const chair = muse.id === "chill" && seated;
 
@@ -373,15 +339,10 @@ export function MuseBody({
       ) : null}
       <group ref={sway}>
         <group ref={torso}>
-          <OfficialMuse id={muse.id} />
+          <MusePlushCard id={muse.id} />
           {laptop ? (
             <group position={[0, 0.42, 0.42]}>
               <Laptop />
-            </group>
-          ) : null}
-          {muse.id === "builder" ? (
-            <group position={[0.02, 0.34, 0.32]} rotation={[0.1, 0.15, 0.04]}>
-              <Notes />
             </group>
           ) : null}
         </group>
