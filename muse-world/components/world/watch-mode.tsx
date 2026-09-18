@@ -7,7 +7,7 @@ import { usePerf } from "@/components/world/perf-context";
 import { wallSlotWorld } from "@/lib/world/layout";
 import { projectLoft, watchFrame } from "@/lib/world/perf";
 import type { MuseId, MuseState, PacketEndpoint, WorldSnapshot } from "@/types/world";
-import { MIND_NODES, MUSE_IDS, assertNever } from "@/types/world";
+import { MUSE_IDS, assertNever } from "@/types/world";
 
 function loftPoint(world: WorldSnapshot, endpoint: PacketEndpoint): { left: number; top: number } {
   switch (endpoint) {
@@ -26,13 +26,28 @@ function loftPoint(world: WorldSnapshot, endpoint: PacketEndpoint): { left: numb
 function museAccent(id: MuseId): string {
   switch (id) {
     case "scroller":
-      return "#d8c6a6";
+      return "#d8b98c";
     case "trader":
       return "#2a2a28";
     case "chill":
-      return "#3f7a4a";
+      return "#4a7d55";
     case "builder":
       return "#c9b48a";
+    default:
+      return assertNever(id);
+  }
+}
+
+function botAccent(id: MuseId): string {
+  switch (id) {
+    case "scroller":
+      return "#e8a84e";
+    case "trader":
+      return "#7fd4e8";
+    case "chill":
+      return "#8fc79a";
+    case "builder":
+      return "#e6c579";
     default:
       return assertNever(id);
   }
@@ -79,17 +94,30 @@ function MuseFigure({
       {caption ? (
         <span className="thought-caption mb-2 block text-center">{caption}</span>
       ) : null}
-      <span className="relative mx-auto block h-[72px] w-8">
-        <span className="absolute left-1/2 top-0 h-4 w-4 -translate-x-1/2 rounded-full bg-[#f3efe6] shadow-[0_0_12px_rgba(243,239,230,0.2)]" />
-        <span className="absolute left-1/2 top-4 h-9 w-[18px] -translate-x-1/2 rounded-t-[6px] bg-[#eee8dc]" />
+      <span className="relative mx-auto block h-[74px] w-10">
+        <span className="absolute left-[2px] top-1 h-[18px] w-[9px] -rotate-[16deg] rounded-full bg-[#e3d3b8]" />
+        <span className="absolute right-[2px] top-1 h-[18px] w-[9px] rotate-[16deg] rounded-full bg-[#e3d3b8]" />
+        <span className="absolute left-1/2 top-0 h-[26px] w-[26px] -translate-x-1/2 rounded-full bg-[#f1e7d2] shadow-[0_0_12px_rgba(243,239,230,0.22)]" />
+        <span className="absolute left-1/2 top-[10px] h-[4px] w-[4px] -translate-x-[7px] rounded-full bg-[#191411]" />
+        <span className="absolute left-1/2 top-[10px] h-[4px] w-[4px] translate-x-[3px] rounded-full bg-[#191411]" />
+        <span className="absolute left-1/2 top-[15px] h-[3px] w-[4px] -translate-x-[11px] rounded-full bg-[#e59a83]/80" />
+        <span className="absolute left-1/2 top-[15px] h-[3px] w-[4px] translate-x-[7px] rounded-full bg-[#e59a83]/80" />
+        <span className="absolute left-1/2 top-[22px] h-[30px] w-[26px] -translate-x-1/2 rounded-[12px] bg-[#ede2cc]" />
         <span
-          className="absolute left-1/2 top-[22px] h-1.5 w-[18px] -translate-x-1/2"
+          className="absolute left-1/2 top-[33px] h-1.5 w-[26px] -translate-x-1/2 rounded-sm"
           style={{ background: museAccent(muse.id) }}
         />
-        <span className="absolute bottom-1 left-1/2 h-3 w-[7px] -translate-x-[9px] bg-[#e7e0d2]" />
-        <span className="absolute bottom-1 left-1/2 h-3 w-[7px] translate-x-[2px] bg-[#e7e0d2]" />
+        <span className="absolute bottom-1 left-1/2 h-[9px] w-[10px] -translate-x-[12px] rounded-full bg-[#e3d3b8]" />
+        <span className="absolute bottom-1 left-1/2 h-[9px] w-[10px] translate-x-[2px] rounded-full bg-[#e3d3b8]" />
+        <span className="absolute -right-2 top-[26px] h-[18px] w-[13px] rounded-[7px] bg-[#f6f5f1] shadow-[0_0_8px_rgba(246,245,241,0.3)]">
+          <span className="absolute inset-x-[3px] top-[4px] h-[6px] rounded-full bg-[#0b0c10]" />
+          <span
+            className="absolute inset-x-[2px] bottom-[2px] h-[2px] rounded-full"
+            style={{ background: botAccent(muse.id) }}
+          />
+        </span>
         {selected ? (
-          <span className="absolute -bottom-0.5 left-1/2 h-1.5 w-7 -translate-x-1/2 rounded-full bg-[#e6d3a8]/55" />
+          <span className="absolute -bottom-0.5 left-1/2 h-1.5 w-8 -translate-x-1/2 rounded-full bg-[#e6d3a8]/55" />
         ) : null}
       </span>
       <span className="mt-1 block text-center font-serif text-[9px] tracking-[0.2em] text-[#efe6d4]/70">
@@ -172,30 +200,6 @@ function Furniture() {
   );
 }
 
-function WatchMind({ world }: { world: WorldSnapshot }) {
-  if (!world.mindOpen || !world.selected) {
-    return null;
-  }
-  const muse = world.muses[world.selected];
-  return (
-    <div className="pointer-events-none absolute inset-x-[10%] top-[14%] z-30 grid grid-cols-5 gap-3">
-      {MIND_NODES.map((id) => (
-        <div key={id} className="text-center">
-          <span
-            className="mx-auto block rounded-full bg-[#f0e6d2]"
-            style={{
-              width: 6 + muse.mind.nodes[id] * 10,
-              height: 6 + muse.mind.nodes[id] * 10,
-              opacity: 0.45 + muse.mind.nodes[id] * 0.45,
-            }}
-          />
-          <span className="mt-1 block text-[8px] tracking-[0.18em] text-[#8d8370]">{id}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function WatchPacket({ world, now }: { world: WorldSnapshot; now: number }) {
   if (!world.packet) {
     return null;
@@ -274,7 +278,6 @@ export function WatchMode({
         ))}
         <WatchPacket world={world} now={now} />
       </motion.div>
-      <WatchMind world={world} />
     </div>
   );
 }

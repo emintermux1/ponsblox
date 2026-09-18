@@ -14,8 +14,9 @@ const newsreader = Newsreader({
   style: ["normal", "italic"],
 });
 
-const title = "MUSE WORLD";
-const description = "A living penthouse. Four muses. You watch.";
+const title = "MUSE GROK WORLD";
+const description =
+  "A living penthouse at musegrok.world. Four plush muses, one Grok. You watch.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),

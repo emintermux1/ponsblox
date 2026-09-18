@@ -8,11 +8,13 @@ import type {
 } from "@/types/world";
 import { assertNever, MUSE_IDS } from "@/types/world";
 
-export const WORDMARK = "Muse";
-export const WORLD_MARK = "WORLD";
+export const WORDMARK = "Muse Grok";
+export const WORLD_MARK = "MUSEGROK.WORLD";
 export const ENTRY_CAPTION = "the penthouse is occupied";
 export const ENTER_MIND = "ENTER MIND";
 export const LEAVE_MIND = "LEAVE MIND";
+export const LIVE_STRIP = "LIVE LOFT";
+export const MIND_EYEBROW = "INSIDE THE MIND";
 export const EMPTY_ROOM = "the loft has not spoken";
 export const EMPTY_SELECTION =
   "stand in the room. they already know you are here.";

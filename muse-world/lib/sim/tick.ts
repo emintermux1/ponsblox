@@ -45,7 +45,7 @@ const THOUGHTS: Record<MuseId, string[]> = {
   ],
 };
 
-const TICKERS = ["PAID", "WIF", "BONK", "PINT", "JUP", "PENGU"];
+const TICKERS = ["WIF", "BONK", "JUP", "PENGU", "POPCAT", "PNUT"];
 
 export function pickTicker(fallback: string | null): string {
   return fallback ?? TICKERS[Math.floor(Math.random() * TICKERS.length)] ?? "WIF";

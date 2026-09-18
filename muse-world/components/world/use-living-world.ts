@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { mostAwakeId } from "@/components/watch/copy";
 import { tickSnapshot, type Pulse } from "@/lib/sim/tick";
 import { INTRO_CLEAR_MS, INTRO_COPY_AT_MS, presetForMuse } from "@/lib/world/camera";
@@ -9,7 +9,7 @@ import { PERF_BUDGET } from "@/lib/world/perf";
 import type { CameraPreset, MuseId, WorldEvent, WorldSnapshot } from "@/types/world";
 
 const INTRO_COPY = [
-  "MUSE WORLD",
+  "MUSE GROK WORLD",
   "They don't wait for prompts",
   "Watch them live.",
 ] as const;
@@ -23,20 +23,40 @@ function prefersReducedMotion(): boolean {
 
 export function useLivingWorld() {
   const [world, setWorld] = useState<WorldSnapshot>(seedWorld);
-  const [introDone, setIntroDone] = useState(prefersReducedMotion);
+  const [introDone, setIntroDoneState] = useState(prefersReducedMotion);
   const [introLine, setIntroLine] = useState<string | null>(
     prefersReducedMotion() ? null : INTRO_COPY[0],
   );
   const [pulse, setPulse] = useState<Pulse>({ kind: "QUIET", ticker: null });
+  const introDoneRef = useRef(introDone);
+
+  const setIntroDone = useCallback((done: boolean) => {
+    introDoneRef.current = done;
+    setIntroDoneState(done);
+    if (done) {
+      setIntroLine(null);
+    }
+  }, []);
+
+  /** Any deliberate input cuts the establishing flythrough — no dead clicks. */
+  const skipIntro = useCallback(() => {
+    if (!introDoneRef.current) {
+      setIntroDone(true);
+    }
+  }, [setIntroDone]);
 
   useEffect(() => {
     if (prefersReducedMotion()) {
-      setIntroLine(null);
       return;
     }
+    const setLine = (line: string | null) => {
+      if (!introDoneRef.current) {
+        setIntroLine(line);
+      }
+    };
     const timers = [
-      window.setTimeout(() => setIntroLine(INTRO_COPY[1]), INTRO_COPY_AT_MS[1]),
-      window.setTimeout(() => setIntroLine(INTRO_COPY[2]), INTRO_COPY_AT_MS[2]),
+      window.setTimeout(() => setLine(INTRO_COPY[1]), INTRO_COPY_AT_MS[1]),
+      window.setTimeout(() => setLine(INTRO_COPY[2]), INTRO_COPY_AT_MS[2]),
       window.setTimeout(() => setIntroLine(null), INTRO_CLEAR_MS),
     ];
     return () => timers.forEach((id) => window.clearTimeout(id));
@@ -95,19 +115,22 @@ export function useLivingWorld() {
   }, []);
 
   const select = (id: MuseId | null) => {
+    skipIntro();
     setWorld((current) => ({
       ...current,
       selected: id,
       mindOpen: id ? current.mindOpen : false,
-      camera: id ? presetForMuse(id) : "ROOM",
+      camera: id ? (current.mindOpen ? "MIND" : presetForMuse(id)) : "ROOM",
     }));
   };
 
   const setCamera = (camera: CameraPreset) => {
+    skipIntro();
     setWorld((current) => ({ ...current, camera, mindOpen: camera === "MIND" }));
   };
 
   const toggleMind = () => {
+    skipIntro();
     setWorld((current) => {
       const selected = current.selected ?? mostAwakeId(current);
       const next = current.selected ? !current.mindOpen : true;
