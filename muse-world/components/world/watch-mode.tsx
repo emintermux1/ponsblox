@@ -2,24 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { activityLine, asCaption } from "@/components/watch/copy";
 import { usePerf } from "@/components/world/perf-context";
 import { wallSlotWorld } from "@/lib/world/layout";
 import { projectLoft, watchFrame } from "@/lib/world/perf";
-import type { MuseId, MuseState, PacketEndpoint, WorldEvent, WorldSnapshot } from "@/types/world";
+import type { MuseId, MuseState, PacketEndpoint, WorldSnapshot } from "@/types/world";
 import { MIND_NODES, MUSE_IDS, assertNever } from "@/types/world";
-
-function sourceLabel(source: WorldEvent["source"]): "SIM" | "REAL" {
-  switch (source) {
-    case "world":
-    case "sim":
-      return "SIM";
-    case "bot":
-    case "xai":
-      return "REAL";
-    default:
-      return assertNever(source);
-  }
-}
 
 function loftPoint(world: WorldSnapshot, endpoint: PacketEndpoint): { left: number; top: number } {
   switch (endpoint) {
@@ -61,6 +49,7 @@ function MuseFigure({
 }) {
   const { reducedMotion } = usePerf();
   const point = projectLoft(muse.position);
+  const caption = asCaption(muse.thought);
   const seated =
     muse.activity === "CHILLING" ||
     muse.activity === "SMOKING" ||
@@ -87,10 +76,8 @@ function MuseFigure({
           : { y: { duration: 3.4, repeat: Infinity, ease: "easeInOut" }, duration: 0.85 }
       }
     >
-      {muse.thought ? (
-        <span className="mb-2 block whitespace-nowrap rounded-sm bg-[#0d0c0a]/55 px-2 py-1 text-center font-serif text-[11px] tracking-[0.12em] text-[#efe6d4]">
-          {muse.thought}
-        </span>
+      {caption ? (
+        <span className="thought-caption mb-2 block text-center">{caption}</span>
       ) : null}
       <span className="relative mx-auto block h-[72px] w-8">
         <span className="absolute left-1/2 top-0 h-4 w-4 -translate-x-1/2 rounded-full bg-[#f3efe6] shadow-[0_0_12px_rgba(243,239,230,0.2)]" />
@@ -109,7 +96,7 @@ function MuseFigure({
         {muse.name}
       </span>
       <span className="block text-center text-[8px] tracking-[0.18em] text-[#8d8370]">
-        {muse.activity}
+        {activityLine(muse.activity)}
       </span>
     </motion.button>
   );
@@ -288,12 +275,6 @@ export function WatchMode({
         <WatchPacket world={world} now={now} />
       </motion.div>
       <WatchMind world={world} />
-      {world.events[0] ? (
-        <p className="pointer-events-none absolute bottom-16 left-4 max-w-[70vw] text-[10px] tracking-[0.12em] text-[#8d8370] sm:left-6">
-          <span className="mr-2 tracking-[0.2em]">{sourceLabel(world.events[0].source)}</span>
-          {world.events[0].text}
-        </p>
-      ) : null}
     </div>
   );
 }

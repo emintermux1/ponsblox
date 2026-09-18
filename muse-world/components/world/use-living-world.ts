@@ -1,11 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { mostAwakeId } from "@/components/watch/copy";
 import { tickSnapshot, type Pulse } from "@/lib/sim/tick";
+import { INTRO_CLEAR_MS, INTRO_COPY_AT_MS, presetForMuse } from "@/lib/world/camera";
 import { seedWorld } from "@/lib/world/defaults";
 import { PERF_BUDGET } from "@/lib/world/perf";
 import type { CameraPreset, MuseId, WorldEvent, WorldSnapshot } from "@/types/world";
-import { presetForMuse } from "@/lib/world/camera";
+
+const INTRO_COPY = [
+  "MUSE WORLD",
+  "They don't wait for prompts",
+  "Watch them live.",
+] as const;
 
 function prefersReducedMotion(): boolean {
   return (
@@ -17,7 +24,23 @@ function prefersReducedMotion(): boolean {
 export function useLivingWorld() {
   const [world, setWorld] = useState<WorldSnapshot>(seedWorld);
   const [introDone, setIntroDone] = useState(prefersReducedMotion);
+  const [introLine, setIntroLine] = useState<string | null>(
+    prefersReducedMotion() ? null : INTRO_COPY[0],
+  );
   const [pulse, setPulse] = useState<Pulse>({ kind: "QUIET", ticker: null });
+
+  useEffect(() => {
+    if (prefersReducedMotion()) {
+      setIntroLine(null);
+      return;
+    }
+    const timers = [
+      window.setTimeout(() => setIntroLine(INTRO_COPY[1]), INTRO_COPY_AT_MS[1]),
+      window.setTimeout(() => setIntroLine(INTRO_COPY[2]), INTRO_COPY_AT_MS[2]),
+      window.setTimeout(() => setIntroLine(null), INTRO_CLEAR_MS),
+    ];
+    return () => timers.forEach((id) => window.clearTimeout(id));
+  }, []);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -86,12 +109,13 @@ export function useLivingWorld() {
 
   const toggleMind = () => {
     setWorld((current) => {
-      if (!current.selected) return current;
-      const next = !current.mindOpen;
+      const selected = current.selected ?? mostAwakeId(current);
+      const next = current.selected ? !current.mindOpen : true;
       return {
         ...current,
+        selected,
         mindOpen: next,
-        camera: next ? "MIND" : presetForMuse(current.selected),
+        camera: next ? "MIND" : presetForMuse(selected),
       };
     });
   };
@@ -99,6 +123,7 @@ export function useLivingWorld() {
   return {
     world,
     introDone,
+    introLine,
     setIntroDone,
     select,
     setCamera,

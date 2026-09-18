@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Text } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
+import { asCaption } from "@/components/watch/copy";
 import { usePerf } from "@/components/world/perf-context";
 import type { MuseState } from "@/types/world";
 
@@ -16,6 +17,7 @@ export function ThoughtChip({
   const { thoughtDistance, pauseExtras } = usePerf();
   const near = useRef(true);
   const [show, setShow] = useState(true);
+  const caption = asCaption(muse.thought);
 
   useFrame(({ camera }) => {
     if (pauseExtras) {
@@ -35,7 +37,7 @@ export function ThoughtChip({
     }
   });
 
-  if (hush || !muse.thought || !show) {
+  if (hush || !caption || !show) {
     return null;
   }
 
@@ -52,7 +54,7 @@ export function ThoughtChip({
       overflowWrap="break-word"
       textAlign="center"
     >
-      {muse.thought}
+      {caption}
     </Text>
   );
 }
