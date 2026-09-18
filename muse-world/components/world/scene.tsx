@@ -12,6 +12,7 @@ import { TravelPacket } from "@/components/world/packet";
 import { usePerf } from "@/components/world/perf-context";
 import { CameraRig } from "@/components/world/rig";
 import { ThoughtChip } from "@/components/world/thoughts";
+import { deskGrokLive } from "@/lib/sim/tick";
 import { wallSlotWorld } from "@/lib/world/layout";
 import { MIND_LIFT } from "@/lib/world/mind-graph";
 import type { MuseId, PacketEndpoint, WorldSnapshot } from "@/types/world";
@@ -156,6 +157,12 @@ export function LivingScene({
         packet={world.packet}
         wallPins={world.wallPins ?? []}
         builderPos={world.muses.builder.position}
+        grokLive={deskGrokLive(world.events)}
+        deskLive={
+          world.muses.trader.activity === "TRADING" ||
+          world.muses.trader.activity === "WATCHING" ||
+          world.muses.builder.activity === "THINKING"
+        }
       />
       {MUSE_IDS.map((id) => (
         <FrustumGuard key={id} center={world.muses[id].position} radius={1.6}>

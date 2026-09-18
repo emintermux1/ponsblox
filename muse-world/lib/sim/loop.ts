@@ -25,7 +25,7 @@ export async function runGrokTick(): Promise<void> {
       ...world.muses.trader,
       mind: {
         ...world.muses.trader.mind,
-        grok: `requesting context on ${ticker}`,
+        grok: ticker ? `requesting context on ${ticker}` : "requesting context on the room",
         nodes: { ...world.muses.trader.mind.nodes, GROK: 0.78 },
       },
     },
@@ -36,7 +36,7 @@ export async function runGrokTick(): Promise<void> {
   const wake = await wakeGrok({
     museId: "trader",
     goal: asked.mind.goal,
-    observation: `${ticker} is in the room`,
+    observation: ticker ? `${ticker} is in the room` : "the room is quiet",
   });
   const reply = grokReplyFromWake(wake);
   const after = setThought(
@@ -46,7 +46,7 @@ export async function runGrokTick(): Promise<void> {
         ...asked.mind,
         grok: wake.xai ? wake.xai.summary : previousGrok,
         action: reply.bias === "pass" ? "PASS" : "WATCH",
-        watching: ticker,
+        watching: ticker ?? asked.mind.watching,
         nodes: {
           ...asked.mind.nodes,
           GROK: wake.xai ? 0.4 : 0.72,

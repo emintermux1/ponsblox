@@ -63,7 +63,7 @@ describe("wall slots", () => {
       { id: "b", label: "JUP", slot: 1, at: 3 },
       { id: "c", label: "BONK", slot: 2, at: 8 },
       { id: "d", label: "PINT", slot: 3, at: 9 },
-      { id: "e", label: "PAID", slot: 4, at: 7 },
+      { id: "e", label: "PENGU", slot: 4, at: 7 },
     ];
     assert.equal(nextWallSlot(pins), 1);
     assert.equal(upsertWallPin(pins, "PENGU", 1, 20).find((pin) => pin.slot === 1)?.label, "PENGU");
@@ -135,18 +135,18 @@ describe("pickStoryBeat", () => {
 
   it("asks the builder for a card after a thesis cooldown", () => {
     const world = seedWorld();
-    world.muses.trader.mind.watching = "PAID";
+    world.muses.trader.mind.watching = "WIF";
     world.muses.builder.activity = "RESEARCHING";
     const beat = pickStoryBeat(
       input({
         muses: world.muses,
-        pulseTicker: "PAID",
+        pulseTicker: "WIF",
         events: [event("THESIS_CREATED", 990_000, "builder")],
         now: 1_000_000,
         random: () => 0.1,
       }),
     );
-    assert.deepEqual(beat, { type: "ask_card", ticker: "PAID" });
+    assert.deepEqual(beat, { type: "ask_card", ticker: "WIF" });
   });
 
   it("shares a ticker from scroller to builder", () => {
@@ -233,7 +233,7 @@ describe("tickSnapshot stories", () => {
     world.muses.chill = {
       ...world.muses.chill,
       activity: "WALKING",
-      position: [-1.6, 0.62, 3.5],
+      position: [-1.62, 0.62, 3.5],
     };
     const next = tickSnapshot(world, { kind: "QUIET", ticker: null }, 1_000, () => 0.99);
     assert.equal(next.muses.chill.activity, "CHILLING");

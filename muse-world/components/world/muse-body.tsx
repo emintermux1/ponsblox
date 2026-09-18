@@ -1,10 +1,12 @@
 "use client";
 
 import { useRef } from "react";
+import { Text } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import type { Group, Mesh } from "three";
 import { usePerf } from "@/components/world/perf-context";
 import { damp } from "@/lib/world/camera";
+import { STAND_Y } from "@/lib/world/layout";
 import type { MuseActivity, MuseId, MuseState } from "@/types/world";
 import { assertNever } from "@/types/world";
 
@@ -83,6 +85,17 @@ function Eyes() {
         <sphereGeometry args={[0.01, 8, 8]} />
         <meshStandardMaterial color={GLOW} emissive={GLOW} emissiveIntensity={0.4} />
       </mesh>
+    </group>
+  );
+}
+
+function CreamEars() {
+  return (
+    <group>
+      <Fluff position={[-0.18, 0.22, -0.02]} radius={0.09} color={FUR} scale={[0.72, 1.15, 0.55]} />
+      <Fluff position={[0.18, 0.22, -0.02]} radius={0.09} color={FUR} scale={[0.72, 1.15, 0.55]} />
+      <Fluff position={[-0.18, 0.24, 0.01]} radius={0.05} color={FUR_LIGHT} scale={[0.6, 0.9, 0.4]} />
+      <Fluff position={[0.18, 0.24, 0.01]} radius={0.05} color={FUR_LIGHT} scale={[0.6, 0.9, 0.4]} />
     </group>
   );
 }
@@ -196,9 +209,20 @@ type Motion = {
   leftFoot: [number, number, number];
   rightFoot: [number, number, number];
   prop: [number, number, number];
+  glance: [number, number];
 };
 
-function motionFor(activity: MuseActivity, t: number, phase: number): Motion {
+function isSitting(muse: MuseState): boolean {
+  return muse.activity !== "WALKING" && muse.position[1] < STAND_Y - 0.08;
+}
+
+function sitPose(motion: Motion, recline: number) {
+  motion.sway[0] -= recline;
+  motion.leftFoot = [0.02, 0.03, 0.16];
+  motion.rightFoot = [-0.02, 0.03, 0.14];
+}
+
+function motionFor(activity: MuseActivity, t: number, phase: number, sitting: boolean): Motion {
   const breathe = Math.sin(t * 1.65 + phase);
   const shift = Math.sin(t * 0.74 + phase * 0.8);
   const look = Math.sin(t * 0.41 + phase * 1.25);
@@ -213,92 +237,111 @@ function motionFor(activity: MuseActivity, t: number, phase: number): Motion {
     leftFoot: [0, 0, 0],
     rightFoot: [0, 0, 0],
     prop: [0, 0, 0],
+    glance: [look * 0.012, breathe * 0.006],
   };
 
   switch (activity) {
     case "IDLE":
+      if (sitting) sitPose(motion, 0.12);
       break;
     case "SCROLLING": {
       const flick = Math.sin(t * 8.4 + phase);
-      motion.head = [0.34 + flick * 0.05, 0.22, 0.06];
-      motion.rightArm = [-0.95, -0.28, -0.18];
-      motion.leftArm = [0.18, 0.2, 0.42];
-      motion.prop = [flick * 0.42, 0.12, 0.1];
-      motion.sway = [0.1 + 0.03 * shift, 0.08 * look, flick * 0.045];
+      motion.head = [0.42 + flick * 0.05, 0.18, 0.04];
+      motion.rightArm = [-1.05, -0.22, -0.12];
+      motion.leftArm = [0.12, 0.18, 0.38];
+      motion.prop = [flick * 0.55, 0.18, 0.14];
+      motion.sway = [0.18 + 0.03 * shift, 0.06 * look, flick * 0.04];
       motion.offset[1] += Math.abs(flick) * 0.006;
+      motion.glance = [0.01, -0.02];
+      if (sitting) sitPose(motion, 0.06);
       break;
     }
     case "WALKING": {
-      const step = t * 4.6 + phase;
+      const step = t * 5.1 + phase;
       const lift = Math.abs(Math.sin(step));
-      motion.offset[1] += lift * 0.04;
-      motion.sway = [0.08, Math.sin(step) * 0.14, Math.sin(step) * 0.11];
-      motion.leftArm = [Math.sin(step) * 0.58, 0, 0.22];
-      motion.rightArm = [Math.sin(step + Math.PI) * 0.58, 0, -0.22];
-      motion.leftFoot = [0, Math.max(0, Math.sin(step)) * 0.05, Math.sin(step) * 0.1];
+      motion.offset[1] += lift * 0.05;
+      motion.sway = [0.06, Math.sin(step) * 0.16, Math.sin(step) * 0.12];
+      motion.leftArm = [Math.sin(step) * 0.62, 0, 0.22];
+      motion.rightArm = [Math.sin(step + Math.PI) * 0.62, 0, -0.22];
+      motion.leftFoot = [0, Math.max(0, Math.sin(step)) * 0.06, Math.sin(step) * 0.12];
       motion.rightFoot = [
         0,
-        Math.max(0, Math.sin(step + Math.PI)) * 0.05,
-        Math.sin(step + Math.PI) * 0.1,
+        Math.max(0, Math.sin(step + Math.PI)) * 0.06,
+        Math.sin(step + Math.PI) * 0.12,
       ];
-      motion.head = [0.06, Math.sin(step) * 0.08, Math.sin(step) * 0.05];
+      motion.head = [0.04, Math.sin(step) * 0.07, Math.sin(step) * 0.04];
+      motion.facing = 0;
       break;
     }
     case "SMOKING": {
       const drag = (Math.sin(t * 1.15 + phase) + 1) / 2;
       motion.torso = [1 + drag * 0.045, 1 + drag * 0.08, 1 + drag * 0.045];
-      motion.head = [0.1 + drag * 0.04, 0.18, 0.05];
-      motion.rightArm = [-0.82, 0.12, -0.42];
+      motion.head = [0.08 + drag * 0.04, 0.16, 0.04];
+      motion.rightArm = [-0.88, 0.1, -0.38];
       motion.prop = [0.15, 0.35, 0.1];
-      motion.sway = [0.12 + 0.02 * shift, 0.08 * look, 0.04 * shift];
+      motion.sway = [0.08 + 0.02 * shift, 0.08 * look, 0.04 * shift];
+      if (sitting) sitPose(motion, 0.2);
       break;
     }
     case "CHILLING":
-      motion.sway = [0.16 + 0.03 * shift, 0.1 * look, 0.06 * shift];
-      motion.head = [0.16, 0.14 * look, 0.05];
-      motion.leftArm = [0.25, 0.1, 0.35];
-      motion.rightArm = [0.2, -0.08, -0.28];
+      motion.sway = [0.04 + 0.03 * shift, 0.12 * look, 0.05 * shift];
+      motion.head = [0.08, 0.18 * look, 0.04];
+      motion.leftArm = [0.32, 0.12, 0.42];
+      motion.rightArm = [0.28, -0.1, -0.36];
+      if (sitting) sitPose(motion, 0.22);
       break;
     case "WATCHING":
-      motion.sway = [0.14, 0.04 * look, 0.03 * shift];
-      motion.head = [0.18, 0.08 * look, 0.02];
-      motion.leftArm = [-0.35, 0.1, 0.25];
-      motion.rightArm = [-0.28, -0.08, -0.22];
+      motion.sway = [0.2, 0.03 * look, 0.02 * shift];
+      motion.head = [0.32, 0.05 * look, 0.02];
+      motion.leftArm = [-0.55, 0.08, 0.18];
+      motion.rightArm = [-0.48, -0.06, -0.16];
+      motion.glance = [0, -0.018];
+      if (sitting) sitPose(motion, 0.04);
       break;
     case "TRADING": {
-      const tap = Math.sin(t * 7.2 + phase);
-      motion.sway = [0.16, 0.03, tap * 0.03];
-      motion.head = [0.22, 0.06, 0];
-      motion.rightArm = [-0.7 + tap * 0.12, -0.15, -0.12];
-      motion.leftArm = [-0.45, 0.12, 0.2];
+      const tap = Math.sin(t * 9.4 + phase);
+      const tapB = Math.sin(t * 8.1 + phase * 1.3);
+      motion.sway = [0.22, tap * 0.02, tap * 0.02];
+      motion.head = [0.36, 0.04 * look, 0];
+      motion.rightArm = [-1.05 + tap * 0.16, -0.08, -0.06];
+      motion.leftArm = [-0.98 + tapB * 0.14, 0.1, 0.08];
+      motion.prop = [tap * 0.2, 0.1, 0.08];
+      motion.glance = [tap * 0.01, -0.02];
+      if (sitting) sitPose(motion, 0.02);
       break;
     }
     case "RESEARCHING": {
-      const jot = Math.sin(t * 3.4 + phase);
-      motion.head = [0.28 + jot * 0.04, -0.16, 0.04];
-      motion.leftArm = [-0.75, 0.35, 0.28];
-      motion.rightArm = [-0.2, -0.12, -0.32];
-      motion.prop = [jot * 0.2, 0.08, 0.12];
-      motion.sway = [0.08, -0.06, 0.04 * shift];
+      const jot = Math.sin(t * 4.2 + phase);
+      motion.head = [0.3 + jot * 0.05, -0.12, 0.03];
+      motion.leftArm = [-0.82, 0.28, 0.22];
+      motion.rightArm = [-0.55 + jot * 0.18, -0.08, -0.18];
+      motion.prop = [jot * 0.28, 0.1, 0.14];
+      motion.sway = [0.12, -0.05, 0.03 * shift];
+      motion.glance = [0.008, -0.012];
+      if (sitting) sitPose(motion, 0.05);
       break;
     }
     case "THINKING":
-      motion.head = [0.12, 0.08, 0.2 + 0.04 * shift];
+      motion.head = [0.14, 0.06, 0.18 + 0.04 * shift];
       motion.leftArm = [-0.95, 0.42, 0.55];
-      motion.rightArm = [0.15, -0.1, -0.22];
+      motion.rightArm = [0.12, -0.1, -0.2];
+      if (sitting) sitPose(motion, 0.08);
       break;
     case "TALKING":
       motion.head = [0.08 + Math.sin(t * 5.6 + phase) * 0.1, 0.1 * look, 0];
       motion.leftArm = [0.2, 0.15, 0.45];
       motion.rightArm = [-0.35, -0.2, -0.4];
+      if (sitting) sitPose(motion, 0.08);
       break;
     case "REACTING": {
       const hop = Math.abs(Math.sin(t * 7.8 + phase));
-      motion.offset[1] += hop * 0.07;
+      motion.offset[1] += hop * 0.05;
       motion.torso = [1 + hop * 0.04, 1 + hop * 0.06, 1 + hop * 0.04];
-      motion.head = [-0.08, 0.16 * look, 0];
-      motion.leftArm = [-1.1, 0.2, 0.55];
-      motion.rightArm = [-1.05, -0.2, -0.55];
+      motion.head = [0.12, 0.18 * look, 0];
+      motion.leftArm = [-1.05, 0.16, 0.48];
+      motion.rightArm = [-1.0, -0.16, -0.48];
+      motion.glance = [0.02, -0.01];
+      if (sitting) sitPose(motion, 0.04);
       break;
     }
     default:
@@ -431,23 +474,36 @@ export function MuseBody({
   const rightFoot = useRef<Group>(null);
   const leftProp = useRef<Group>(null);
   const rightProp = useRef<Group>(null);
+  const eyes = useRef<Group>(null);
   const ring = useRef<Mesh>(null);
   const phase = phaseFor(muse.id);
   const { pauseExtras } = usePerf();
 
   useFrame((state, delta) => {
     if (!root.current) return;
+    const sitting = isSitting(muse);
     const motion = motionFor(
       muse.activity,
       pauseExtras ? 0 : state.clock.elapsedTime,
       phase,
+      sitting,
     );
-    root.current.position.set(
-      muse.position[0] + motion.offset[0],
-      muse.position[1] + motion.offset[1],
-      muse.position[2] + motion.offset[2],
+    dampPos(
+      root.current,
+      [
+        muse.position[0] + motion.offset[0],
+        muse.position[1] + motion.offset[1],
+        muse.position[2] + motion.offset[2],
+      ],
+      4.4,
+      delta,
     );
-    root.current.rotation.y = muse.facing + motion.facing;
+    root.current.rotation.y = damp(
+      root.current.rotation.y,
+      muse.facing + motion.facing,
+      5.2,
+      delta,
+    );
     dampRot(sway.current, motion.sway, 5.5, delta);
     dampScale(torso.current, motion.torso, 4.2, delta);
     dampRot(head.current, motion.head, 6.2, delta);
@@ -457,6 +513,10 @@ export function MuseBody({
     dampPos(rightFoot.current, motion.rightFoot, 8, delta);
     dampRot(leftProp.current, motion.prop, 7.5, delta);
     dampRot(rightProp.current, motion.prop, 7.5, delta);
+    if (eyes.current) {
+      eyes.current.position.x = damp(eyes.current.position.x, motion.glance[0], 7, delta);
+      eyes.current.position.y = damp(eyes.current.position.y, motion.glance[1], 7, delta);
+    }
     if (ring.current) {
       const pulse = pauseExtras ? 1 : 1 + Math.sin(state.clock.elapsedTime * 2.1) * 0.06;
       ring.current.scale.set(pulse, pulse, 1);
@@ -480,14 +540,16 @@ export function MuseBody({
           <Fluff position={[-0.22, 0.46, 0]} radius={0.15} color={FUR_SHADE} />
           <Fluff position={[0.22, 0.46, 0]} radius={0.15} color={FUR_SHADE} />
           <Fluff position={[0, 0.38, 0.2]} radius={0.16} color={FUR_LIGHT} scale={[1.15, 0.85, 0.7]} />
+          <Fluff position={[0, 0.32, -0.22]} radius={0.12} color={FUR_SHADE} scale={[0.9, 0.7, 1.15]} />
           {muse.id === "chill" ? <Scarf /> : null}
           <group ref={head} position={[0, 0.9, 0.02]}>
             <Fluff position={[0, 0, 0]} radius={0.27} color={FUR_LIGHT} />
             <Fluff position={[-0.16, -0.04, 0.12]} radius={0.1} />
             <Fluff position={[0.16, -0.04, 0.12]} radius={0.1} />
-            <Fluff position={[-0.16, 0.18, -0.02]} radius={0.08} color={FUR_SHADE} />
-            <Fluff position={[0.16, 0.18, -0.02]} radius={0.08} color={FUR_SHADE} />
-            <Eyes />
+            <CreamEars />
+            <group ref={eyes}>
+              <Eyes />
+            </group>
             <mesh position={[0, -0.04, 0.24]} scale={[0.7, 0.35, 0.4]}>
               <sphereGeometry args={[0.03, 8, 8]} />
               <meshStandardMaterial color="#c9b8a2" roughness={0.7} />
@@ -521,6 +583,19 @@ export function MuseBody({
         </group>
       </group>
       <SmokePuffs active={!pauseExtras && muse.activity === "SMOKING"} />
+      <Text
+        position={[0, 1.22, 0]}
+        fontSize={0.058}
+        letterSpacing={0.1}
+        color="#efe6d4"
+        fillOpacity={0.78}
+        anchorX="center"
+        anchorY="bottom"
+        outlineWidth={0.004}
+        outlineColor="#1b1914"
+      >
+        {muse.name}
+      </Text>
       {selected ? (
         <mesh ref={ring} position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[0.4, 0.48, 32]} />

@@ -21,6 +21,7 @@ import {
   worldToWallLocal,
 } from "@/lib/world/layout";
 import type { CityLod, GlassQuality } from "@/lib/world/perf";
+import { DESK_SIGNAL } from "@/lib/world/mind-graph";
 import type { SpatialPacket, WallPin } from "@/types/world";
 import { assertNever } from "@/types/world";
 
@@ -412,6 +413,80 @@ function WindowWall() {
   );
 }
 
+function DeskChair({ position }: { position: [number, number, number] }) {
+  return (
+    <group position={position} rotation={[0, Math.PI, 0]}>
+      <Panel args={[0.5, 0.05, 0.48]} position={[0, 0.36, 0]} color={LEATHER} roughness={0.64} />
+      <Panel args={[0.5, 0.4, 0.06]} position={[0, 0.58, -0.22]} color={LEATHER} roughness={0.6} />
+      <Panel args={[0.045, 0.34, 0.045]} position={[-0.18, 0.17, 0.16]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
+      <Panel args={[0.045, 0.34, 0.045]} position={[0.18, 0.17, 0.16]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
+      <Panel args={[0.045, 0.34, 0.045]} position={[-0.18, 0.17, -0.16]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
+      <Panel args={[0.045, 0.34, 0.045]} position={[0.18, 0.17, -0.16]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
+    </group>
+  );
+}
+
+function DeskKeyboard({ x }: { x: number }) {
+  return (
+    <group position={[x, 0.785, 0.22]}>
+      <Panel args={[0.38, 0.016, 0.14]} position={[0, 0, 0]} color="#1a1916" roughness={0.42} metalness={0.18} />
+      <Panel args={[0.34, 0.008, 0.1]} position={[0, 0.01, 0]} color="#2a2824" roughness={0.5} />
+    </group>
+  );
+}
+
+function GrokOrb({ live }: { live: boolean }) {
+  const core = useRef<Mesh>(null);
+  const halo = useRef<Mesh>(null);
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    const pulse = live ? 1 + Math.sin(t * 4.4) * 0.16 : 1 + Math.sin(t * 0.7) * 0.03;
+    const emit = live ? 1.7 + Math.sin(t * 4.4) * 0.7 : 0.18;
+    if (core.current) {
+      core.current.scale.setScalar(pulse);
+      const material = core.current.material;
+      if ("emissiveIntensity" in material) {
+        material.emissiveIntensity = emit;
+      }
+    }
+    if (halo.current) {
+      halo.current.scale.setScalar(1.35 + (live ? Math.abs(Math.sin(t * 4.4)) * 0.45 : 0.08));
+      const material = halo.current.material;
+      if ("opacity" in material) {
+        material.opacity = live ? 0.28 + Math.abs(Math.sin(t * 4.4)) * 0.22 : 0.08;
+      }
+    }
+  });
+
+  return (
+    <group position={DESK_SIGNAL}>
+      <mesh ref={core}>
+        <sphereGeometry args={[0.055, 20, 18]} />
+        <meshStandardMaterial
+          color="#f3ead2"
+          emissive="#f0d78a"
+          emissiveIntensity={0.2}
+          roughness={0.16}
+          metalness={0.28}
+        />
+      </mesh>
+      <mesh ref={halo}>
+        <sphereGeometry args={[0.055, 16, 14]} />
+        <meshStandardMaterial
+          color="#f6e7b8"
+          emissive="#f0d78a"
+          emissiveIntensity={0.4}
+          transparent
+          opacity={0.1}
+          depthWrite={false}
+        />
+      </mesh>
+      {live ? <pointLight color="#f0d78a" intensity={1.8} distance={3.4} /> : null}
+    </group>
+  );
+}
+
 function LoungeChair() {
   return (
     <group position={[-1.82, 0, 3.42]} rotation={[0, -0.55, 0]}>
@@ -521,7 +596,7 @@ function FloorLamp() {
   );
 }
 
-function Desk({ wood }: { wood: CanvasTexture }) {
+function Desk({ wood, live }: { wood: CanvasTexture; live: boolean }) {
   return (
     <group position={[3.4, 0, -0.85]}>
       <Panel
@@ -547,12 +622,16 @@ function Desk({ wood }: { wood: CanvasTexture }) {
               color="#0e1216"
               metalness={0.35}
               roughness={0.08}
+              emissive={live ? "#3a5a72" : "#101820"}
+              emissiveIntensity={live ? 0.55 : 0.12}
               transparent
               opacity={0.88}
             />
           </mesh>
         </group>
       ))}
+      <DeskKeyboard x={-0.58} />
+      <DeskKeyboard x={0.62} />
       <Panel args={[0.42, 0.02, 0.3]} position={[1.18, 0.8, 0.22]} color={PAPER} roughness={0.82} />
       <Panel args={[0.36, 0.015, 0.26]} position={[1.2, 0.82, 0.2]} color="#d7c6aa" roughness={0.8} />
     </group>
@@ -745,11 +824,15 @@ function Structure({
 export function Penthouse({
   packet = null,
   wallPins = [],
-  builderPos = [6.4, 0.62, 2.8],
+  builderPos = [6.42, 0.62, 2.68],
+  grokLive = false,
+  deskLive = false,
 }: {
   packet?: SpatialPacket | null;
   wallPins?: WallPin[];
   builderPos?: [number, number, number];
+  grokLive?: boolean;
+  deskLive?: boolean;
 }) {
   const { cityCount, cityLod } = usePerf();
   const dense = showDenseProps(cityLod);
@@ -769,11 +852,14 @@ export function Penthouse({
       <Structure concrete={concrete} wood={wood} />
       <WindowWall />
       <Lounge />
-      {dense ? <LoungeChair /> : null}
+      <LoungeChair />
       <CoffeeTable />
       {dense ? <Hookah /> : null}
       {dense ? <FloorLamp /> : null}
-      <Desk wood={wood} />
+      <Desk wood={wood} live={deskLive} />
+      <DeskChair position={[3.28, 0, 0.12]} />
+      <DeskChair position={[4.12, 0, 0.12]} />
+      <GrokOrb live={grokLive} />
       <IdeaWall packet={packet} pins={wallPins} builderPos={builderPos} />
       <City count={cityCount} />
       {dense ? <Haze /> : null}

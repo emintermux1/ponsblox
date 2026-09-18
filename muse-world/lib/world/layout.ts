@@ -1,10 +1,27 @@
-import type { PacketEndpoint } from "@/types/world";
+import type { MuseActivity, MuseId, PacketEndpoint } from "@/types/world";
 import { assertNever } from "@/types/world";
 
 export const PACKET_TRAVEL_MS = 2200;
 export const PACKET_HOLD_MS = 2400;
 
 export const IDEA_WALL_ORIGIN: [number, number, number] = [7.55, 1.8, 2.6];
+
+export const STAND_Y = 0.62;
+
+export type MuseStation = {
+  position: [number, number, number];
+  facing: number;
+};
+
+export const STATIONS = {
+  scrollerSofa: { position: [-4.2, 0.4, 1.48], facing: 0.18 } satisfies MuseStation,
+  scrollerWindow: { position: [-6.35, STAND_Y, -2.55], facing: Math.PI } satisfies MuseStation,
+  traderDesk: { position: [3.28, 0.42, 0], facing: Math.PI } satisfies MuseStation,
+  builderWall: { position: [6.42, STAND_Y, 2.68], facing: 1.64 } satisfies MuseStation,
+  builderDesk: { position: [4.12, 0.42, 0], facing: Math.PI } satisfies MuseStation,
+  chillArmchair: { position: [-1.8, 0.34, 3.5], facing: -0.55 } satisfies MuseStation,
+  chillWindow: { position: [-2.15, STAND_Y, -3.55], facing: Math.PI } satisfies MuseStation,
+} as const;
 
 export const IDEA_WALL_CARDS = [
   { key: "thesis", x: -0.7, y: 0.55 },
@@ -34,11 +51,49 @@ export function worldToWallLocal(position: [number, number, number]): [number, n
   ];
 }
 
-export function chillHome(now: number): [number, number, number] {
-  const cycle = Math.floor(now / 14000) % 3;
-  if (cycle === 0) return [-1.6, 0.62, 3.5];
-  if (cycle === 1) return [-5.4, 0.62, 2.2];
-  return [-3.1, 0.62, 4.2];
+export function nearXZ(
+  a: [number, number, number],
+  b: [number, number, number],
+  eps = 0.12,
+): boolean {
+  return Math.hypot(a[0] - b[0], a[2] - b[2]) < eps;
+}
+
+export function chillHome(_now?: number): [number, number, number] {
+  return STATIONS.chillArmchair.position;
+}
+
+export function stationFor(id: MuseId, activity: MuseActivity): MuseStation {
+  switch (id) {
+    case "scroller":
+      return activity === "WATCHING" ? STATIONS.scrollerWindow : STATIONS.scrollerSofa;
+    case "trader":
+      return STATIONS.traderDesk;
+    case "chill":
+      return STATIONS.chillArmchair;
+    case "builder":
+      return activity === "THINKING" ? STATIONS.builderDesk : STATIONS.builderWall;
+    default:
+      return assertNever(id);
+  }
+}
+
+export function arriveActivity(id: MuseId, desired: MuseActivity): MuseActivity {
+  if (desired !== "WALKING") {
+    return desired;
+  }
+  switch (id) {
+    case "chill":
+      return "CHILLING";
+    case "scroller":
+      return "SCROLLING";
+    case "trader":
+      return "TRADING";
+    case "builder":
+      return "RESEARCHING";
+    default:
+      return assertNever(id);
+  }
 }
 
 export function packetAccent(endpoint: PacketEndpoint): string {
