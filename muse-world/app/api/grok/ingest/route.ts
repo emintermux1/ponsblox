@@ -1,8 +1,11 @@
-import { claimsExecutedFill, makeGrokEvent } from "@/lib/adapters/parse";
+import { applyGrokIngestToWorld } from "@/lib/adapters/apply";
+import { claimsExecutedFill, loftCaptionFromText } from "@/lib/adapters/parse";
 import {
+  GROK_ENV_NAMES,
   assertSource,
   authorizeMuseIngest,
   grokIngestEventSource,
+  readEnvName,
 } from "@/lib/adapters/source";
 import { patchWorld } from "@/lib/world/store";
 import { isMuseId } from "@/types/world";
@@ -10,7 +13,7 @@ import { isMuseId } from "@/types/world";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  const secret = process.env.GROK_INGEST_SECRET;
+  const secret = readEnvName(GROK_ENV_NAMES.ingestSecret);
   const header = request.headers.get("x-muse-ingest");
   if (!authorizeMuseIngest(header, secret)) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
@@ -33,31 +36,15 @@ export async function POST(request: Request) {
   if (claimsExecutedFill(summary)) {
     return Response.json({ error: "do not invent fills" }, { status: 400 });
   }
+  if (!loftCaptionFromText(summary)) {
+    return Response.json({ error: "not a loft caption" }, { status: 400 });
+  }
   const museId = body.museId;
   const source = grokIngestEventSource();
-  patchWorld((world) => ({
-    ...world,
-    muses: {
-      ...world.muses,
-      [museId]: {
-        ...world.muses[museId],
-        mind: {
-          ...world.muses[museId].mind,
-          grok: summary,
-          nodes: { ...world.muses[museId].mind.nodes, GROK: 0.55 },
-        },
-      },
-    },
-    events: [
-      makeGrokEvent({
-        kind: "GROK_RESPONSE",
-        museId,
-        museName: world.muses[museId].name,
-        source,
-        summary,
-      }),
-      ...world.events,
-    ].slice(0, 24),
-  }));
+  try {
+    patchWorld((world) => applyGrokIngestToWorld(world, museId, summary));
+  } catch {
+    return Response.json({ error: "do not invent fills" }, { status: 400 });
+  }
   return Response.json({ ok: true, source });
 }

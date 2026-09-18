@@ -28,6 +28,23 @@ export type PacketLabel = WorldEvent["source"] | MarketOrigin;
 
 export const SIM_GROK_SUMMARY = "no Grok key — SIM context only";
 
+export const GROK_ENV_NAMES = {
+  webhookUrl: "GROK_BOT_WEBHOOK_URL",
+  webhookKey: "GROK_BOT_WEBHOOK_KEY",
+  ingestSecret: "GROK_INGEST_SECRET",
+  xaiKey: "XAI_API_KEY",
+  xaiUrl: "XAI_API_URL",
+} as const;
+
+export function readEnvName(name: string): string | undefined {
+  const value = process.env[name];
+  if (typeof value !== "string") {
+    return undefined;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
 export function assertSource(source: "real" | "sim"): "real" | "sim" {
   switch (source) {
     case "real":
@@ -119,10 +136,16 @@ export function marketPulseFromFetch(outcome: MarketFetchOutcome): MarketPulse {
 }
 
 export function isGrokWebhookConfigured(
-  url: string | undefined = process.env.GROK_BOT_WEBHOOK_URL,
-  key: string | undefined = process.env.GROK_BOT_WEBHOOK_KEY,
+  url: string | undefined = readEnvName(GROK_ENV_NAMES.webhookUrl),
+  key: string | undefined = readEnvName(GROK_ENV_NAMES.webhookKey),
 ): boolean {
-  return Boolean(url && key);
+  return Boolean(url?.trim() && key?.trim());
+}
+
+export function isXaiConfigured(
+  key: string | undefined = readEnvName(GROK_ENV_NAMES.xaiKey),
+): boolean {
+  return Boolean(key?.trim());
 }
 
 export function simGrokReply(): GrokReply {
@@ -139,14 +162,14 @@ export function grokReplyAfterWake(input: {
   woken: boolean;
   xai: GrokReply | null;
 }): GrokReply {
-  if (input.xai && honestyFromLabel(input.xai.source) === "real") {
+  if (input.xai?.source === "xai" && honestyFromLabel(input.xai.source) === "real") {
     assertSource("real");
     return input.xai;
   }
   if (input.webhookConfigured && input.woken) {
-    assertSource("real");
+    assertSource("sim");
     return {
-      source: "bot",
+      source: "sim",
       summary: "Grok Bot woken — waiting on ingest",
       bias: "watch",
     };
