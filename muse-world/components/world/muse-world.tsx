@@ -22,24 +22,29 @@ const LivingScene = dynamic(
   { ssr: false },
 );
 
-function useIntroCopy() {
-  const [introLine, setIntroLine] = useState<string | null>(INTRO_COPY[0]);
+function useIntroCopy(active: boolean) {
+  const [beat, setBeat] = useState(0);
 
   useEffect(() => {
-    const timers = INTRO_COPY.map((text, index) =>
-      window.setTimeout(() => setIntroLine(text), INTRO_COPY_AT_MS[index]),
-    );
-    timers.push(window.setTimeout(() => setIntroLine(null), INTRO_CLEAR_MS));
+    if (!active) {
+      return;
+    }
+    const timers = [
+      window.setTimeout(() => setBeat(1), INTRO_COPY_AT_MS[1]),
+      window.setTimeout(() => setBeat(2), INTRO_COPY_AT_MS[2]),
+      window.setTimeout(() => setBeat(-1), INTRO_CLEAR_MS),
+    ];
     return () => timers.forEach((id) => window.clearTimeout(id));
-  }, []);
+  }, [active]);
 
-  return introLine;
+  return beat < 0 ? null : INTRO_COPY[beat];
 }
 
 export function MuseWorld() {
   const { world, introDone, setIntroDone, select, setCamera, toggleMind } =
     useLivingWorld();
-  const introLine = useIntroCopy();
+  const [booted, setBooted] = useState(false);
+  const introLine = useIntroCopy(booted);
 
   return (
     <main className="relative h-dvh w-full overflow-hidden bg-[#0b0c10]">
@@ -48,6 +53,7 @@ export function MuseWorld() {
         dpr={[1, 1.6]}
         camera={{ position: [0.2, 3.8, 16.4], fov: 38, near: 0.1, far: 80 }}
         gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
+        onCreated={() => setBooted(true)}
       >
         <LivingScene
           world={world}

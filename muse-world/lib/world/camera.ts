@@ -23,8 +23,9 @@ export const CINEMA_EASE = "power2.inOut";
 
 export const INTRO_COPY_AT_MS = [0, 3200, 7000] as const;
 export const INTRO_CLEAR_MS = 10_800;
-export const INTRO_HOLD_S = 0.38;
-export const INTRO_SETTLE_S = 0.55;
+export const INTRO_HOLD_S = 0.28;
+export const INTRO_SETTLE_S = 0.4;
+export const INTRO_LEG_S = 3.05;
 
 export const INTRO_SHOTS: Shot[] = [
   { position: [0.2, 3.8, 16.4], target: [0, 1.6, 0], fov: 38 },
@@ -151,7 +152,7 @@ export function cinematicDuration(from: Shot, to: Shot): number {
 }
 
 export function introLegDuration(from: Shot, to: Shot): number {
-  return Math.min(3.55, Math.max(2.85, cinematicDuration(from, to) * 0.76));
+  return Math.min(INTRO_LEG_S + 0.2, Math.max(INTRO_LEG_S - 0.2, cinematicDuration(from, to) * 0.7));
 }
 
 export function lerp(a: number, b: number, t: number): number {
@@ -217,7 +218,7 @@ export function playIntro(
   if (shotDistance(start, INTRO_SHOTS[0]) > 0.05) {
     tl.to(proxy, {
       ...flattenShot(INTRO_SHOTS[0]),
-      duration: cinematicDuration(start, INTRO_SHOTS[0]),
+      duration: Math.min(1.2, cinematicDuration(start, INTRO_SHOTS[0])),
       ease: CINEMA_EASE,
     });
   }

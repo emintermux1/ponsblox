@@ -46,15 +46,18 @@ export function CameraRig({
     if (introDone) {
       return;
     }
-    const timeline = playIntro(proxy.current, () => {
+    const finish = () => {
       if (finished.current) {
         return;
       }
       finished.current = true;
       follow.current = false;
       onIntroDoneRef.current();
-    });
+    };
+    const timeline = playIntro(proxy.current, finish);
+    const failSafe = window.setTimeout(finish, 14_000);
     return () => {
+      window.clearTimeout(failSafe);
       timeline.kill();
     };
   }, [introDone]);
