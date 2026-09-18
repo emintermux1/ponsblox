@@ -9,8 +9,9 @@ import { Penthouse } from "@/components/world/penthouse";
 import { TravelPacket } from "@/components/world/packet";
 import { CameraRig } from "@/components/world/rig";
 import { ThoughtChip } from "@/components/world/thoughts";
+import { wallSlotWorld } from "@/lib/world/layout";
 import { MIND_LIFT } from "@/lib/world/mind-graph";
-import type { MuseId, WorldSnapshot } from "@/types/world";
+import type { MuseId, PacketEndpoint, WorldSnapshot } from "@/types/world";
 import { MUSE_IDS } from "@/types/world";
 
 function AreaLights() {
@@ -33,11 +34,12 @@ export function LivingScene({
 }) {
   const selected = world.selected;
   const musePos = selected ? world.muses[selected].position : null;
-  const positions = {
+  const positions: Record<PacketEndpoint, [number, number, number]> = {
     scroller: world.muses.scroller.position,
     trader: world.muses.trader.position,
     chill: world.muses.chill.position,
     builder: world.muses.builder.position,
+    wall: wallSlotWorld(world.packet?.slot ?? 0),
   };
 
   return (
@@ -96,7 +98,11 @@ export function LivingScene({
         introDone={introDone}
         onIntroDone={onIntroDone}
       />
-      <Penthouse />
+      <Penthouse
+        packet={world.packet}
+        wallPins={world.wallPins ?? []}
+        builderPos={world.muses.builder.position}
+      />
       {MUSE_IDS.map((id) => (
         <group key={id}>
           <MuseBody

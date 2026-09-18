@@ -94,13 +94,27 @@ export type WorldSnapshot = {
   muses: Record<MuseId, MuseState>;
   events: WorldEvent[];
   packet: SpatialPacket | null;
+  wallPins: WallPin[];
 };
 
+export type PacketKind = "NOTE" | "PIN";
+
+export type PacketEndpoint = MuseId | "wall";
+
 export type SpatialPacket = {
-  from: MuseId;
-  to: MuseId;
+  from: PacketEndpoint;
+  to: PacketEndpoint;
   label: string;
   t: number;
+  kind: PacketKind;
+  slot?: number;
+};
+
+export type WallPin = {
+  id: string;
+  label: string;
+  slot: number;
+  at: number;
 };
 
 export const MIND_NODES: MindNodeId[] = [

@@ -1,7 +1,8 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef } from "react";
-import { MeshReflectorMaterial } from "@react-three/drei";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Html, MeshReflectorMaterial } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
 import {
   BackSide,
   CanvasTexture,
@@ -10,7 +11,15 @@ import {
   RepeatWrapping,
   SRGBColorSpace,
 } from "three";
-import type { ColorRepresentation } from "three";
+import type { ColorRepresentation, Mesh } from "three";
+import {
+  IDEA_WALL_CARDS,
+  IDEA_WALL_ORIGIN,
+  PACKET_TRAVEL_MS,
+  wallSlotLocal,
+  worldToWallLocal,
+} from "@/lib/world/layout";
+import type { SpatialPacket, WallPin } from "@/types/world";
 
 const WOOD = "#2b2118";
 const WOOD_DEEP = "#1a1410";
@@ -472,29 +481,100 @@ function Desk() {
   );
 }
 
-function IdeaWall() {
-  const cards = useMemo(
-    () =>
-      [
-        [-0.72, 0.52, -0.04],
-        [0.12, 0.86, 0.05],
-        [0.82, 0.38, -0.06],
-        [-0.22, -0.18, 0.03],
-        [0.52, -0.36, -0.03],
-      ] as const,
-    [],
-  );
+function FlyingWallCard({
+  pin,
+  from,
+  to,
+}: {
+  pin: SpatialPacket;
+  from: [number, number, number];
+  to: [number, number, number];
+}) {
+  const mesh = useRef<Mesh>(null);
+  useFrame(() => {
+    if (!mesh.current) {
+      return;
+    }
+    const u = Math.min(1, (Date.now() - pin.t) / PACKET_TRAVEL_MS);
+    mesh.current.visible = u < 1;
+    mesh.current.position.set(
+      from[0] + (to[0] - from[0]) * u,
+      from[1] + (to[1] - from[1]) * u + Math.sin(u * Math.PI) * 0.32,
+      from[2] + (to[2] - from[2]) * u,
+    );
+  });
   return (
-    <group position={[7.62, 1.85, 2.6]} rotation={[0, -Math.PI / 2, 0]}>
+    <mesh ref={mesh}>
+      <boxGeometry args={[0.62, 0.38, 0.02]} />
+      <meshStandardMaterial color="#f3e6c8" emissive="#8a7348" emissiveIntensity={0.5} roughness={0.72} />
+    </mesh>
+  );
+}
+
+function IdeaWall({
+  packet,
+  pins,
+  builderPos,
+}: {
+  packet: SpatialPacket | null;
+  pins: WallPin[];
+  builderPos: [number, number, number];
+}) {
+  const traveling = packet?.kind === "PIN" && packet.to === "wall" ? packet : null;
+  const travelId = traveling ? `${traveling.t}:${traveling.label}:${traveling.slot ?? 0}` : null;
+  const [landedId, setLandedId] = useState<string | null>(null);
+  const fromLocal = useMemo(() => worldToWallLocal(builderPos), [builderPos]);
+  useFrame(() => {
+    if (!traveling || !travelId) {
+      return;
+    }
+    if (Date.now() - traveling.t >= PACKET_TRAVEL_MS && landedId !== travelId) {
+      setLandedId(travelId);
+    }
+  });
+  const flyingSlot = travelId && landedId !== travelId ? (traveling?.slot ?? 0) : null;
+
+  return (
+    <group position={IDEA_WALL_ORIGIN} rotation={[0, -Math.PI / 2, 0]}>
       <Panel args={[3.85, 2.55, 0.07]} position={[0, 0, 0]} color={WOOD_DEEP} roughness={0.7} />
       <Panel args={[3.9, 0.03, 0.08]} position={[0, 1.28, 0.02]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
       <Panel args={[3.9, 0.03, 0.08]} position={[0, -1.28, 0.02]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
-      {cards.map(([x, y, rot], i) => (
-        <mesh key={i} position={[x, y, 0.05]} rotation={[0, 0, rot]}>
-          <boxGeometry args={[0.58, 0.36, 0.012]} />
-          <meshStandardMaterial color={PAPER} roughness={0.84} />
+      {IDEA_WALL_CARDS.map((card) => (
+        <mesh key={card.key} position={[card.x, card.y, 0.05]}>
+          <boxGeometry args={[0.62, 0.38, 0.02]} />
+          <meshStandardMaterial color={PAPER} roughness={0.8} />
         </mesh>
       ))}
+      {pins
+        .filter((pin) => pin.slot !== flyingSlot)
+        .map((pin) => {
+          const [x, y, z] = wallSlotLocal(pin.slot);
+          return (
+            <group key={pin.id} position={[x, y, z]}>
+              <mesh>
+                <boxGeometry args={[0.58, 0.34, 0.018]} />
+                <meshStandardMaterial
+                  color="#f3e6c8"
+                  emissive="#8a7348"
+                  emissiveIntensity={0.28}
+                  roughness={0.7}
+                />
+              </mesh>
+              <Html center distanceFactor={8} style={{ pointerEvents: "none" }}>
+                <span className="whitespace-nowrap font-serif text-[9px] tracking-[0.18em] text-[#3a3226]/80">
+                  ${pin.label}
+                </span>
+              </Html>
+            </group>
+          );
+        })}
+      {traveling ? (
+        <FlyingWallCard
+          pin={traveling}
+          from={fromLocal}
+          to={wallSlotLocal(traveling.slot ?? 0)}
+        />
+      ) : null}
       <Panel args={[1.8, 0.08, 0.42]} position={[0, -1.55, 0.18]} color={WOOD} roughness={0.62} />
     </group>
   );
@@ -574,7 +654,15 @@ function Structure({
   );
 }
 
-export function Penthouse() {
+export function Penthouse({
+  packet = null,
+  wallPins = [],
+  builderPos = [6.4, 0.62, 2.8],
+}: {
+  packet?: SpatialPacket | null;
+  wallPins?: WallPin[];
+  builderPos?: [number, number, number];
+}) {
   const concrete = useMemo(() => asMap(makeSpeckle(512, "#6c6964", 404, 9000), 3, 2), []);
   const wood = useMemo(() => asMap(makeWood(), 2, 1), []);
 
@@ -596,7 +684,11 @@ export function Penthouse() {
       <Hookah />
       <FloorLamp />
       <Desk />
-      <IdeaWall />
+      <IdeaWall packet={packet} pins={wallPins} builderPos={builderPos} />
+      <mesh position={[-6.6, 0.28, 3.8]}>
+        <cylinderGeometry args={[0.22, 0.22, 0.08, 20]} />
+        <meshStandardMaterial color="#d8c3a0" roughness={0.35} />
+      </mesh>
       <City />
       <Haze />
     </group>

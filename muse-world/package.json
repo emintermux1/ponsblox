@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "check": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test lib/adapters/parse.test.ts"
+    "test": "node --experimental-strip-types --test lib/adapters/parse.test.ts && npx --yes tsx --tsconfig tsconfig.json --test lib/sim/stories.test.ts"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.8",
