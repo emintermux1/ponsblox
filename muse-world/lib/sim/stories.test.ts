@@ -228,6 +228,18 @@ describe("tickSnapshot stories", () => {
     assert.ok(world.events.length <= 8);
   });
 
+  it("arrives from a walk as CHILLING, not IDLE", () => {
+    const world = seedWorld();
+    world.muses.chill = {
+      ...world.muses.chill,
+      activity: "WALKING",
+      position: [-1.6, 0.62, 3.5],
+    };
+    const next = tickSnapshot(world, { kind: "QUIET", ticker: null }, 1_000, () => 0.99);
+    assert.equal(next.muses.chill.activity, "CHILLING");
+    assert.notEqual(next.muses.chill.activity, "IDLE");
+  });
+
   it("lands a wall pin from a thesis beat", () => {
     const world = seedWorld();
     world.muses.trader.mind.watching = "JUP";

@@ -685,10 +685,6 @@ export function Penthouse({
       <FloorLamp />
       <Desk />
       <IdeaWall packet={packet} pins={wallPins} builderPos={builderPos} />
-      <mesh position={[-6.6, 0.28, 3.8]}>
-        <cylinderGeometry args={[0.22, 0.22, 0.08, 20]} />
-        <meshStandardMaterial color="#d8c3a0" roughness={0.35} />
-      </mesh>
       <City />
       <Haze />
     </group>
