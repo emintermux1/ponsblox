@@ -14,6 +14,7 @@ import {
   LOOK_CAM,
   LOOK_CAM_NAME,
   lookLimits,
+  ORBIT_CONTROLS_NAME,
   MOBILE_INTRO_SHOTS,
   playIntro,
   readShot,
@@ -89,6 +90,7 @@ test("GROK shot looks at the desk orb, not an empty lounge hover", () => {
 
 test("look-cam keeps a usable orbit range", () => {
   assert.equal(LOOK_CAM_NAME, "LOOK_CAM");
+  assert.equal(ORBIT_CONTROLS_NAME, "OrbitControls");
   assert.equal(LOOK_CAM.id, "LOOK_CAM");
   assert.ok(LOOK_CAM.minDistance < LOOK_CAM.maxDistance);
   assert.ok(LOOK_CAM.minPolarAngle < LOOK_CAM.maxPolarAngle);

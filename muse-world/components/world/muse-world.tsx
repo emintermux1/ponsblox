@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { ACESFilmicToneMapping } from "three";
 import { PerfProvider, usePerf } from "@/components/world/perf-context";
 import { WatchMode } from "@/components/world/watch-mode";
-import { LOOK_CAM_NAME } from "@/lib/world/camera";
+import { LOOK_CAM_NAME, ORBIT_CONTROLS_NAME } from "@/lib/world/camera";
 import type { RenderMode } from "@/lib/world/perf";
 import type { ScreenPulse } from "@/lib/world/screen-texture";
 import type { MuseId, ScreenId, WorldSnapshot } from "@/types/world";
@@ -68,6 +68,7 @@ export function MuseWorld({
       data-loft-mode={ready ? budget.mode : "boot"}
       data-loft-tier={budget.tier}
       data-look-cam={LOOK_CAM_NAME}
+      data-orbit-controls={ORBIT_CONTROLS_NAME}
     >
       {ready && webgl ? (
         <Canvas

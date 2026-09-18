@@ -51,6 +51,7 @@ export const MOBILE_INTRO_SHOTS: Shot[] = [
 export const NARROW_VIEWPORT = 768;
 
 export const LOOK_CAM_NAME = "LOOK_CAM";
+export const ORBIT_CONTROLS_NAME = "OrbitControls";
 
 export const LOOK_CAM = {
   id: LOOK_CAM_NAME,
