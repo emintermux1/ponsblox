@@ -7,8 +7,7 @@ import {
   grokSignalLive,
   projectMindNode,
 } from "@/lib/world/mind-graph";
-import { presetForMuse } from "@/lib/world/camera";
-import type { CameraPreset, MuseId, MuseState, WorldSnapshot } from "@/types/world";
+import type { CameraPreset, MuseState, WorldSnapshot } from "@/types/world";
 import { MIND_NODES } from "@/types/world";
 
 const PRESETS: CameraPreset[] = [
@@ -100,7 +99,7 @@ function GlanceReadout({ muse }: { muse: MuseState }) {
 function MindReadout({ muse }: { muse: MuseState }) {
   const live = grokSignalLive(muse.mind);
   return (
-    <>
+    <div data-mind-panel="constellation">
       <p className="mt-3 text-[10px] tracking-[0.28em] text-[#8d8370]">CONSTELLATION</p>
       <MindConstellation nodes={muse.mind.nodes} />
       <div className="mt-1 flex justify-between text-[10px] tracking-[0.18em] text-[#cfc4ad]">
@@ -113,21 +112,17 @@ function MindReadout({ muse }: { muse: MuseState }) {
       {muse.thought ? (
         <p className="mt-2 font-serif text-[12px] tracking-[0.14em] text-[#efe6d4]/55">{muse.thought}</p>
       ) : null}
-    </>
+    </div>
   );
 }
 
 function SelectedCard({
   muse,
   mindOpen,
-  onPreset,
-  onSelect,
   onEnterMind,
 }: {
   muse: MuseState;
   mindOpen: boolean;
-  onPreset: (preset: CameraPreset) => void;
-  onSelect: (id: MuseId | null) => void;
   onEnterMind: () => void;
 }) {
   return (
@@ -135,15 +130,7 @@ function SelectedCard({
       <p className="font-serif text-lg tracking-[0.16em]">{muse.name}</p>
       <p className="text-[10px] tracking-[0.28em] text-[#b7a47a]">{muse.role}</p>
       {mindOpen ? <MindReadout muse={muse} /> : <GlanceReadout muse={muse} />}
-      <button
-        type="button"
-        onClick={() => {
-          onSelect(muse.id);
-          onPreset(mindOpen ? presetForMuse(muse.id) : "MIND");
-          onEnterMind();
-        }}
-        className="mt-4 text-[10px] tracking-[0.28em]"
-      >
+      <button type="button" onClick={onEnterMind} className="mt-4 text-[10px] tracking-[0.28em]">
         {mindOpen ? "LEAVE MIND" : "ENTER MIND"}
       </button>
     </div>
@@ -154,13 +141,11 @@ export function WorldHud({
   world,
   introLine,
   onPreset,
-  onSelect,
   onEnterMind,
 }: {
   world: WorldSnapshot;
   introLine: string | null;
   onPreset: (preset: CameraPreset) => void;
-  onSelect: (id: MuseId | null) => void;
   onEnterMind: () => void;
 }) {
   const selected = world.selected ? world.muses[world.selected] : null;
@@ -207,13 +192,7 @@ export function WorldHud({
         ))}
       </div>
       {selected ? (
-        <SelectedCard
-          muse={selected}
-          mindOpen={world.mindOpen}
-          onPreset={onPreset}
-          onSelect={onSelect}
-          onEnterMind={onEnterMind}
-        />
+        <SelectedCard muse={selected} mindOpen={world.mindOpen} onEnterMind={onEnterMind} />
       ) : null}
     </div>
   );

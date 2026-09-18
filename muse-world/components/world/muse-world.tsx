@@ -43,7 +43,6 @@ export function MuseWorld() {
         world={world}
         introLine={introLine}
         onPreset={setCamera}
-        onSelect={select}
         onEnterMind={toggleMind}
       />
     </main>
