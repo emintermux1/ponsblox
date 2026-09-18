@@ -196,8 +196,9 @@ canvas {
 }
 
 .loft-locations {
-  display: none;
-  gap: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.75rem;
   color: color-mix(in srgb, var(--loft-paper) 42%, transparent);
 }
 
@@ -212,10 +213,54 @@ canvas {
 .loft-strip {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem 0.8rem;
+  align-items: flex-start;
+  gap: 0.45rem 0.9rem;
   padding: 0.3rem 0.9rem 0;
   color: color-mix(in srgb, var(--loft-paper) 80%, transparent);
+}
+
+.loft-strip button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.05rem;
+  line-height: 1.2;
+}
+
+.loft-strip-name {
+  display: block;
+}
+
+.loft-strip-role {
+  display: block;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--loft-paper) 48%, transparent);
+}
+
+.muse-name-tag {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.08rem;
+  color: var(--loft-paper);
+  font-size: 0.72rem;
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 8px rgba(8, 6, 4, 0.7);
+  white-space: nowrap;
+}
+
+.muse-name-tag strong {
+  font-weight: 600;
+}
+
+.muse-name-tag span {
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--loft-paper) 55%, transparent);
 }
 
 .loft-strip button[data-active="true"] {
@@ -284,9 +329,6 @@ canvas {
     padding-right: 1.15rem;
   }
 
-  .loft-locations {
-    display: flex;
-  }
 }
 
 @media (max-width: 767px) {

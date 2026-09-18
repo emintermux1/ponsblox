@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { test } from "node:test";
 import { CAST } from "@/lib/world/cast";
 import {
@@ -41,6 +43,11 @@ test("asCaption and watchingLine never surface PAID or ticker slop", () => {
   assert.doesNotMatch(watchingLine("PAID", "PAID") ?? "", /PAID/);
 });
 
+test("asCaption hides missing-key confession copy", () => {
+  assert.equal(asCaption("no Grok key — SIM context only"), null);
+  assert.equal(asCaption("SIM context only"), null);
+});
+
 test("asCaption hides chain-of-thought shaped text", () => {
   assert.equal(asCaption("let me think through the order book first"), null);
   assert.equal(asCaption("because the funding flipped, therefore we wait"), null);
@@ -66,6 +73,17 @@ test("first entry copy is not ENTER MIND", () => {
 test("mind is a quiet later word, never brass ENTER MIND", () => {
   assert.notEqual(ENTER_MIND.toUpperCase(), "ENTER MIND");
   assert.notEqual(LEAVE_MIND.toUpperCase(), "LEAVE MIND");
+});
+
+test("spectator chrome never prints missing-key or dex HUD copy", () => {
+  const chrome = readFileSync(join(process.cwd(), "components/watch/chrome.tsx"), "utf8");
+  assert.doesNotMatch(chrome, /no Grok key/i);
+  assert.doesNotMatch(chrome, /SIM context/i);
+  assert.doesNotMatch(chrome, /ask Grok/i);
+  assert.doesNotMatch(chrome, /dexscreener/i);
+  assert.doesNotMatch(chrome, /gecko/i);
+  assert.match(chrome, /CAST\[id\]\.name/);
+  assert.match(chrome, /loft-strip-role/);
 });
 
 test("cast first names stay on the HUD copy side", () => {

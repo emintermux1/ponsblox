@@ -143,7 +143,7 @@ export function GrokOrb({
         <PillEye x={-0.055} />
         <PillEye x={0.055} />
       </group>
-      <NameTag name={GROK_NAME} mark={honesty === "REAL" ? "GROK LIVE" : "SIM"} y={0.36} />
+      <NameTag name={GROK_NAME} y={0.36} />
     </group>
   );
 }

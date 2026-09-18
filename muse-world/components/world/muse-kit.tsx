@@ -1,15 +1,8 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import {
-  CanvasTexture,
-  InstancedMesh,
-  Object3D,
-  RepeatWrapping,
-  SRGBColorSpace,
-  type Group,
-} from "three";
+import { CanvasTexture, RepeatWrapping, SRGBColorSpace, type Group } from "three";
 import { LitScreen, type ScreenKind } from "@/components/world/lit-screen";
 import { LaptopDevice, PhoneDevice } from "@/components/world/screens";
 import { usePerf } from "@/components/world/perf-context";
@@ -39,13 +32,13 @@ function makeFurMap(): CanvasTexture {
   }
   ctx.fillStyle = FUR;
   ctx.fillRect(0, 0, size, size);
-  for (let i = 0; i < 3200; i += 1) {
+  for (let i = 0; i < 900; i += 1) {
     const x = Math.random() * size;
     const y = Math.random() * size;
-    const len = 3 + Math.random() * 11;
+    const len = 2 + Math.random() * 7;
     const angle = -0.45 + Math.random() * 0.9;
-    ctx.strokeStyle = Math.random() > 0.45 ? "#ebe3d4" : "#faf6ef";
-    ctx.lineWidth = 0.55 + Math.random() * 1.15;
+    ctx.strokeStyle = Math.random() > 0.5 ? "#e4d8c6" : "#efe6d6";
+    ctx.lineWidth = 0.45 + Math.random() * 0.7;
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineTo(x + Math.sin(angle) * len, y + Math.cos(angle) * len);
@@ -91,17 +84,25 @@ export function FaceMaterial() {
 export function Headphones() {
   return (
     <group>
-      <mesh position={[0, 0.1, -0.02]} rotation={[0.08, 0, 0]} scale={[1, 0.78, 1]}>
-        <torusGeometry args={[0.23, 0.016, 8, 22]} />
-        <meshStandardMaterial color="#cfc8bc" roughness={0.42} metalness={0.22} />
+      <mesh position={[0, 0.2, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <torusGeometry args={[0.22, 0.03, 10, 20, Math.PI]} />
+        <meshStandardMaterial color="#d9d3c8" roughness={0.32} metalness={0.42} />
       </mesh>
-      <mesh position={[-0.23, 0.01, 0.02]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.075, 0.082, 0.06, 14]} />
-        <meshStandardMaterial color={CREAM_CUP} roughness={0.5} />
+      <mesh position={[-0.24, 0.04, 0.03]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.11, 0.12, 0.09, 16]} />
+        <meshStandardMaterial color={CREAM_CUP} roughness={0.42} metalness={0.18} />
       </mesh>
-      <mesh position={[0.23, 0.01, 0.02]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.075, 0.082, 0.06, 14]} />
-        <meshStandardMaterial color={CREAM_CUP} roughness={0.5} />
+      <mesh position={[0.24, 0.04, 0.03]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.11, 0.12, 0.09, 16]} />
+        <meshStandardMaterial color={CREAM_CUP} roughness={0.42} metalness={0.18} />
+      </mesh>
+      <mesh position={[-0.245, 0.04, 0.07]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.07, 0.07, 0.02, 14]} />
+        <meshStandardMaterial color="#111111" roughness={0.55} />
+      </mesh>
+      <mesh position={[0.245, 0.04, 0.07]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.07, 0.07, 0.02, 14]} />
+        <meshStandardMaterial color="#111111" roughness={0.55} />
       </mesh>
     </group>
   );
@@ -130,33 +131,33 @@ function GrokPills({
 
 export function Cap() {
   return (
-    <group position={[0, 0.2, -0.02]}>
+    <group position={[0, 0.22, -0.02]}>
       <mesh>
-        <sphereGeometry args={[0.2, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <sphereGeometry args={[0.26, 20, 14, 0, Math.PI * 2, 0, Math.PI / 2]} />
         <meshStandardMaterial color={NAVY} roughness={0.48} />
       </mesh>
-      <mesh position={[0, 0.02, 0.16]} rotation={[-0.18, 0, 0]}>
-        <boxGeometry args={[0.22, 0.018, 0.12]} />
+      <mesh position={[0, 0.01, 0.2]} rotation={[-0.22, 0, 0]}>
+        <boxGeometry args={[0.3, 0.024, 0.16]} />
         <meshStandardMaterial color={NAVY} roughness={0.42} />
       </mesh>
-      <GrokPills position={[0, 0.1, 0.17]} />
+      <GrokPills position={[0, 0.12, 0.22]} scale={1.15} />
     </group>
   );
 }
 
 export function Sunglasses() {
   return (
-    <group position={[0, 0.05, 0.24]}>
+    <group position={[0, 0.06, 0.26]}>
       <mesh>
-        <boxGeometry args={[0.22, 0.012, 0.012]} />
+        <boxGeometry args={[0.3, 0.016, 0.014]} />
         <meshStandardMaterial color="#111111" roughness={0.3} />
       </mesh>
-      <mesh position={[-0.055, 0, 0.012]} scale={[1, 0.62, 0.35]}>
-        <sphereGeometry args={[0.046, 12, 10]} />
+      <mesh position={[-0.07, 0, 0.014]} scale={[1.15, 0.7, 0.38]}>
+        <sphereGeometry args={[0.055, 12, 10]} />
         <meshStandardMaterial color="#1a1a1a" metalness={0.62} roughness={0.18} />
       </mesh>
-      <mesh position={[0.055, 0, 0.012]} scale={[1, 0.62, 0.35]}>
-        <sphereGeometry args={[0.046, 12, 10]} />
+      <mesh position={[0.07, 0, 0.014]} scale={[1.15, 0.7, 0.38]}>
+        <sphereGeometry args={[0.055, 12, 10]} />
         <meshStandardMaterial color="#1a1a1a" metalness={0.62} roughness={0.18} />
       </mesh>
     </group>
@@ -186,16 +187,16 @@ export function Hoodie() {
 export function Scarf() {
   return (
     <group>
-      <mesh position={[0, 0.58, 0.02]} rotation={[0.5, 0.16, 0.06]}>
-        <torusGeometry args={[0.2, 0.048, 10, 20]} />
+      <mesh position={[0, 0.6, 0.04]} rotation={[0.55, 0.12, 0.04]}>
+        <torusGeometry args={[0.24, 0.07, 12, 24]} />
         <meshStandardMaterial color={GREEN} roughness={0.82} />
       </mesh>
-      <mesh position={[0.12, 0.42, 0.16]} scale={[1.4, 0.7, 0.5]}>
-        <sphereGeometry args={[0.055, 10, 8]} />
+      <mesh position={[0.14, 0.4, 0.2]} scale={[1.7, 0.85, 0.55]}>
+        <sphereGeometry args={[0.07, 10, 8]} />
         <meshStandardMaterial color={GREEN} roughness={0.8} />
       </mesh>
-      <mesh position={[0.16, 0.32, 0.18]} scale={[1.1, 0.85, 0.45]}>
-        <sphereGeometry args={[0.046, 10, 8]} />
+      <mesh position={[0.18, 0.26, 0.22]} scale={[1.25, 1.05, 0.5]}>
+        <sphereGeometry args={[0.06, 10, 8]} />
         <meshStandardMaterial color="#4a8a54" roughness={0.8} />
       </mesh>
     </group>
@@ -204,8 +205,8 @@ export function Scarf() {
 
 export function Halo() {
   return (
-    <mesh position={[0, 0.5, 0]} rotation={[Math.PI / 2.15, 0, 0]}>
-      <torusGeometry args={[0.18, 0.013, 8, 24]} />
+    <mesh position={[0, 0.68, 0]} rotation={[Math.PI / 2.05, 0, 0]}>
+      <torusGeometry args={[0.2, 0.016, 8, 28]} />
       <meshStandardMaterial
         color="#f0d48a"
         emissive="#e8c56a"
@@ -240,35 +241,8 @@ export function FloppyEars() {
   );
 }
 
-export function FurSparkles({ seed }: { seed: number }) {
-  const mesh = useRef<InstancedMesh>(null);
-  const dummy = useMemo(() => new Object3D(), []);
-
-  useLayoutEffect(() => {
-    if (!mesh.current) {
-      return;
-    }
-    for (let i = 0; i < 18; i += 1) {
-      const a = seed + i * 0.73;
-      dummy.position.set(
-        Math.cos(a) * (0.4 + (i % 4) * 0.05),
-        0.2 + (i % 6) * 0.15,
-        Math.sin(a) * (0.32 + (i % 3) * 0.045),
-      );
-      const size = 0.7 + (i % 5) * 0.18;
-      dummy.scale.set(size, size, size);
-      dummy.updateMatrix();
-      mesh.current.setMatrixAt(i, dummy.matrix);
-    }
-    mesh.current.instanceMatrix.needsUpdate = true;
-  }, [dummy, seed]);
-
-  return (
-    <instancedMesh ref={mesh} args={[undefined, undefined, 18]}>
-      <sphereGeometry args={[0.016, 6, 6]} />
-      <meshBasicMaterial color="#fff8ee" transparent opacity={0.5} depthWrite={false} />
-    </instancedMesh>
-  );
+export function FurSparkles({ seed: _seed }: { seed: number }) {
+  return null;
 }
 
 export function SilverLaptop({ kind }: { kind: ScreenKind }) {

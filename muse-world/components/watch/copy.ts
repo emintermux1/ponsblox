@@ -4,6 +4,7 @@ import type {
   CameraPreset,
   MuseActivity,
   MuseId,
+  ScreenId,
   WorldEvent,
   WorldEventKind,
   WorldSnapshot,
@@ -114,7 +115,7 @@ export function asCaption(thought: string | null): string | null {
     return null;
   }
   const trimmed = thought.replace(/\s+/g, " ").trim();
-  if (!trimmed || isPaidTicker(trimmed) || isTickerSlopHeadline(trimmed)) {
+  if (!trimmed || isPaidTicker(trimmed) || isTickerSlopHeadline(trimmed) || isSimGrokText(trimmed)) {
     return null;
   }
   if (trimmed.includes("\n") || COT_MARK.test(trimmed) || trimmed.length > 64) {
@@ -274,4 +275,41 @@ export function latestCaption(world: WorldSnapshot): string | null {
     }
   }
   return newest?.text ?? null;
+}
+
+export function inspectCopy(
+  world: WorldSnapshot,
+  id: ScreenId,
+): { title: string; lines: string[] } {
+  switch (id) {
+    case "tape": {
+      const trader = world.muses.trader;
+      return {
+        title: "Tape",
+        lines: [
+          trader.mind.watching
+            ? "looking, without an outside name"
+            : "the tape is lit. no outside name.",
+          `ACT ${trader.mind.action}`,
+        ],
+      };
+    }
+    case "notes": {
+      const builder = world.muses.builder;
+      const memory = builder.mind.memory.trim();
+      const lines: string[] = [];
+      if (memory && memory !== "nothing sticky") {
+        lines.push(memory);
+      }
+      if (builder.mind.goal.trim()) {
+        lines.push(builder.mind.goal);
+      }
+      return {
+        title: "Notes",
+        lines: lines.length > 0 ? lines : ["the desk is lit. no card yet."],
+      };
+    }
+    default:
+      return assertNever(id);
+  }
 }

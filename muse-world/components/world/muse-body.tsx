@@ -10,7 +10,6 @@ import {
   Flipper,
   FloppyEars,
   FurMaterial,
-  FurSparkles,
   HeadDress,
   HeldProps,
 } from "@/components/world/muse-kit";
@@ -256,8 +255,7 @@ export function MuseBody({
         <Flipper side="right" />
       </group>
       <OfficialHead id={muse.id} />
-      {pauseExtras ? null : <FurSparkles seed={phase} />}
-      <NameTag name={muse.name} mark={muse.role} y={1.46} />
+      <NameTag name={muse.name} y={1.46} />
       {selected ? (
         <mesh ref={ring} position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[0.36, 0.46, 32]} />

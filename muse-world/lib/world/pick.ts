@@ -11,7 +11,6 @@ import type {
   ScreenId,
   WorldSnapshot,
 } from "@/types/world";
-import { assertNever } from "@/types/world";
 
 export type WakePayload = {
   woken?: unknown;
@@ -148,39 +147,4 @@ export function applyGrokWake(
   return assignWakeTask(wokenWorld, museId, now, source === "xai" ? summary : null, source === "xai");
 }
 
-export function inspectCopy(
-  world: WorldSnapshot,
-  id: ScreenId,
-): { title: string; lines: string[] } {
-  switch (id) {
-    case "tape": {
-      const trader = world.muses.trader;
-      return {
-        title: "Tape",
-        lines: [
-          trader.mind.watching
-            ? "looking, without an outside name"
-            : "the tape is lit. no outside name.",
-          `ACT ${trader.mind.action}`,
-        ],
-      };
-    }
-    case "notes": {
-      const builder = world.muses.builder;
-      const memory = builder.mind.memory.trim();
-      const lines: string[] = [];
-      if (memory && memory !== "nothing sticky") {
-        lines.push(memory);
-      }
-      if (builder.mind.goal.trim()) {
-        lines.push(builder.mind.goal);
-      }
-      return {
-        title: "Notes",
-        lines: lines.length > 0 ? lines : ["the desk is lit. no card yet."],
-      };
-    }
-    default:
-      return assertNever(id);
-  }
-}
+export { inspectCopy } from "@/components/watch/copy";

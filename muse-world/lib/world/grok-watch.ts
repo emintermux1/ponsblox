@@ -1,5 +1,4 @@
 import { asCaption, mostAwakeId } from "@/components/watch/copy";
-import { SIM_GROK_SUMMARY } from "@/lib/adapters/source";
 import type {
   GrokHonesty,
   MuseActivity,
@@ -11,7 +10,6 @@ import type {
 import { assertNever, isMuseId } from "@/types/world";
 
 export const ASK_GROK = "ask Grok";
-export const SIM_GROK_STUB = SIM_GROK_SUMMARY;
 
 function isDeskChatActivity(activity: MuseActivity): boolean {
   switch (activity) {
@@ -93,12 +91,9 @@ export function grokSupportCaption(world: WorldSnapshot): string {
     return "waking";
   }
   if (world.grokWake.honesty === "REAL") {
-    const live = asCaption(world.grokWake.summary);
-    if (live) {
-      return live;
-    }
+    return asCaption(world.grokWake.summary) ?? "";
   }
-  return SIM_GROK_STUB;
+  return "";
 }
 
 export function grokAskPacket(museId: MuseId, now: number): SpatialPacket {
