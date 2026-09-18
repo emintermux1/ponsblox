@@ -67,6 +67,7 @@ export function SpectatorChrome({
       <NameStrip
         selectedId={world.selected}
         grokLive={grokLive}
+        grokMark={grokMark}
         grokActive={world.camera === "GROK" || world.grokWake.phase !== "idle"}
         onSelect={onSelect}
         onGrok={onWakeGrok}
