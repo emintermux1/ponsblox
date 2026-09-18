@@ -28,14 +28,13 @@ function Lighting() {
         shadow-mapSize-width={shadowMapSize}
         shadow-mapSize-height={shadowMapSize}
       />
+      <pointLight position={[0.6, 3.6, 10.2]} intensity={0.26} color="#cfc3a6" />
       {extraLights ? (
         <>
           <pointLight position={[-4, 2.4, 1.2]} intensity={0.35} color="#d8c49a" />
           <pointLight position={[3.4, 1.6, -0.6]} intensity={0.4} color="#8aa0b0" />
         </>
-      ) : (
-        <pointLight position={[0.4, 3.2, 8.4]} intensity={0.22} color="#c4b392" />
-      )}
+      ) : null}
     </>
   );
 }

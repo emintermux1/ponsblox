@@ -294,7 +294,16 @@ export function Penthouse() {
       <Panel args={[20, 0.2, 12]} position={[0, 4.7, 0.4]} color="#1c1915" roughness={0.85} shadows={shadows} />
       <Panel args={[0.22, 4.7, 12]} position={[-9.9, 2.35, 0.4]} color="#2a241c" shadows={shadows} />
       <Panel args={[0.22, 4.7, 12]} position={[9.9, 2.35, 0.4]} color="#2a241c" shadows={shadows} />
-      <Panel args={[20, 4.7, 0.22]} position={[0, 2.35, 6.3]} color="#241f19" shadows={shadows} />
+      <mesh
+        position={[0, 2.35, 6.28]}
+        rotation={[0, Math.PI, 0]}
+        receiveShadow={shadows}
+        frustumCulled
+      >
+        <planeGeometry args={[20, 4.7]} />
+        <meshStandardMaterial color="#241f19" roughness={0.86} />
+      </mesh>
+      <Panel args={[20, 0.18, 0.42]} position={[0, 0.09, 6.2]} color="#2a241c" shadows={shadows} />
       <WindowWall physical={physical} shadows={shadows} />
       <Couch shadows={shadows} />
       {showDenseProps(cityLod) ? <Hookah /> : null}
