@@ -401,6 +401,10 @@ function WindowWall() {
         />
       ))}
       <Panel args={[18.9, 0.05, 0.12]} position={[0, 0.12, 0.05]} color={ALUMINUM} metalness={0.84} roughness={0.3} />
+      <mesh position={[0, 0.05, -0.08]}>
+        <planeGeometry args={[18.2, 3.8]} />
+        <meshBasicMaterial color="#7a93a8" transparent opacity={0.22} depthWrite={false} />
+      </mesh>
     </group>
   );
 }
@@ -495,9 +499,9 @@ function Hookah() {
   );
 }
 
-function FloorLamp() {
+function FloorLamp({ position = [-6.55, 0, 3.55] }: { position?: [number, number, number] }) {
   return (
-    <group position={[-6.55, 0, 3.55]}>
+    <group position={position}>
       <mesh position={[0, 0.04, 0]}>
         <cylinderGeometry args={[0.16, 0.16, 0.04, 20]} />
         <meshStandardMaterial color={ALUMINUM_DARK} metalness={0.82} roughness={0.34} />
@@ -595,6 +599,24 @@ function Desk({
       <DeskKeyboard x={0.62} />
       <Panel args={[0.42, 0.02, 0.3]} position={[1.18, 0.8, 0.22]} color={PAPER} roughness={0.82} />
       <Panel args={[0.36, 0.015, 0.26]} position={[1.2, 0.82, 0.2]} color="#d7c6aa" roughness={0.8} />
+      <Panel args={[0.22, 0.03, 0.16]} position={[-1.28, 0.8, 0.28]} color="#3a2c20" roughness={0.7} />
+      <Panel args={[0.2, 0.025, 0.14]} position={[-1.26, 0.83, 0.26]} color="#5c4030" roughness={0.68} />
+      <Panel args={[0.18, 0.02, 0.12]} position={[-1.24, 0.86, 0.24]} color="#ead9c0" roughness={0.8} />
+      <group position={[1.42, 0.78, -0.28]}>
+        <mesh position={[0, 0.16, 0]}>
+          <cylinderGeometry args={[0.012, 0.012, 0.32, 8]} />
+          <meshStandardMaterial color={ALUMINUM} metalness={0.86} roughness={0.3} />
+        </mesh>
+        <mesh position={[0.08, 0.28, 0]} rotation={[0, 0, 0.7]}>
+          <cylinderGeometry args={[0.08, 0.11, 0.04, 16]} />
+          <meshStandardMaterial
+            color="#d8c9ae"
+            emissive="#c9ae84"
+            emissiveIntensity={1.05}
+            roughness={0.48}
+          />
+        </mesh>
+      </group>
     </group>
   );
 }
@@ -643,6 +665,15 @@ function Structure({
       >
         <planeGeometry args={[7.4, 5.6]} />
         <meshStandardMaterial color="#4f463e" roughness={0.9} metalness={0.02} />
+      </mesh>
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[3.35, 0.014, -0.35]}
+        receiveShadow={shadows}
+        frustumCulled
+      >
+        <planeGeometry args={[4.6, 3.2]} />
+        <meshStandardMaterial color="#3f342c" roughness={0.92} metalness={0.02} />
       </mesh>
       <Panel args={[20.2, 0.16, 12.2]} position={[0, 4.68, 0.4]} color={WOOD_DEEP} roughness={0.78} map={wood} />
       <Panel args={[6.4, 0.04, 0.22]} position={[-3.2, 4.58, 0.2]} color={ALUMINUM} metalness={0.86} roughness={0.28} />
@@ -728,6 +759,7 @@ export function Penthouse({
       <CoffeeTable />
       {dense ? <Hookah /> : null}
       {dense ? <FloorLamp /> : null}
+      <FloorLamp position={[5.55, 0, 1.05]} />
       <Desk
         wood={wood}
         inspecting={inspecting}

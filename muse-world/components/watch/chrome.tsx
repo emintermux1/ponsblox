@@ -1,15 +1,17 @@
 "use client";
 
 import { CAST, GROK_NAME, grokPresence } from "@/lib/world/cast";
+import { ASK_GROK, grokCompanyLine, grokSupportCaption } from "@/lib/world/grok-watch";
 import { inspectCopy } from "@/lib/world/pick";
 import type { RenderMode } from "@/lib/world/perf";
 import type { CameraPreset, MuseId, ScreenId, WorldSnapshot } from "@/types/world";
 import { assertNever, MUSE_IDS } from "@/types/world";
 import {
   activityLine,
-  ENTER_MIND,
+  grokHonestyMark,
   hudMark,
   LEAVE_MIND,
+  MIND_HINT,
   locationLabel,
   ROOM_PRESETS,
   WORDMARK,
@@ -25,6 +27,7 @@ export function SpectatorChrome({
   onSelect,
   onInspect,
   onEnterMind,
+  onWakeGrok,
 }: {
   world: WorldSnapshot;
   introLine: string | null;
@@ -34,14 +37,18 @@ export function SpectatorChrome({
   onSelect: (id: MuseId | null) => void;
   onInspect: (id: ScreenId | null) => void;
   onEnterMind: () => void;
+  onWakeGrok: () => void;
 }) {
   const street = useStreetSignal();
   const selected = world.selected ? world.muses[world.selected] : null;
   const signal = lastSignal(street, world.events);
   const mark = hudMark(signal.mark);
-  const grokLive = grokPresence(world.events) === "LIVE";
+  const grokMark = grokHonestyMark(world.events);
+  const grokLive =
+    grokPresence(world.events) === "LIVE" || world.grokWake.honesty === "REAL";
   const caption = compact ? null : quietIntro(introLine);
   const inspect = world.inspecting ? inspectCopy(world, world.inspecting) : null;
+  const company = grokCompanyLine(world);
 
   return (
     <div
@@ -51,7 +58,7 @@ export function SpectatorChrome({
       data-entry-veil="off"
     >
       <header className="loft-chrome-top">
-        <Wordmark mark={mark} signal={signal} mode={mode} caption={caption} />
+        <Wordmark mark={mark} grokMark={grokMark} mode={mode} caption={caption} />
         <div className="loft-chrome-tools">
           <Locations camera={world.camera} onPreset={onPreset} />
           {selected ? <MindButton mindOpen={world.mindOpen} onToggle={onEnterMind} /> : null}
@@ -62,8 +69,9 @@ export function SpectatorChrome({
         grokLive={grokLive}
         grokActive={world.camera === "GROK" || world.grokWake.phase !== "idle"}
         onSelect={onSelect}
-        onGrok={() => onPreset("GROK")}
+        onGrok={onWakeGrok}
       />
+      <AskGrok world={world} onWake={onWakeGrok} />
       {inspect ? (
         <p className="loft-selected-note">
           {inspect.title}
@@ -79,12 +87,16 @@ export function SpectatorChrome({
           {selected.name}
           <span>{activityLine(selected.activity)}</span>
           {world.mindOpen ? <span>{selected.mind.action}</span> : null}
+          {company ? <span>{company}</span> : null}
         </p>
       ) : world.camera === "GROK" || world.grokWake.phase !== "idle" ? (
         <p className="loft-selected-note">
           {GROK_NAME}
-          <span>{world.grokWake.phase === "waking" ? "waking" : world.grokWake.honesty ?? ""}</span>
+          <span>{world.grokWake.phase === "waking" ? "waking" : world.grokWake.honesty ?? "SIM"}</span>
+          {company ? <span>{company}</span> : null}
         </p>
+      ) : company ? (
+        <p className="loft-selected-note">{company}</p>
       ) : null}
     </div>
   );
@@ -101,10 +113,6 @@ function quietIntro(line: string | null): string | null {
   return line;
 }
 
-function museStripName(id: MuseId): string {
-  return CAST[id].name;
-}
-
 function modeLabel(mode: RenderMode): string {
   switch (mode) {
     case "webgl":
@@ -116,27 +124,14 @@ function modeLabel(mode: RenderMode): string {
   }
 }
 
-function signalMarkLabel(mark: LastSignal["mark"]): string {
-  switch (mark) {
-    case "REAL":
-      return "live";
-    case "SIM":
-      return "sim";
-    case "—":
-      return "quiet";
-    default:
-      return assertNever(mark);
-  }
-}
-
 function Wordmark({
   mark,
-  signal,
+  grokMark,
   mode,
   caption,
 }: {
   mark: "REAL" | "SIM";
-  signal: LastSignal;
+  grokMark: "GROK LIVE" | "SIM";
   mode: RenderMode;
   caption: string | null;
 }) {
@@ -144,9 +139,10 @@ function Wordmark({
     <div className="loft-wordmark-block">
       <p className="loft-wordmark">{WORDMARK}</p>
       <p className="loft-signal">
-        <span className={signalDotClass(signal.mark)} data-hud-mark={mark} />
-        {signalMarkLabel(signal.mark)}
+        <span className={signalDotClass(mark)} data-hud-mark={mark} />
+        {mark}
         <span className="loft-signal-mode">{modeLabel(mode)}</span>
+        <span className="loft-world-mark">{grokMark}</span>
       </p>
       {caption ? <p className="loft-intro">{caption}</p> : null}
     </div>
@@ -192,12 +188,14 @@ function Locations({
 function NameStrip({
   selectedId,
   grokLive,
+  grokMark,
   grokActive,
   onSelect,
   onGrok,
 }: {
   selectedId: MuseId | null;
   grokLive: boolean;
+  grokMark: "GROK LIVE" | "SIM";
   grokActive: boolean;
   onSelect: (id: MuseId | null) => void;
   onGrok: () => void;
@@ -212,7 +210,8 @@ function NameStrip({
           onClick={() => onSelect(id)}
           data-active={selectedId === id}
         >
-          {museStripName(id)}
+          <span>{CAST[id].name}</span>
+          <span className="loft-strip-role">{CAST[id].role}</span>
         </button>
       ))}
       <button
@@ -229,6 +228,23 @@ function NameStrip({
   );
 }
 
+function AskGrok({
+  world,
+  onWake,
+}: {
+  world: WorldSnapshot;
+  onWake: () => void;
+}) {
+  return (
+    <div className="loft-ask-grok">
+      <button type="button" onClick={onWake}>
+        {ASK_GROK}
+      </button>
+      <p>{grokSupportCaption(world)}</p>
+    </div>
+  );
+}
+
 function MindButton({
   mindOpen,
   onToggle,
@@ -238,7 +254,7 @@ function MindButton({
 }) {
   return (
     <button type="button" className="loft-mind-btn" onClick={onToggle}>
-      {mindOpen ? LEAVE_MIND : ENTER_MIND}
+      {mindOpen ? LEAVE_MIND : MIND_HINT}
     </button>
   );
 }

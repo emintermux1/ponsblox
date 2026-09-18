@@ -19,6 +19,7 @@ import {
   shotForPreset,
   shotSettled,
 } from "./camera";
+import { GROK_ORB_POS } from "./layout";
 
 test("cinemaDt clamps a tab-resume spike and ignores negatives", () => {
   assert.equal(cinemaDt(2), 1 / 24);
@@ -59,6 +60,12 @@ test("intro ease is a short release, not a locked cinematic", () => {
 
 test("ROOM preset is the loft home shot", () => {
   assert.deepEqual(shotForPreset("ROOM", null, null), HOME_SHOT);
+});
+
+test("GROK shot looks at the desk orb, not an empty lounge hover", () => {
+  const shot = shotForPreset("GROK", null, null);
+  assert.deepEqual(shot.target, GROK_ORB_POS);
+  assert.ok(GROK_ORB_POS[0] > 3, "hero Grok sits on the trader desk");
 });
 
 test("look-cam keeps a usable orbit range", () => {

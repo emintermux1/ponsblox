@@ -1,7 +1,7 @@
 import type { MuseActivity, MuseId, PacketEndpoint, ScreenId } from "@/types/world";
 import { assertNever } from "@/types/world";
 
-export const GROK_ORB_POS: [number, number, number] = [0.18, 1.36, 2.08];
+export const GROK_ORB_POS: [number, number, number] = [4.22, 1.12, -0.62];
 
 export const SCREEN_POS: Record<ScreenId, [number, number, number]> = {
   tape: [2.82, 1.2, -1.13],

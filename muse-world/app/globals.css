@@ -239,6 +239,24 @@ canvas {
   color: color-mix(in srgb, var(--loft-paper) 52%, transparent);
 }
 
+.loft-ask-grok {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.45rem 0.75rem;
+  padding: 0.2rem 0.9rem 0;
+  color: color-mix(in srgb, var(--loft-paper) 48%, transparent);
+}
+
+.loft-ask-grok button {
+  color: var(--loft-brass);
+  letter-spacing: 0.04em;
+}
+
+.loft-ask-grok p {
+  margin: 0;
+}
+
 .loft-dot {
   display: inline-block;
   width: 0.35rem;

@@ -28,6 +28,7 @@ export function SpectatorFrame() {
           onSelect={living.select}
           onInspect={living.inspect}
           onEnterMind={living.toggleMind}
+          onWakeGrok={living.wakeGrok}
         />
         <SceneGate
           onFail={markWebglLost}

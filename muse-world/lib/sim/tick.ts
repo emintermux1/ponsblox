@@ -1,5 +1,6 @@
 import { cleanTicker } from "@/lib/adapters/parse";
 import { pickStoryBeat, upsertWallPin, type StoryBeat } from "@/lib/sim/stories";
+import { grokAskPacket } from "@/lib/world/grok-watch";
 import {
   PACKET_HOLD_MS,
   arriveActivity,
@@ -571,6 +572,7 @@ export function tickSnapshot(
   );
   const wallPins = sanitizeWallPins(world.wallPins ?? []);
   const muses = { ...world.muses };
+  let grokAskFrom: MuseId | null = null;
 
   for (const id of Object.keys(muses) as MuseId[]) {
     let muse = clearExpiredThought(muses[id], now);
@@ -583,6 +585,7 @@ export function tickSnapshot(
       const line = pick(THOUGHTS[muse.id], random);
       muse = setThought(muse, line, 2600, now);
       if (line === "send to grok") {
+        grokAskFrom = muse.id;
         muse = {
           ...muse,
           mind: {
@@ -606,7 +609,13 @@ export function tickSnapshot(
     random,
   });
   if (!beat) {
-    return { ...world, muses, events, packet, wallPins };
+    return {
+      ...world,
+      muses,
+      events,
+      packet: grokAskFrom && !packet ? grokAskPacket(grokAskFrom, now) : packet,
+      wallPins,
+    };
   }
   return { ...world, ...applyStoryBeat(beat, muses, events, packet, wallPins, now, random) };
 }
