@@ -202,6 +202,34 @@ function drawRows(
   });
 }
 
+function changeColor(tape: TapeView): string {
+  return tape.changePct != null && tape.changePct < 0 ? "#c9ae7a" : "#7dcea0";
+}
+
+function paintHero(
+  ctx: CanvasRenderingContext2D,
+  tape: TapeView,
+  x: number,
+  y: number,
+  titlePx: number,
+) {
+  ctx.fillStyle = "#efe6d4";
+  ctx.font = `800 ${titlePx}px ui-sans-serif, system-ui`;
+  ctx.fillText(tapeHeadline(tape), x, y);
+  const change = formatChange(tape.changePct);
+  ctx.fillStyle = changeColor(tape);
+  ctx.font = `700 ${Math.round(titlePx * 0.42)}px ui-sans-serif, system-ui`;
+  ctx.fillText(change ?? (tape.source === "sim" ? "fail-open SIM" : "watching"), x, y + titlePx * 0.55);
+  const price = formatPrice(tape.priceUsd);
+  ctx.fillStyle = "#8d8370";
+  ctx.font = "600 16px ui-sans-serif, system-ui";
+  ctx.fillText(
+    [tapeStamp(tape.source), price, "no fills"].filter(Boolean).join("  ·  "),
+    x,
+    y + titlePx * 0.82,
+  );
+}
+
 function paintPhone(ctx: CanvasRenderingContext2D, w: number, h: number, tape: TapeView) {
   const g = ctx.createLinearGradient(0, 0, 0, h);
   g.addColorStop(0, "#1c1814");
@@ -211,27 +239,13 @@ function paintPhone(ctx: CanvasRenderingContext2D, w: number, h: number, tape: T
   ctx.fillStyle = "#0a0908";
   roundRect(ctx, w / 2 - 58, 10, 116, 28, 14);
   ctx.fill();
-  ctx.fillStyle = "#cfc6b4";
-  ctx.font = "600 12px ui-sans-serif, system-ui";
-  ctx.fillText(tapeStamp(tape.source), 22, 56);
-  ctx.fillStyle = "#efe6d4";
-  ctx.font = "700 34px ui-sans-serif, system-ui";
-  ctx.fillText(tapeHeadline(tape), 22, 108);
-  const change = formatChange(tape.changePct);
-  ctx.fillStyle = tape.changePct != null && tape.changePct < 0 ? "#c9ae7a" : "#7dcea0";
-  ctx.font = "600 16px ui-sans-serif, system-ui";
-  ctx.fillText(change ?? (tape.source === "sim" ? "fail-open SIM" : "watching"), 22, 138);
-  const price = formatPrice(tape.priceUsd);
-  if (price) {
-    ctx.fillStyle = "#d8c6a6";
-    ctx.fillText(price, 22, 162);
-  }
+  paintHero(ctx, tape, 22, 118, 52);
   ctx.fillStyle = "#161310";
-  roundRect(ctx, 16, 180, w - 32, 168, 18);
+  roundRect(ctx, 16, 220, w - 32, 168, 18);
   ctx.fill();
-  drawCandles(ctx, tape, 28, 196, w - 56, 88);
-  drawSpark(ctx, tape, 28, 196, w - 56, 88);
-  drawRows(ctx, tape, 16, 368, w - 32, 58, 6);
+  drawCandles(ctx, tape, 28, 236, w - 56, 88);
+  drawSpark(ctx, tape, 28, 236, w - 56, 88);
+  drawRows(ctx, tape, 16, 408, w - 32, 58, 6);
   ctx.fillStyle = "#8d8370";
   ctx.font = "11px ui-sans-serif, system-ui";
   ctx.fillText("public tape  ·  no fills", 22, h - 28);
@@ -240,43 +254,24 @@ function paintPhone(ctx: CanvasRenderingContext2D, w: number, h: number, tape: T
 function paintFeed(ctx: CanvasRenderingContext2D, w: number, h: number, tape: TapeView) {
   ctx.fillStyle = "#14110e";
   ctx.fillRect(0, 0, w, h);
-  ctx.fillStyle = "#efe6d4";
-  roundRect(ctx, 24, 18, 280, 44, 12);
-  ctx.fill();
-  ctx.fillStyle = "#1a1712";
-  ctx.font = "700 18px ui-sans-serif, system-ui";
-  ctx.fillText(tapeHeadline(tape), 40, 46);
-  ctx.fillStyle = "#8d8370";
-  ctx.font = "12px ui-sans-serif, system-ui";
-  ctx.fillText(tapeStamp(tape.source), 320, 46);
+  paintHero(ctx, tape, 28, 78, 54);
   ctx.fillStyle = "#1b1814";
-  roundRect(ctx, 24, 78, 420, 250, 14);
+  roundRect(ctx, 24, 150, 520, 360, 14);
   ctx.fill();
-  drawSpark(ctx, tape, 40, 96, 388, 96);
-  drawCandles(ctx, tape, 40, 204, 388, 108);
-  drawRows(ctx, tape, 460, 78, 476, 58, 6);
-  ctx.fillStyle = "#8d8370";
-  ctx.font = "12px ui-sans-serif, system-ui";
-  ctx.fillText("laptop  ·  public tape  ·  no fills", 24, h - 18);
+  drawSpark(ctx, tape, 40, 168, 488, 140);
+  drawCandles(ctx, tape, 40, 320, 488, 170);
+  drawRows(ctx, tape, 560, 150, 376, 58, 6);
 }
 
 function paintTape(ctx: CanvasRenderingContext2D, w: number, h: number, tape: TapeView) {
   ctx.fillStyle = "#0c1014";
   ctx.fillRect(0, 0, w, h);
-  ctx.fillStyle = "#d7b56a";
-  ctx.font = "700 26px ui-sans-serif, system-ui";
-  ctx.fillText(tapeHeadline(tape), 28, 42);
-  ctx.fillStyle = "#8d8370";
-  ctx.font = "13px ui-sans-serif, system-ui";
-  ctx.fillText(`${tapeStamp(tape.source)}  ·  no fills`, 28, 66);
+  paintHero(ctx, tape, 28, 78, 62);
   ctx.fillStyle = "#151a20";
-  ctx.fillRect(20, 84, 620, h - 112);
-  drawCandles(ctx, tape, 36, 100, 588, h - 150);
-  drawSpark(ctx, tape, 36, 100, 588, h - 150);
-  drawRows(ctx, tape, 656, 84, 284, 58, 7);
-  ctx.fillStyle = "#6a7380";
-  ctx.font = "12px ui-sans-serif, system-ui";
-  ctx.fillText(tape.ticker ? `${tape.ticker} public book` : "watching only", 28, h - 16);
+  ctx.fillRect(20, 150, 620, h - 178);
+  drawCandles(ctx, tape, 36, 166, 588, h - 214);
+  drawSpark(ctx, tape, 36, 166, 588, h - 214);
+  drawRows(ctx, tape, 656, 150, 284, 58, 6);
 }
 
 function paintNotes(ctx: CanvasRenderingContext2D, w: number, h: number, tape: TapeView) {
@@ -284,16 +279,11 @@ function paintNotes(ctx: CanvasRenderingContext2D, w: number, h: number, tape: T
   ctx.fillRect(0, 0, w, h);
   ctx.fillStyle = "#f4ead4";
   ctx.fillRect(18, 16, w - 36, h - 32);
-  ctx.fillStyle = "#3a3226";
-  ctx.font = "italic 26px Georgia, serif";
-  ctx.fillText(tapeHeadline(tape), 40, 58);
-  ctx.fillStyle = "#8d8370";
-  ctx.font = "12px ui-sans-serif, system-ui";
-  ctx.fillText(`${tapeStamp(tape.source)}  ·  desk research  ·  no fills`, 40, 82);
+  paintHero(ctx, tape, 40, 86, 52);
   ctx.fillStyle = "#e6d3b4";
-  ctx.fillRect(36, 100, 560, 210);
-  drawCandles(ctx, tape, 48, 112, 536, 186);
-  drawRows(ctx, tape, 616, 100, 308, 58, 6);
+  ctx.fillRect(36, 160, 560, 250);
+  drawCandles(ctx, tape, 48, 176, 536, 218);
+  drawRows(ctx, tape, 616, 160, 308, 58, 6);
 }
 
 function paintTv(ctx: CanvasRenderingContext2D, w: number, h: number, tape: TapeView) {
@@ -302,22 +292,12 @@ function paintTv(ctx: CanvasRenderingContext2D, w: number, h: number, tape: Tape
   g.addColorStop(1, "#0e1216");
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
-  ctx.fillStyle = "#0b0f14";
-  ctx.fillRect(0, 0, w, 52);
-  ctx.fillStyle = "#d7b56a";
-  ctx.font = "700 22px ui-sans-serif, system-ui";
-  ctx.fillText(tapeHeadline(tape), 28, 34);
-  ctx.fillStyle = "#8ea6b8";
-  ctx.font = "12px ui-sans-serif, system-ui";
-  ctx.fillText(tapeStamp(tape.source), w - 200, 34);
+  paintHero(ctx, tape, 28, 78, 64);
   ctx.fillStyle = "#121820";
-  ctx.fillRect(24, 68, 680, h - 120);
-  drawCandles(ctx, tape, 40, 84, 648, h - 160);
-  drawSpark(ctx, tape, 40, 84, 648, h - 160);
-  drawRows(ctx, tape, 720, 68, 216, 56, 7);
-  ctx.fillStyle = "#8d8370";
-  ctx.font = "13px ui-sans-serif, system-ui";
-  ctx.fillText("public tape  ·  no fills", 28, h - 22);
+  ctx.fillRect(24, 150, 680, h - 198);
+  drawCandles(ctx, tape, 40, 166, 648, h - 238);
+  drawSpark(ctx, tape, 40, 166, 648, h - 238);
+  drawRows(ctx, tape, 720, 150, 216, 56, 6);
 }
 
 function paintLcd(kind: LcdKind, tape: TapeView): HTMLCanvasElement | null {
