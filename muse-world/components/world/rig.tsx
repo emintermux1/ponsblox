@@ -165,7 +165,7 @@ export function CameraRig({
     const { width, height } = viewportSize();
     const next = fitShotToViewport(shotForPreset(preset, selected, musePosRef.current), width, height);
     proxy.current = proxyFromCamera(camera, next);
-    drive.current = { kind: "ease"; to: next };
+    drive.current = { kind: "ease", to: next };
     setLookFree(true);
   }, [camera, introDone, preset, selected]);
 

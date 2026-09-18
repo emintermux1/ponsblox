@@ -83,6 +83,7 @@ const FOLLOW_LAMBDA = {
 
 let cinemaArmed = false;
 let activeIntro: gsap.core.Timeline | null = null;
+let introGeneration = 0;
 
 export function armCinema(): void {
   if (cinemaArmed) {
@@ -334,6 +335,8 @@ export function playIntro(
   shots: Shot[] = INTRO_SHOTS,
 ): gsap.core.Timeline {
   armCinema();
+  introGeneration += 1;
+  const generation = introGeneration;
   if (activeIntro) {
     activeIntro.kill();
     activeIntro = null;
@@ -343,6 +346,9 @@ export function playIntro(
   const home = path[path.length - 1] ?? HOME_SHOT;
   const tl = gsap.timeline({
     onComplete: () => {
+      if (generation !== introGeneration) {
+        return;
+      }
       if (activeIntro === tl) {
         activeIntro = null;
       }
