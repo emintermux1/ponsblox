@@ -114,8 +114,12 @@ npx vercel --name muse-world --yes
 ## Check
 
 ```
-cd muse-world && npm run check
+cd muse-world
+npx next typegen
+npm run check
 ```
+
+`next typegen` writes gitignored route types (`LayoutProps`). `tsc --noEmit` is green after that.
 
 ## Stack
 
