@@ -310,11 +310,6 @@ canvas {
 }
 
 .thought-caption {
-    display: none;
-  }
-}
-
-.thought-caption {
   display: inline-block;
   max-width: 16rem;
   font-family: var(--font-geist-sans), system-ui, sans-serif;
