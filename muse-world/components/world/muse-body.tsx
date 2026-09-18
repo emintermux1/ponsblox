@@ -106,12 +106,12 @@ function MuseMark({
 }) {
   return (
     <group position={position} scale={scale}>
-      <mesh position={[-0.016, 0, 0]}>
-        <torusGeometry args={[0.016, 0.0062, 8, 18]} />
+      <mesh position={[-0.02, 0, 0]}>
+        <torusGeometry args={[0.02, 0.008, 8, 18]} />
         <meshStandardMaterial color={color} roughness={0.32} metalness={0.08} />
       </mesh>
-      <mesh position={[0.016, 0, 0]}>
-        <torusGeometry args={[0.016, 0.0062, 8, 18]} />
+      <mesh position={[0.02, 0, 0]}>
+        <torusGeometry args={[0.02, 0.008, 8, 18]} />
         <meshStandardMaterial color={color} roughness={0.32} metalness={0.08} />
       </mesh>
     </group>
@@ -123,20 +123,20 @@ function Face({ shades }: { shades: boolean }) {
     <group>
       {shades ? <Shades /> : (
         <>
-          <MuseMark position={[-0.078, 0.03, 0.236]} scale={1.05} />
-          <MuseMark position={[0.078, 0.03, 0.236]} scale={1.05} />
+          <MuseMark position={[-0.09, 0.028, 0.2]} scale={1.55} />
+          <MuseMark position={[0.09, 0.028, 0.2]} scale={1.55} />
         </>
       )}
-      <mesh position={[-0.12, -0.02, 0.22]} scale={[1.15, 0.7, 0.35]}>
-        <sphereGeometry args={[0.028, 10, 8]} />
-        <meshStandardMaterial color={BLUSH} roughness={0.7} transparent opacity={0.55} />
+      <mesh position={[-0.14, -0.03, 0.18]} scale={[1.35, 0.8, 0.4]}>
+        <sphereGeometry args={[0.036, 10, 8]} />
+        <meshStandardMaterial color={BLUSH} roughness={0.7} transparent opacity={0.7} />
       </mesh>
-      <mesh position={[0.12, -0.02, 0.22]} scale={[1.15, 0.7, 0.35]}>
-        <sphereGeometry args={[0.028, 10, 8]} />
-        <meshStandardMaterial color={BLUSH} roughness={0.7} transparent opacity={0.55} />
+      <mesh position={[0.14, -0.03, 0.18]} scale={[1.35, 0.8, 0.4]}>
+        <sphereGeometry args={[0.036, 10, 8]} />
+        <meshStandardMaterial color={BLUSH} roughness={0.7} transparent opacity={0.7} />
       </mesh>
-      <mesh position={[0, -0.055, 0.238]} rotation={[0.35, 0, 0]} scale={[1, 0.55, 0.45]}>
-        <torusGeometry args={[0.026, 0.0045, 8, 14, Math.PI]} />
+      <mesh position={[0, -0.07, 0.2]} rotation={[0.4, 0, 0]} scale={[1.15, 0.6, 0.5]}>
+        <torusGeometry args={[0.032, 0.006, 8, 14, Math.PI]} />
         <meshStandardMaterial color={INK} roughness={0.4} />
       </mesh>
     </group>
@@ -170,31 +170,31 @@ function Flipper({
 function Headphones() {
   return (
     <group>
-      <mesh position={[0, 0.06, -0.02]} rotation={[0.08, 0, 0]} scale={[1, 0.78, 1]}>
-        <torusGeometry args={[0.25, 0.016, 8, 24]} />
+      <mesh position={[0, 0.04, -0.02]} rotation={[0.1, 0, 0]} scale={[1, 0.82, 1]}>
+        <torusGeometry args={[0.28, 0.028, 8, 24]} />
         <meshStandardMaterial color={NAVY} roughness={0.38} metalness={0.22} />
       </mesh>
-      <mesh position={[-0.24, 0, 0.02]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.078, 0.086, 0.06, 16]} />
+      <mesh position={[-0.27, 0, 0.03]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.1, 0.11, 0.08, 16]} />
         <meshStandardMaterial color={NAVY} roughness={0.42} />
       </mesh>
-      <mesh position={[0.24, 0, 0.02]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.078, 0.086, 0.06, 16]} />
+      <mesh position={[0.27, 0, 0.03]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.1, 0.11, 0.08, 16]} />
         <meshStandardMaterial color={NAVY} roughness={0.42} />
       </mesh>
-      <mesh position={[-0.215, 0, 0.02]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.062, 0.062, 0.03, 14]} />
+      <mesh position={[-0.235, 0, 0.03]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.078, 0.078, 0.04, 14]} />
         <meshStandardMaterial color={CREAM_SHADE} roughness={0.7} />
       </mesh>
-      <mesh position={[0.215, 0, 0.02]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.062, 0.062, 0.03, 14]} />
+      <mesh position={[0.235, 0, 0.03]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.078, 0.078, 0.04, 14]} />
         <meshStandardMaterial color={CREAM_SHADE} roughness={0.7} />
       </mesh>
-      <group position={[-0.25, 0, 0.02]} rotation={[0, Math.PI / 2, 0]}>
-        <MuseMark scale={1.15} color="#e8e4dc" />
+      <group position={[-0.29, 0, 0.03]} rotation={[0, Math.PI / 2, 0]}>
+        <MuseMark scale={1.4} color="#e8e4dc" />
       </group>
-      <group position={[0.25, 0, 0.02]} rotation={[0, -Math.PI / 2, 0]}>
-        <MuseMark scale={1.15} color="#e8e4dc" />
+      <group position={[0.29, 0, 0.03]} rotation={[0, -Math.PI / 2, 0]}>
+        <MuseMark scale={1.4} color="#e8e4dc" />
       </group>
     </group>
   );
@@ -202,17 +202,17 @@ function Headphones() {
 
 function Cap() {
   return (
-    <group position={[0, 0.2, -0.02]}>
+    <group position={[0, 0.22, -0.02]}>
       <mesh>
-        <sphereGeometry args={[0.2, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.55]} />
+        <sphereGeometry args={[0.24, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.58]} />
         <meshStandardMaterial color={NAVY} roughness={0.48} />
       </mesh>
-      <mesh position={[0, -0.02, 0.14]} rotation={[-0.18, 0, 0]}>
-        <cylinderGeometry args={[0.24, 0.24, 0.018, 20]} />
+      <mesh position={[0, -0.02, 0.16]} rotation={[-0.22, 0, 0]}>
+        <cylinderGeometry args={[0.3, 0.3, 0.022, 20]} />
         <meshStandardMaterial color={NAVY} roughness={0.42} />
       </mesh>
-      <group position={[0, 0.08, 0.12]} rotation={[-0.55, 0, 0]}>
-        <MuseMark scale={0.85} color="#e8e4dc" />
+      <group position={[0, 0.1, 0.14]} rotation={[-0.55, 0, 0]}>
+        <MuseMark scale={1.05} color="#e8e4dc" />
       </group>
     </group>
   );
@@ -220,13 +220,13 @@ function Cap() {
 
 function Shades() {
   return (
-    <group position={[0, 0.03, 0.23]}>
-      <mesh position={[-0.068, 0, 0.01]} scale={[1.05, 0.72, 0.22]}>
-        <sphereGeometry args={[0.052, 12, 10]} />
+    <group position={[0, 0.03, 0.2]}>
+      <mesh position={[-0.08, 0, 0.01]} scale={[1.15, 0.78, 0.28]}>
+        <sphereGeometry args={[0.06, 12, 10]} />
         <meshStandardMaterial color="#0c0d10" metalness={0.55} roughness={0.12} />
       </mesh>
-      <mesh position={[0.068, 0, 0.01]} scale={[1.05, 0.72, 0.22]}>
-        <sphereGeometry args={[0.052, 12, 10]} />
+      <mesh position={[0.08, 0, 0.01]} scale={[1.15, 0.78, 0.28]}>
+        <sphereGeometry args={[0.06, 12, 10]} />
         <meshStandardMaterial color="#0c0d10" metalness={0.55} roughness={0.12} />
       </mesh>
       <mesh position={[0, 0.012, 0.01]}>
@@ -249,16 +249,16 @@ function Hoodie() {
   const { shadows } = usePerf();
   return (
     <group>
-      <mesh castShadow={shadows} position={[0, 0.4, 0.01]} scale={[1.12, 0.95, 1.08]}>
-        <sphereGeometry args={[0.34, 22, 18]} />
+      <mesh castShadow={shadows} position={[0, 0.36, 0.02]} scale={[1.16, 0.78, 1.12]}>
+        <sphereGeometry args={[0.3, 22, 18]} />
         <meshStandardMaterial color={HOODIE} roughness={0.72} />
       </mesh>
-      <mesh position={[0, 0.72, -0.04]} rotation={[0.35, 0, 0]} scale={[1.05, 0.7, 0.85]}>
-        <torusGeometry args={[0.2, 0.055, 10, 20]} />
+      <mesh position={[0, 0.58, -0.02]} rotation={[0.55, 0, 0]} scale={[1.02, 0.55, 0.8]}>
+        <torusGeometry args={[0.18, 0.045, 10, 20]} />
         <meshStandardMaterial color={HOODIE} roughness={0.7} />
       </mesh>
-      <mesh position={[0, 0.36, 0.22]} scale={[1.15, 0.7, 0.35]}>
-        <boxGeometry args={[0.16, 0.12, 0.04]} />
+      <mesh position={[0, 0.34, 0.26]}>
+        <boxGeometry args={[0.2, 0.12, 0.05]} />
         <meshStandardMaterial color="#151820" roughness={0.76} />
       </mesh>
     </group>
@@ -268,38 +268,38 @@ function Hoodie() {
 function Scarf() {
   return (
     <group>
-      <mesh position={[0, 0.7, 0.02]} rotation={[0.4, 0.12, 0.06]}>
-        <torusGeometry args={[0.2, 0.048, 10, 22]} />
+      <mesh position={[0, 0.62, 0.04]} rotation={[0.35, 0.1, 0.05]}>
+        <torusGeometry args={[0.22, 0.07, 10, 22]} />
         <meshStandardMaterial color={SCARF} roughness={0.78} />
       </mesh>
-      <Soft position={[0.12, 0.52, 0.16]} radius={0.05} color={SCARF} scale={[1.55, 0.7, 0.5]} roughness={0.8} />
-      <Soft position={[0.15, 0.4, 0.18]} radius={0.042} color="#356643" scale={[1.25, 0.85, 0.48]} roughness={0.8} />
+      <Soft position={[0.16, 0.42, 0.2]} radius={0.068} color={SCARF} scale={[1.7, 0.75, 0.55]} roughness={0.8} />
+      <Soft position={[0.2, 0.26, 0.22]} radius={0.058} color="#356643" scale={[1.4, 0.9, 0.5]} roughness={0.8} />
     </group>
   );
 }
 
 function Laptop() {
   return (
-    <group rotation={[-0.42, 0, 0]}>
+    <group rotation={[-0.38, 0, 0]}>
       <mesh>
-        <boxGeometry args={[0.34, 0.012, 0.22]} />
+        <boxGeometry args={[0.46, 0.016, 0.3]} />
         <meshStandardMaterial color={LAPTOP} metalness={0.45} roughness={0.28} />
       </mesh>
-      <mesh position={[0, 0.12, -0.1]} rotation={[1.12, 0, 0]}>
-        <boxGeometry args={[0.34, 0.2, 0.01]} />
+      <mesh position={[0, 0.16, -0.13]} rotation={[1.08, 0, 0]}>
+        <boxGeometry args={[0.46, 0.28, 0.012]} />
         <meshStandardMaterial color={LAPTOP} metalness={0.4} roughness={0.3} />
       </mesh>
-      <mesh position={[0, 0.125, -0.093]} rotation={[1.12, 0, 0]}>
-        <planeGeometry args={[0.3, 0.17]} />
+      <mesh position={[0, 0.168, -0.12]} rotation={[1.08, 0, 0]}>
+        <planeGeometry args={[0.4, 0.23]} />
         <meshStandardMaterial
           color={SCREEN}
-          emissive="#6f889c"
-          emissiveIntensity={0.55}
+          emissive="#7f9aaf"
+          emissiveIntensity={0.7}
           roughness={0.18}
         />
       </mesh>
-      <group position={[0, 0.01, 0.108]} rotation={[Math.PI / 2, 0, 0]}>
-        <MuseMark scale={1.4} color="#e8e4dc" />
+      <group position={[0, 0.012, 0.148]} rotation={[Math.PI / 2, 0, 0]}>
+        <MuseMark scale={1.8} color="#e8e4dc" />
       </group>
     </group>
   );
@@ -308,20 +308,20 @@ function Laptop() {
 function Notes() {
   return (
     <group>
-      <mesh rotation={[-0.55, 0.2, 0.08]}>
-        <boxGeometry args={[0.2, 0.015, 0.15]} />
+      <mesh rotation={[-0.5, 0.18, 0.06]}>
+        <boxGeometry args={[0.3, 0.018, 0.22]} />
         <meshStandardMaterial color={PAPER} roughness={0.86} />
       </mesh>
-      <mesh position={[0.012, 0.012, 0.008]} rotation={[-0.5, 0.28, 0.12]}>
-        <boxGeometry args={[0.19, 0.012, 0.14]} />
+      <mesh position={[0.02, 0.016, 0.012]} rotation={[-0.46, 0.26, 0.1]}>
+        <boxGeometry args={[0.28, 0.016, 0.2]} />
         <meshStandardMaterial color="#f3ead8" roughness={0.84} />
       </mesh>
-      <mesh position={[-0.01, 0.024, 0.014]} rotation={[-0.42, 0.12, 0.05]}>
-        <boxGeometry args={[0.18, 0.01, 0.13]} />
+      <mesh position={[-0.012, 0.032, 0.02]} rotation={[-0.4, 0.1, 0.04]}>
+        <boxGeometry args={[0.26, 0.014, 0.18]} />
         <meshStandardMaterial color="#f7f0e2" roughness={0.82} />
       </mesh>
-      <mesh position={[0.08, 0.03, 0.02]} rotation={[0.2, 0.3, 0.5]}>
-        <cylinderGeometry args={[0.006, 0.006, 0.16, 8]} />
+      <mesh position={[0.12, 0.04, 0.03]} rotation={[0.2, 0.3, 0.5]}>
+        <cylinderGeometry args={[0.008, 0.008, 0.22, 8]} />
         <meshStandardMaterial color="#c4a46a" roughness={0.55} />
       </mesh>
     </group>
@@ -331,27 +331,27 @@ function Notes() {
 function Armchair() {
   const { shadows } = usePerf();
   return (
-    <group position={[0, 0, -0.06]}>
-      <mesh castShadow={shadows} position={[0, 0.14, 0.02]}>
-        <boxGeometry args={[0.72, 0.1, 0.62]} />
+    <group position={[0, 0, -0.08]}>
+      <mesh castShadow={shadows} position={[0, 0.16, 0.02]}>
+        <boxGeometry args={[0.88, 0.12, 0.74]} />
         <meshStandardMaterial color={LEATHER} roughness={0.64} />
       </mesh>
-      <mesh castShadow={shadows} position={[0, 0.4, -0.26]}>
-        <boxGeometry args={[0.72, 0.46, 0.12]} />
+      <mesh castShadow={shadows} position={[0, 0.58, -0.32]}>
+        <boxGeometry args={[0.88, 0.78, 0.16]} />
         <meshStandardMaterial color={LEATHER} roughness={0.6} />
       </mesh>
-      <mesh castShadow={shadows} position={[-0.34, 0.28, 0.04]}>
-        <boxGeometry args={[0.1, 0.22, 0.52]} />
+      <mesh castShadow={shadows} position={[-0.42, 0.32, 0.04]}>
+        <boxGeometry args={[0.12, 0.26, 0.62]} />
         <meshStandardMaterial color="#6a5648" roughness={0.66} />
       </mesh>
-      <mesh castShadow={shadows} position={[0.34, 0.28, 0.04]}>
-        <boxGeometry args={[0.1, 0.22, 0.52]} />
+      <mesh castShadow={shadows} position={[0.42, 0.32, 0.04]}>
+        <boxGeometry args={[0.12, 0.26, 0.62]} />
         <meshStandardMaterial color="#6a5648" roughness={0.66} />
       </mesh>
-      {([-0.28, 0.28] as const).map((x) =>
-        ([-0.2, 0.2] as const).map((z) => (
+      {([-0.34, 0.34] as const).map((x) =>
+        ([-0.24, 0.24] as const).map((z) => (
           <mesh key={`${x}:${z}`} position={[x, 0.06, z]}>
-            <boxGeometry args={[0.06, 0.1, 0.06]} />
+            <boxGeometry args={[0.07, 0.12, 0.07]} />
             <meshStandardMaterial color={WOOD} roughness={0.7} />
           </mesh>
         )),
@@ -561,21 +561,21 @@ export function GrokOrb({
   return (
     <group ref={root} position={home}>
       <mesh ref={core}>
-        <sphereGeometry args={[0.16, 28, 22]} />
+        <sphereGeometry args={[0.2, 28, 22]} />
         <meshStandardMaterial
           color={GROK_WHITE}
           emissive={GROK_WHITE}
-          emissiveIntensity={live ? 0.55 : 0.28}
-          roughness={0.18}
+          emissiveIntensity={live ? 0.7 : 0.38}
+          roughness={0.16}
           metalness={0.08}
         />
       </mesh>
-      <mesh scale={1.22}>
-        <sphereGeometry args={[0.16, 18, 14]} />
-        <meshBasicMaterial color="#ffffff" transparent opacity={live ? 0.16 : 0.08} depthWrite={false} />
+      <mesh scale={1.28}>
+        <sphereGeometry args={[0.2, 18, 14]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={live ? 0.2 : 0.1} depthWrite={false} />
       </mesh>
       <mesh rotation={[Math.PI / 2.4, 0.3, 0]}>
-        <torusGeometry args={[0.168, 0.006, 8, 28]} />
+        <torusGeometry args={[0.21, 0.008, 8, 28]} />
         <meshStandardMaterial color="#d8dde4" roughness={0.3} metalness={0.2} />
       </mesh>
       <Billboard position={[0, 0.28, 0]} follow>
@@ -624,7 +624,7 @@ export function MuseBody({
   const rightFoot = useRef<Group>(null);
   const ring = useRef<Mesh>(null);
   const phase = phaseFor(muse.id);
-  const { pauseExtras } = usePerf();
+  const { pauseExtras, shadows } = usePerf();
   const seated = isSeated(muse.activity);
   const laptop = holdsLaptop(muse.id);
   const chair = muse.id === "chill" && seated;
@@ -680,34 +680,29 @@ export function MuseBody({
       ) : null}
       <group ref={sway}>
         <group ref={torso}>
-          <mesh position={[0, 0.48, 0]}>
-            <capsuleGeometry args={[0.3, 0.26, 10, 24]} />
-            <meshStandardMaterial color={CREAM} roughness={0.44} metalness={0.03} />
+          <mesh castShadow={shadows} position={[0, 0.5, 0]} scale={[1.02, 1.28, 0.94]}>
+            <sphereGeometry args={[0.34, 28, 22]} />
+            <meshStandardMaterial color={CREAM} roughness={0.42} metalness={0.03} />
           </mesh>
-          <Soft position={[0, 0.36, 0.04]} radius={0.3} color={CREAM_WARM} scale={[1.08, 0.82, 0.92]} />
           {muse.id === "trader" ? <Hoodie /> : null}
           {muse.id === "chill" ? <Scarf /> : null}
-          <group ref={head} position={[0, 0.86, 0.02]}>
-            <Soft position={[0, 0, 0]} radius={0.268} color={CREAM_WARM} roughness={0.4} />
-            <Soft position={[0, -0.02, 0.04]} radius={0.2} color={CREAM} scale={[1.05, 0.9, 0.7]} />
+          <group ref={head} position={[0, 0.72, 0.04]}>
             <Face shades={shadeFace} />
             <HeadGear id={muse.id} />
           </group>
-          <group ref={leftArm} position={[-0.26, 0.56, 0.04]}>
-            <Soft position={[0, 0, 0]} radius={0.07} color={CREAM_SHADE} />
-            <Flipper position={[-0.04, -0.14, 0.05]} rotation={[0.15, 0, 0.35]} color={flipper} />
+          <group ref={leftArm} position={[-0.3, 0.5, 0.06]}>
+            <Flipper position={[-0.05, -0.12, 0.06]} rotation={[0.2, 0, 0.4]} color={flipper} />
           </group>
-          <group ref={rightArm} position={[0.26, 0.56, 0.04]}>
-            <Soft position={[0, 0, 0]} radius={0.07} color={CREAM_SHADE} />
-            <Flipper position={[0.04, -0.14, 0.05]} rotation={[0.15, 0, -0.35]} color={flipper} />
+          <group ref={rightArm} position={[0.3, 0.5, 0.06]}>
+            <Flipper position={[0.05, -0.12, 0.06]} rotation={[0.2, 0, -0.4]} color={flipper} />
           </group>
           {laptop ? (
-            <group position={[0, 0.4, 0.3]}>
+            <group position={[0, 0.5, 0.46]}>
               <Laptop />
             </group>
           ) : null}
           {muse.id === "builder" ? (
-            <group position={[-0.16, 0.36, 0.24]} rotation={[0.15, 0.35, 0.08]}>
+            <group position={[0.02, 0.4, 0.34]} rotation={[0.1, 0.15, 0.04]}>
               <Notes />
             </group>
           ) : null}
