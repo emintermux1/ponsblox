@@ -11,6 +11,7 @@ import {
 } from "three";
 import type { ColorRepresentation } from "three";
 import { IdeaWall } from "@/components/world/idea-wall";
+import { LoftArt } from "@/components/world/loft-art";
 import { MonitorDevice } from "@/components/world/screens";
 import { usePerf } from "@/components/world/perf-context";
 import type { CityLod, GlassQuality } from "@/lib/world/perf";
@@ -768,6 +769,7 @@ export function Penthouse({
       <DeskChair position={[3.28, 0, 0.12]} />
       <DeskChair position={[4.12, 0, 0.12]} />
       <IdeaWall packet={packet} pins={wallPins} builderPos={builderPos} world={world} />
+      <LoftArt />
       <City count={cityCount} />
       {dense ? <Haze /> : null}
     </group>
