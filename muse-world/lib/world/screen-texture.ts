@@ -47,9 +47,8 @@ export function sanitizeScreenPulse(input: {
   changePct?: unknown;
   source?: unknown;
 }): ScreenPulse {
-  const source = isLiveScreenSource(typeof input.source === "string" ? input.source : null)
-    ? input.source
-    : "sim";
+  const rawSource = typeof input.source === "string" ? input.source : "sim";
+  const source: ScreenSource = isLiveScreenSource(rawSource) ? rawSource : "sim";
   const ticker = cleanTicker(typeof input.ticker === "string" ? input.ticker : null);
   const rawName = typeof input.name === "string" ? input.name : null;
   const name = rawName && !isJunkDisplayName(rawName) ? pulseDisplayName(rawName, ticker) : ticker;
