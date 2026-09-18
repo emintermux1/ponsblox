@@ -7,9 +7,16 @@ import { PERF_BUDGET } from "@/lib/world/perf";
 import type { CameraPreset, MuseId, WorldEvent, WorldSnapshot } from "@/types/world";
 import { presetForMuse } from "@/lib/world/camera";
 
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
 export function useLivingWorld() {
   const [world, setWorld] = useState<WorldSnapshot>(seedWorld);
-  const [introDone, setIntroDone] = useState(false);
+  const [introDone, setIntroDone] = useState(prefersReducedMotion);
   const [pulse, setPulse] = useState<Pulse>({ kind: "QUIET", ticker: null });
 
   useEffect(() => {

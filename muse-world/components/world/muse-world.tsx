@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { MotionConfig } from "framer-motion";
-import { ACESFilmicToneMapping, PCFShadowMap } from "three";
+import { ACESFilmicToneMapping } from "three";
 import { WorldHud } from "@/components/world/hud";
 import { PerfProvider } from "@/components/world/perf-context";
 import { useLivingWorld } from "@/components/world/use-living-world";
@@ -71,11 +71,11 @@ export function MuseWorld() {
   return (
     <PerfProvider value={budget}>
       <MotionConfig reducedMotion="user">
-        <main className="relative h-dvh w-full overflow-hidden bg-[#0d1520]">
+        <main className="relative h-dvh w-full overflow-hidden bg-[#15202c]">
           {ready && webgl ? (
             <Canvas
               className="absolute inset-0"
-              shadows={budget.shadows ? { type: PCFShadowMap } : false}
+              shadows={budget.shadows ? "percentage" : false}
               dpr={budget.dpr}
               frameloop={budget.frameloop}
               camera={{
@@ -93,7 +93,6 @@ export function MuseWorld() {
                 toneMapping: ACESFilmicToneMapping,
               }}
               onCreated={({ gl }) => {
-                gl.shadowMap.type = PCFShadowMap;
                 gl.domElement.addEventListener("webglcontextlost", (event) => {
                   event.preventDefault();
                   markWebglLost();

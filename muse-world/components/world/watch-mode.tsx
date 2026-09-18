@@ -130,7 +130,7 @@ function CitySilhouette() {
   ];
   return (
     <div className="absolute inset-x-0 top-0 h-[42%] overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-[#10131a] via-[#1a1718] to-[#2a2118]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#15202c] via-[#243646] to-[#3a2c20]" />
       {towers.map((tower) => (
         <div
           key={tower.left}
@@ -161,13 +161,12 @@ function Furniture() {
         <div className="absolute inset-x-2 top-1 h-2 bg-[#2f2923]" />
       </div>
       <div
-        className="absolute z-10 h-[8%] w-[18%] -translate-x-1/2 -translate-y-1/2 bg-[#c4b7a2] shadow-[0_8px_18px_#00000040]"
+        className="absolute z-10 h-[8%] w-[18%] -translate-x-1/2 -translate-y-1/2 bg-[#4a2c18] shadow-[0_8px_18px_#00000040]"
         style={{ left: `${desk.left}%`, top: `${desk.top}%` }}
       >
         <div className="absolute inset-x-3 -top-3 flex justify-between">
-          <span className="h-3 w-5 bg-[#1c2430]" />
-          <span className="h-3 w-5 bg-[#d8c7a4]" />
-          <span className="h-3 w-5 bg-[#142018]" />
+          <span className="h-3 w-5 bg-[#0e1216]" />
+          <span className="h-3 w-5 bg-[#0e1216]" />
         </div>
       </div>
       <div
@@ -256,7 +255,7 @@ export function WatchMode({
   }, [world.packet, reducedMotion, hidden]);
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-[#0b0c10]">
+    <div className="absolute inset-0 overflow-hidden bg-[#15202c]">
       <CitySilhouette />
       <motion.div
         className="absolute inset-0 origin-center"
@@ -267,15 +266,15 @@ export function WatchMode({
         }
         transition={{ duration: reducedMotion ? 0 : 1.1, ease: [0.22, 1, 0.36, 1] }}
       >
-        <div className="absolute inset-x-[5%] top-[7%] z-10 h-[36%] border border-[#2a241c]/90 bg-[#8aa0b4]/8">
-          <div className="absolute inset-y-0 left-1/4 w-px bg-[#2a241c]/80" />
-          <div className="absolute inset-y-0 left-2/4 w-px bg-[#2a241c]/80" />
-          <div className="absolute inset-y-0 left-3/4 w-px bg-[#2a241c]/80" />
-          <div className="absolute inset-x-0 top-1/2 h-px bg-[#2a241c]/50" />
+        <div className="absolute inset-x-[5%] top-[7%] z-10 h-[36%] border border-[#c8c5be]/40 bg-[#8a96a2]/10">
+          <div className="absolute inset-y-0 left-1/4 w-px bg-[#c8c5be]/70" />
+          <div className="absolute inset-y-0 left-2/4 w-px bg-[#c8c5be]/70" />
+          <div className="absolute inset-y-0 left-3/4 w-px bg-[#c8c5be]/70" />
+          <div className="absolute inset-x-0 top-1/2 h-px bg-[#c8c5be]/40" />
         </div>
-        <div className="absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-b from-[#6d675e] via-[#5a544b] to-[#2f2b26]">
-          <div className="absolute left-[9%] top-[8%] h-[46%] w-[40%] bg-[#8b5a3c]/50" />
-          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-[#0b0c10]/35 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-b from-[#8a8680] via-[#6a645c] to-[#4a3426]">
+          <div className="absolute left-[9%] top-[8%] h-[46%] w-[40%] bg-[#5c4a3e]/55" />
+          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-[#15202c]/35 to-transparent" />
         </div>
         <Furniture />
         {MUSE_IDS.map((id) => (

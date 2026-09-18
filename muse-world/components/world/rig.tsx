@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
+import { PerspectiveCamera } from "three";
 import { usePerf } from "@/components/world/perf-context";
 import {
   applyProxyToCamera,
@@ -29,7 +30,7 @@ export function CameraRig({
   onIntroDone: () => void;
 }) {
   const camera = useThree((state) => state.camera);
-  const { reducedMotion, hidden } = usePerf();
+  const { reducedMotion, hidden, cameraFar } = usePerf();
   const proxy = useRef<ShotProxy>(proxyFromCamera(camera, INTRO_SHOTS[0]));
   const follow = useRef(false);
   const finished = useRef(false);
@@ -86,14 +87,18 @@ export function CameraRig({
     };
   }, [preset, selected, introDone]);
 
-  useFrame((_, dt) => {
+  useFrame((state, dt) => {
     if (hidden) {
       return;
+    }
+    const frameCamera = state.camera;
+    if (frameCamera instanceof PerspectiveCamera) {
+      frameCamera.far = cameraFar;
     }
     if (follow.current && preset === "MIND") {
       dampShot(proxy.current, shotForPreset("MIND", selected, musePos), dt);
     }
-    applyProxyToCamera(camera, proxy.current);
+    applyProxyToCamera(frameCamera, proxy.current);
   });
 
   return null;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect } from "react";
-import { ContactShadows, SoftShadows } from "@react-three/drei";
+import { ContactShadows } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
 import { FrustumGuard } from "@/components/world/frustum-guard";
@@ -29,14 +29,17 @@ function Lighting() {
   return (
     <>
       {extraLights ? <AreaLights /> : null}
-      {shadows && extraLights ? <SoftShadows size={18} samples={8} focus={0.75} /> : null}
-      <color attach="background" args={["#0d1520"]} />
-      <fog attach="fog" args={["#15202c", 16, Math.min(50, cameraFar - 6)]} />
-      <hemisphereLight args={["#6d8498", "#1c1612", extraLights ? 0.36 : 0.5]} />
+      <color attach="background" args={["#15202c"]} />
+      <fog
+        attach="fog"
+        args={["#243646", extraLights ? 28 : 16, extraLights ? 70 : Math.min(50, cameraFar - 6)]}
+      />
+      <ambientLight intensity={extraLights ? 0.28 : 0.22} color="#d2c0a6" />
+      <hemisphereLight args={["#7f96aa", "#3a2c20", extraLights ? 0.55 : 0.48]} />
       <directionalLight
         position={[7, 9.5, -5]}
-        intensity={extraLights ? 0.62 : 0.85}
-        color="#9eb4c8"
+        intensity={extraLights ? 0.72 : 0.58}
+        color="#c5d2de"
         castShadow={shadows}
         shadow-mapSize-width={shadowMapSize}
         shadow-mapSize-height={shadowMapSize}
@@ -48,21 +51,25 @@ function Lighting() {
         shadow-camera-bottom={-8}
         shadow-bias={-0.00025}
       />
+      <directionalLight
+        position={[-4, 6.2, 7]}
+        intensity={extraLights ? 0.85 : 0.55}
+        color="#f3d7b0"
+      />
       {extraLights ? (
         <>
-          <directionalLight position={[-4, 5.5, 6]} intensity={0.22} color="#e6d0ae" />
           <rectAreaLight
             width={16}
             height={3.2}
-            intensity={3.4}
-            color="#7f9aaf"
+            intensity={8}
+            color="#8eabbf"
             position={[0, 2.15, -4.42]}
             rotation={[0, Math.PI, 0]}
           />
           <rectAreaLight
             width={6.2}
             height={0.16}
-            intensity={5.2}
+            intensity={10}
             color="#f0d4ae"
             position={[-3.2, 4.52, 0.2]}
             rotation={[-Math.PI / 2, 0, 0]}
@@ -70,16 +77,19 @@ function Lighting() {
           <rectAreaLight
             width={5}
             height={0.16}
-            intensity={3.6}
+            intensity={7}
             color="#e8cba6"
             position={[3.3, 4.52, -0.7]}
             rotation={[-Math.PI / 2, 0, 0]}
           />
-          <pointLight position={[-6.55, 1.72, 3.55]} intensity={0.38} color="#e4c49a" distance={7} decay={2} />
-          <pointLight position={[3.4, 1.55, -0.5]} intensity={0.22} color="#d7c4a6" distance={6} decay={2} />
+          <pointLight position={[-3.2, 4.2, 0.4]} intensity={1.35} color="#f2d4a8" distance={11} decay={2} />
+          <pointLight position={[3.3, 4.2, -0.5]} intensity={0.95} color="#ebc9a0" distance={9} decay={2} />
+          <pointLight position={[-6.55, 1.72, 3.55]} intensity={0.85} color="#e4c49a" distance={8} decay={2} />
+          <pointLight position={[3.4, 1.7, -0.5]} intensity={0.45} color="#d7c4a6" distance={6} decay={2} />
+          <pointLight position={[0, 3.4, -3.4]} intensity={0.4} color="#9bb3c4" distance={10} decay={2} />
         </>
       ) : (
-        <pointLight position={[0.6, 3.6, 10.2]} intensity={0.26} color="#cfc3a6" />
+        <pointLight position={[0, 3.2, 2]} intensity={0.32} color="#e4c49a" distance={10} decay={2} />
       )}
     </>
   );
