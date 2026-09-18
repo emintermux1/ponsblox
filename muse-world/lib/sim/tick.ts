@@ -151,9 +151,10 @@ function nextActivity(muse: MuseState, pulse: boolean, random: () => number): Mu
 export function applyActivity(
   muse: MuseState,
   activity: MuseActivity,
-  ticker: string,
+  ticker: string | null,
 ): MuseState {
   const mind = { ...muse.mind, nodes: { ...muse.mind.nodes } };
+  const about = ticker ?? "the room";
   switch (activity) {
     case "SCROLLING":
       mind.nodes.ATTENTION = nudge(mind.nodes.ATTENTION, 0.04);
@@ -162,10 +163,12 @@ export function applyActivity(
       break;
     case "THINKING":
       mind.nodes.CURIOSITY = nudge(mind.nodes.CURIOSITY, 0.06);
-      mind.observed = `weighing ${ticker}`;
+      mind.observed = `weighing ${about}`;
       break;
     case "WATCHING":
-      mind.watching = ticker;
+      if (ticker) {
+        mind.watching = ticker;
+      }
       mind.action = "WATCH";
       mind.nodes.ATTENTION = nudge(mind.nodes.ATTENTION, 0.05);
       break;
@@ -176,7 +179,7 @@ export function applyActivity(
       break;
     case "RESEARCHING":
       mind.nodes.MEMORY = nudge(mind.nodes.MEMORY, 0.05);
-      mind.memory = `notes on ${ticker}`;
+      mind.memory = `notes on ${about}`;
       break;
     case "CHILLING":
     case "SMOKING":
@@ -399,11 +402,12 @@ export function tickSnapshot(
   now = Date.now(),
   random = Math.random,
 ): WorldSnapshot {
-  const ticker = pickTicker(pulse.ticker);
+  const subject =
+    pulse.ticker ?? world.muses.trader.mind.watching ?? world.muses.scroller.mind.watching;
   const spiked = pulse.kind === "TREND_SPIKE" || pulse.kind === "VIRAL_POST";
-  let events = world.events;
-  let packet = world.packet && now - world.packet.t < PACKET_HOLD_MS ? world.packet : null;
-  let wallPins = world.wallPins ?? [];
+  const events = world.events;
+  const packet = world.packet && now - world.packet.t < PACKET_HOLD_MS ? world.packet : null;
+  const wallPins = world.wallPins ?? [];
   const muses = { ...world.muses };
 
   for (const id of Object.keys(muses) as MuseId[]) {
@@ -411,7 +415,7 @@ export function tickSnapshot(
     if (muse.id === "chill" && (muse.activity === "WALKING" || random() < 0.18)) {
       muse = walkToward(muse, chillHome(now), 0.045);
     } else {
-      muse = applyActivity(muse, nextActivity(muse, spiked, random), ticker);
+      muse = applyActivity(muse, nextActivity(muse, spiked, random), subject);
     }
     if (random() < 0.1) {
       muse = setThought(muse, pick(THOUGHTS[muse.id], random), 2600, now);
