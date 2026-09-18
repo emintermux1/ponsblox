@@ -281,19 +281,21 @@ function hitFromDexPair(pair: DexPair): MarketHit | null {
 }
 
 async function peekDexBoosts(): Promise<{ status: ProviderStatus; mints: string[]; hits: MarketHit[] }> {
-  const [boosts, profiles] = await Promise.all([
+  const [boosts, profiles, latest] = await Promise.all([
     readProvider("https://api.dexscreener.com/token-boosts/top/v1", UA, MARKET_FETCH_MS),
     readProvider("https://api.dexscreener.com/token-profiles/latest/v1", UA, MARKET_FETCH_MS),
+    readProvider("https://api.dexscreener.com/token-boosts/latest/v1", UA, MARKET_FETCH_MS),
   ]);
-  if (boosts.status === "skip" && profiles.status === "skip") {
+  if (boosts.status === "skip" && profiles.status === "skip" && latest.status === "skip") {
     return { status: "skip", mints: [], hits: [] };
   }
-  if (boosts.status !== "ok" && profiles.status !== "ok") {
+  if (boosts.status !== "ok" && profiles.status !== "ok" && latest.status !== "ok") {
     return { status: "error", mints: [], hits: [] };
   }
   const mints = [
     ...solanaBoostMints(boosts.status === "ok" ? boosts.body : []),
     ...solanaBoostMints(profiles.status === "ok" ? profiles.body : []),
+    ...solanaBoostMints(latest.status === "ok" ? latest.body : []),
   ].filter((mint, index, all) => all.indexOf(mint) === index);
   const hits = mints.slice(0, TAPE_LIMIT).flatMap((mint) => {
     const hit = skipPaidHit({
@@ -320,10 +322,18 @@ async function peekDexPairs(mints: string[]): Promise<MarketHits> {
   if (result.status !== "ok") {
     return result.status;
   }
-  const ranked = dexPairsOf(result.body)
+  const hits = rankedDexHits(result.body);
+  return hits.length ? hits : "error";
+}
+
+function rankedDexHits(body: unknown): MarketHit[] {
+  const ranked = dexPairsOf(body)
     .map(hitFromDexPair)
     .filter((hit): hit is MarketHit => Boolean(hit))
-    .sort((a, b) => (b.liquidityUsd ?? 0) - (a.liquidityUsd ?? 0));
+    .sort(
+      (a, b) =>
+        (b.liquidityUsd ?? 0) - (a.liquidityUsd ?? 0) || (b.volumeUsd ?? 0) - (a.volumeUsd ?? 0),
+    );
   const seen = new Set<string>();
   const hits: MarketHit[] = [];
   for (const hit of ranked) {
@@ -334,7 +344,25 @@ async function peekDexPairs(mints: string[]): Promise<MarketHits> {
     seen.add(key);
     hits.push(hit);
   }
-  return hits.length ? hits : "error";
+  return hits;
+}
+
+async function peekDexSearchPairs(): Promise<MarketHits> {
+  const result = await readProvider(
+    "https://api.dexscreener.com/latest/dex/search?q=SOL",
+    UA,
+    MARKET_FETCH_MS,
+  );
+  if (result.status !== "ok") {
+    return result.status;
+  }
+  const hits = rankedDexHits(result.body);
+  return hits.length ? hits.slice(0, TAPE_LIMIT) : "error";
+}
+
+/** No documented public Phantom trending URL — do not scrape explore pages. */
+export async function peekPhantomTrending(): Promise<MarketHits> {
+  return "skip";
 }
 
 function mapBirdeyeHits(body: unknown): MarketHit[] {
@@ -355,6 +383,10 @@ function mapBirdeyeHits(body: unknown): MarketHit[] {
     const row = item as Record<string, unknown>;
     const mint = typeof row.address === "string" ? row.address : null;
     const ticker = tickerFromSymbol(typeof row.symbol === "string" ? row.symbol : null);
+    const changePct =
+      finiteUsd(row.priceChange24hPercent) ??
+      finiteUsd(row.price24hChangePercent) ??
+      finiteUsd(row.v24hChangePercent);
     const hit = skipPaidHit({
       source: "birdeye",
       ticker,
@@ -362,6 +394,8 @@ function mapBirdeyeHits(body: unknown): MarketHit[] {
       volumeUsd: finiteUsd(row.volume24hUSD) ?? finiteUsd(row.v24hUSD) ?? 0,
       name: typeof row.name === "string" ? row.name : ticker,
       priceUsd: finiteUsd(row.price),
+      priceChange24h: changePct,
+      changePct,
       liquidityUsd: finiteUsd(row.liquidity),
       imageUrl: asHttpsLogo(
         typeof row.logoURI === "string" ? row.logoURI : typeof row.logo === "string" ? row.logo : null,
@@ -619,18 +653,20 @@ function collectMints(...groups: MarketHits[]): string[] {
 
 async function gatherPulse(now: number): Promise<MarketPulse> {
   const started = Date.now();
-  const [gecko, dexBoosts, birdeye, gmgn, solana, solUsd] = await Promise.all([
+  const [gecko, dexBoosts, dexSearch, birdeye, gmgn, solana, solUsd] = await Promise.all([
     peekGecko(),
     peekDexBoosts(),
+    peekDexSearchPairs(),
     peekBirdeye(),
     peekGmgn(),
+    peekPhantomTrending(),
     peekSolana(),
     peekSolUsd(),
   ]);
   const remaining = Math.max(0, MARKET_BUDGET_MS - (Date.now() - started));
-  const seed = firstMint(gecko, dexBoosts.hits, birdeye, gmgn) ?? dexBoosts.mints[0] ?? null;
-  const pool = firstPool(gecko, birdeye, gmgn);
-  const hydrateMints = collectMints(gecko, dexBoosts.hits, birdeye, gmgn);
+  const seed = firstMint(gecko, dexSearch, dexBoosts.hits, birdeye, gmgn) ?? dexBoosts.mints[0] ?? null;
+  const pool = firstPool(gecko, dexSearch, birdeye, gmgn);
+  const hydrateMints = collectMints(gecko, dexSearch, dexBoosts.hits, birdeye, gmgn);
   for (const mint of dexBoosts.mints) {
     if (!hydrateMints.includes(mint)) {
       hydrateMints.push(mint);

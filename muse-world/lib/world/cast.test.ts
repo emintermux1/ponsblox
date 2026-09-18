@@ -69,4 +69,5 @@ test("Grok presence is SIM until a real ingest exists", () => {
 test("packets name who is passing what", () => {
   assert.equal(packetLine("scroller", "trader", "look"), "Scroller → Trader · look");
   assert.equal(packetLine("builder", "wall", "note"), "Builder → wall · note");
+  assert.equal(packetLine("trader", "grok", "ask"), "Trader → GROK · ask");
 });

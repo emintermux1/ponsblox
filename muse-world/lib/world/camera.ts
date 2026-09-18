@@ -118,7 +118,7 @@ export function shotForPreset(
       return lookAtMuse([3.8, 2.2, 6.2], [6.3, 0.74, 2.8], musePos, 34);
     case "GROK":
       return {
-        position: [2.05, 2.08, 4.85],
+        position: [6.2, 2.12, 2.95],
         target: [GROK_ORB_POS[0], GROK_ORB_POS[1], GROK_ORB_POS[2]],
         fov: 30,
       };

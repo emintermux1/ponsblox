@@ -30,6 +30,7 @@ describe("public tape honesty", () => {
     assert.equal(tapeHeadline(tape), "SIM · quiet");
     assert.deepEqual(tape.fills, []);
     assert.deepEqual(tape.candles, []);
+    assert.deepEqual(tape.rows, []);
   });
 
   it("live gecko tape can show symbol and % without inventing bars", () => {
@@ -46,6 +47,24 @@ describe("public tape honesty", () => {
     assert.equal(tapeHeadline(tape), "WIF  +2.4%");
     assert.deepEqual(tape.candles, []);
     assert.equal(tapeStamp("gecko"), "LIVE · gecko");
+    assert.deepEqual(tape.rows, [{ ticker: "WIF", changePct: 2.41, source: "gecko" }]);
+  });
+
+  it("dexscreener can use public % and only real OHLCV bars", () => {
+    const tape = tapeFromPulse({
+      kind: "VIRAL_POST",
+      ticker: "BONK",
+      source: "dexscreener",
+      priceChange24h: -1.26,
+      candles: [[1, 1, 1.1, 0.9, 0.95]],
+    });
+    assert.equal(tape.source, "dexscreener");
+    assert.equal(tape.ticker, "BONK");
+    assert.equal(formatChange(tape.changePct), "-1.3%");
+    assert.equal(tapeHeadline(tape), "BONK  -1.3%");
+    assert.equal(tape.candles.length, 1);
+    assert.deepEqual(tape.fills, []);
+    assert.equal(tapeStamp("dexscreener"), "LIVE · dex");
   });
 
   it("drops PAID even if a provider tried to stamp it live", () => {

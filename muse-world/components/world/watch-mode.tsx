@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { activityLine, asCaption } from "@/components/watch/copy";
 import { usePerf } from "@/components/world/perf-context";
 import { GROK_ORB_POS, SCREEN_POS, wallSlotWorld } from "@/lib/world/layout";
+import { musePlushPhoto, musePlushTint } from "@/lib/world/muse-face";
 import { projectLoft, watchFrame } from "@/lib/world/perf";
 import type { MuseId, MuseState, PacketEndpoint, ScreenId, WorldSnapshot } from "@/types/world";
 import { MIND_NODES, MUSE_IDS, SCREEN_IDS, assertNever } from "@/types/world";
@@ -81,17 +82,19 @@ function MuseFigure({
       {caption ? (
         <span className="thought-caption mb-2 block text-center">{caption}</span>
       ) : null}
-      <span className="relative mx-auto block h-[72px] w-8">
-        <span className="absolute left-1/2 top-0 h-4 w-4 -translate-x-1/2 rounded-full bg-[#f3efe6] shadow-[0_0_12px_rgba(243,239,230,0.2)]" />
-        <span className="absolute left-1/2 top-4 h-9 w-[18px] -translate-x-1/2 rounded-t-[6px] bg-[#eee8dc]" />
+      <span className="relative mx-auto block h-[92px] w-[92px]">
+        <img
+          src={musePlushPhoto(muse.id)}
+          alt={muse.name}
+          className="h-full w-full object-contain"
+          style={{ background: musePlushTint(muse.id) }}
+        />
         <span
-          className="absolute left-1/2 top-[22px] h-1.5 w-[18px] -translate-x-1/2"
+          className="pointer-events-none absolute inset-x-[18%] bottom-[18%] h-1.5 rounded-full"
           style={{ background: museAccent(muse.id) }}
         />
-        <span className="absolute bottom-1 left-1/2 h-3 w-[7px] -translate-x-[9px] bg-[#e7e0d2]" />
-        <span className="absolute bottom-1 left-1/2 h-3 w-[7px] translate-x-[2px] bg-[#e7e0d2]" />
         {selected ? (
-          <span className="absolute -bottom-0.5 left-1/2 h-1.5 w-7 -translate-x-1/2 rounded-full bg-[#e6d3a8]/55" />
+          <span className="absolute -bottom-0.5 left-1/2 h-1.5 w-8 -translate-x-1/2 rounded-full bg-[#e6d3a8]/55" />
         ) : null}
       </span>
       <span className="mt-1 block min-h-11 cursor-pointer text-center text-base font-medium tracking-wide text-[#efe6d4]">

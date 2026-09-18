@@ -13,6 +13,7 @@ export type SpectatorHudProps = {
   onSelect: (id: MuseId | null) => void;
   onInspect: (id: ScreenId | null) => void;
   onEnterMind: () => void;
+  onWakeGrok: () => void;
 };
 
 export function SpectatorHud({
@@ -24,6 +25,7 @@ export function SpectatorHud({
   onSelect,
   onInspect,
   onEnterMind,
+  onWakeGrok,
 }: SpectatorHudProps) {
   return (
     <div data-entry-veil="off" data-first-paint="hud">
@@ -36,6 +38,7 @@ export function SpectatorHud({
         onSelect={onSelect}
         onInspect={onInspect}
         onEnterMind={onEnterMind}
+        onWakeGrok={onWakeGrok}
       />
     </div>
   );

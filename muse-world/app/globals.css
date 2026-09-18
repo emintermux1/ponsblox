@@ -231,6 +231,26 @@ canvas {
   color: var(--loft-brass);
 }
 
+.loft-ask-grok {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  padding: 0.15rem 0.9rem 0;
+  color: color-mix(in srgb, var(--loft-paper) 42%, transparent);
+}
+
+.loft-ask-grok button {
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  color: color-mix(in srgb, var(--loft-paper) 62%, transparent);
+}
+
+.loft-ask-grok p {
+  font-family: var(--font-serif), "Times New Roman", serif;
+  font-style: italic;
+  font-size: 0.78rem;
+}
+
 .loft-selected-note {
   display: flex;
   flex-wrap: wrap;

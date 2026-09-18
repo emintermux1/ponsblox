@@ -112,6 +112,8 @@ export function endpointName(endpoint: PacketEndpoint): string {
       return museName(endpoint);
     case "wall":
       return "wall";
+    case "grok":
+      return GROK_NAME;
     default:
       return assertNever(endpoint);
   }
@@ -127,9 +129,9 @@ export function packetLine(from: PacketEndpoint, to: PacketEndpoint, label: stri
 
 function isGrokKind(kind: WorldEventKind): boolean {
   switch (kind) {
-    case "GROK_REQUESTED":
     case "GROK_RESPONSE":
       return true;
+    case "GROK_REQUESTED":
     case "TREND_SPIKE":
     case "NEW_DISCOVERY":
     case "POSITION_OPENED":
@@ -157,9 +159,22 @@ function isRealGrokSource(source: WorldEvent["source"]): boolean {
   }
 }
 
+function isSimGrokText(text: string): boolean {
+  const lower = text.toLowerCase();
+  return (
+    lower.includes("no grok key") ||
+    lower.includes("sim context") ||
+    lower.includes("waiting on ingest")
+  );
+}
+
 export function grokPresence(events: WorldEvent[]): GrokPresence {
   for (const event of events) {
-    if (isGrokKind(event.kind) && isRealGrokSource(event.source)) {
+    if (
+      isGrokKind(event.kind) &&
+      isRealGrokSource(event.source) &&
+      !isSimGrokText(event.text)
+    ) {
       return "LIVE";
     }
   }

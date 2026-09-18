@@ -102,5 +102,7 @@ describe("grok wake honesty", () => {
     assert.equal(next.grokWake.summary, "thin book, PASS");
     assert.equal(next.events[0]?.source, "xai");
     assert.equal(next.muses.builder.mind.grok, "thin book, PASS");
+    assert.equal(next.packet?.from, "grok");
+    assert.equal(next.packet?.to, "builder");
   });
 });

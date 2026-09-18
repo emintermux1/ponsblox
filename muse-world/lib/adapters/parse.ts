@@ -573,7 +573,10 @@ function hitsOf(value: MarketHits | undefined): MarketHit[] {
   if (value === undefined || typeof value === "string") {
     return [];
   }
-  return Array.isArray(value) ? [...value] : [value];
+  if (Array.isArray(value)) {
+    return [...value];
+  }
+  return [value as MarketHit];
 }
 
 function usableHit(hit: MarketHit | null): MarketHit | null {

@@ -250,12 +250,7 @@ export function HeadDress({ id }: { id: MuseId }) {
     case "chill":
       return null;
     case "builder":
-      return (
-        <>
-          <FloppyEars />
-          <Halo />
-        </>
-      );
+      return <Halo />;
     default:
       return assertNever(id);
   }
@@ -264,7 +259,7 @@ export function HeadDress({ id }: { id: MuseId }) {
 export function BodyDress({ id }: { id: MuseId }) {
   switch (id) {
     case "trader":
-      return <Hoodie />;
+      return null;
     case "chill":
       return <Scarf />;
     case "scroller":

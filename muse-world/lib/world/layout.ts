@@ -1,7 +1,8 @@
 import type { PacketEndpoint, ScreenId } from "@/types/world";
 import { assertNever } from "@/types/world";
 
-export const GROK_ORB_POS: [number, number, number] = [0.18, 1.36, 2.08];
+/** Hero Grok sits on the trader desk, slightly above the wood. */
+export const GROK_ORB_POS: [number, number, number] = [4.18, 1.12, -0.18];
 
 export const SCREEN_POS: Record<ScreenId, [number, number, number]> = {
   tape: [2.82, 1.2, -1.13],
@@ -67,6 +68,8 @@ export function packetAccent(endpoint: PacketEndpoint): string {
       return "#c9b48a";
     case "wall":
       return "#e6d7bc";
+    case "grok":
+      return "#f5f5f2";
     default:
       return assertNever(endpoint);
   }

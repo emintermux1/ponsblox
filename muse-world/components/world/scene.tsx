@@ -5,7 +5,8 @@ import { ContactShadows } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
 import { FrustumGuard } from "@/components/world/frustum-guard";
-import { GrokOrb } from "@/components/world/grok-orb";
+import { GrokPresence } from "@/components/world/grok-orb";
+import { LoftSurfaces } from "@/components/world/loft-surfaces";
 import { MuseBody } from "@/components/world/muse-body";
 import { MuseMindField } from "@/components/world/mind";
 import { Penthouse } from "@/components/world/penthouse";
@@ -14,6 +15,7 @@ import { usePerf } from "@/components/world/perf-context";
 import { CameraRig } from "@/components/world/rig";
 import { ThoughtChip } from "@/components/world/thoughts";
 import { presetForMuse } from "@/lib/world/camera";
+import { grokLookAt } from "@/lib/world/grok-watch";
 import { GROK_ORB_POS, wallSlotWorld } from "@/lib/world/layout";
 import { MIND_LIFT } from "@/lib/world/mind-graph";
 import type { MuseId, PacketEndpoint, ScreenId, WorldSnapshot } from "@/types/world";
@@ -175,6 +177,7 @@ export function LivingScene({
     chill: world.muses.chill.position,
     builder: world.muses.builder.position,
     wall: wallSlotWorld(world.packet?.slot ?? 0),
+    grok: GROK_ORB_POS,
   };
 
   return (
@@ -196,15 +199,15 @@ export function LivingScene({
         inspecting={world.inspecting}
         onInspect={onInspect}
       />
-      <FrustumGuard center={GROK_ORB_POS} radius={1.4}>
-        <GrokOrb
-          waking={world.grokWake.phase === "waking"}
-          honesty={world.grokWake.honesty}
-          onWake={onWakeGrok}
-        />
-      </FrustumGuard>
+      <LoftSurfaces />
+      <GrokPresence
+        waking={world.grokWake.phase === "waking"}
+        honesty={world.grokWake.honesty}
+        lookAt={grokLookAt(world)}
+        onWake={onWakeGrok}
+      />
       {MUSE_IDS.map((id) => (
-        <FrustumGuard key={id} center={world.muses[id].position} radius={1.6}>
+        <FrustumGuard key={id} center={world.muses[id].position} radius={1.9}>
           <MuseBody
             muse={world.muses[id]}
             selected={selected === id}

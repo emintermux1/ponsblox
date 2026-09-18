@@ -12,6 +12,12 @@ export type TapeSource = MarketProviderId | "sim";
 
 export type TapeKind = "TREND_SPIKE" | "VIRAL_POST" | "QUIET";
 
+export type TapeRowView = {
+  ticker: string;
+  changePct: number | null;
+  source: TapeSource;
+};
+
 export type TapeView = {
   kind: TapeKind;
   ticker: string | null;
@@ -19,8 +25,12 @@ export type TapeView = {
   source: TapeSource;
   changePct: number | null;
   candles: readonly TapeCandle[];
+  rows: TapeRowView[];
   fills: readonly [];
 };
+
+/** Honest short stamps painted on the 3D tape. dexscreener → dex. */
+export type ScreenSourceLabel = "gecko" | "dex" | "gmgn" | "helius" | "sim" | "birdeye" | "solana";
 
 export function quietTape(): TapeView {
   return {
@@ -30,6 +40,7 @@ export function quietTape(): TapeView {
     source: "sim",
     changePct: null,
     candles: [],
+    rows: [],
     fills: [],
   };
 }
@@ -89,28 +100,86 @@ export function sanitizeCandles(value: unknown): TapeCandle[] {
   return candlesFromOhlcvList(value);
 }
 
+export function rowsFromPulse(value: unknown): TapeRowView[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const rows: TapeRowView[] = [];
+  const seen = new Set<string>();
+  for (const item of value) {
+    if (!item || typeof item !== "object") {
+      continue;
+    }
+    const rec = item as Record<string, unknown>;
+    const ticker = paidSafeTicker(typeof rec.ticker === "string" ? rec.ticker : null);
+    if (!ticker || seen.has(ticker)) {
+      continue;
+    }
+    seen.add(ticker);
+    rows.push({
+      ticker,
+      changePct: parseFiniteNumber(rec.priceChange24h) ?? parseFiniteNumber(rec.changePct),
+      source: asTapeSource(rec.source),
+    });
+    if (rows.length >= 6) {
+      break;
+    }
+  }
+  return rows;
+}
+
 export function tapeFromPulse(pulse: {
   kind?: unknown;
   ticker?: unknown;
   mint?: unknown;
   source?: unknown;
   changePct?: unknown;
+  priceChange24h?: unknown;
   candles?: unknown;
+  tape?: unknown;
 }): TapeView {
   const ticker = paidSafeTicker(typeof pulse.ticker === "string" ? pulse.ticker : null);
   const source = asTapeSource(pulse.source);
   if (source === "sim" || isPaidTicker(typeof pulse.ticker === "string" ? pulse.ticker : null)) {
     return quietTape();
   }
+  const changePct =
+    parseFiniteNumber(pulse.changePct) ?? parseFiniteNumber(pulse.priceChange24h);
+  const rows = rowsFromPulse(pulse.tape);
+  if (ticker && !rows.some((row) => row.ticker === ticker)) {
+    rows.unshift({ ticker, changePct, source });
+  }
   return {
     kind: tapeKindOf(pulse.kind),
     ticker,
     mint: typeof pulse.mint === "string" && pulse.mint.length >= 32 ? pulse.mint : null,
     source,
-    changePct: parseFiniteNumber(pulse.changePct),
+    changePct,
     candles: sanitizeCandles(pulse.candles),
+    rows: rows.slice(0, 6),
     fills: [],
   };
+}
+
+export function screenSourceLabel(source: TapeSource): ScreenSourceLabel {
+  switch (source) {
+    case "gecko":
+      return "gecko";
+    case "dexscreener":
+      return "dex";
+    case "gmgn":
+      return "gmgn";
+    case "helius":
+      return "helius";
+    case "sim":
+      return "sim";
+    case "birdeye":
+      return "birdeye";
+    case "solana":
+      return "solana";
+    default:
+      return assertNever(source);
+  }
 }
 
 export function tapeStamp(source: TapeSource): string {
@@ -126,7 +195,7 @@ export function tapeStamp(source: TapeSource): string {
     case "helius":
       return "LIVE · helius";
     case "dexscreener":
-      return "LIVE · dexscreener";
+      return "LIVE · dex";
     case "solana":
       return "LIVE · solana";
     default:
