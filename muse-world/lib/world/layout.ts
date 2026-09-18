@@ -20,7 +20,6 @@ export const STATIONS = {
   builderWall: { position: [6.42, STAND_Y, 2.68], facing: 1.64 } satisfies MuseStation,
   builderDesk: { position: [4.12, 0.42, 0], facing: Math.PI } satisfies MuseStation,
   chillArmchair: { position: [-1.8, 0.34, 3.5], facing: -0.55 } satisfies MuseStation,
-  chillWindow: { position: [-2.15, STAND_Y, -3.55], facing: Math.PI } satisfies MuseStation,
 } as const;
 
 export const IDEA_WALL_CARDS = [

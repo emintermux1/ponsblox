@@ -99,7 +99,7 @@ describe("purposeful work", () => {
       activity: "WALKING",
       position: [-2.4, 0.62, 3.1],
     };
-    const next = tickSnapshot(world, { kind: "TREND_SPIKE", ticker: "JUP" }, 20_000, () => 0.01);
+    const next = tickSnapshot(world, { kind: "QUIET", ticker: null }, 20_000, () => 0.01);
     assert.equal(next.muses.trader.activity, "WALKING");
     assert.ok(next.muses.trader.position[0] > -2.4);
     assert.ok(next.muses.trader.position[0] < 3.4);

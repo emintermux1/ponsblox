@@ -160,7 +160,7 @@ function walkToward(
   const dy = target[1] - y;
   const dz = target[2] - z;
   const dist = Math.hypot(dx, dz);
-  if (dist < 0.1) {
+  if (dist < 0.1 || dist <= speed) {
     return { ...muse, activity: arrive, position: target, facing: arriveFacing };
   }
   const step = Math.min(speed, dist);
