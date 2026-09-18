@@ -274,6 +274,17 @@ canvas {
   background: color-mix(in srgb, var(--loft-paper) 38%, transparent);
 }
 
+.loft-dex-pane {
+  pointer-events: auto;
+  display: flex;
+  width: 380px;
+  height: 220px;
+  flex-direction: column;
+  overflow: hidden;
+  background: #0b1117;
+  box-shadow: 0 8px 24px rgba(4, 6, 8, 0.45);
+}
+
 .loft-dex-screen {
   pointer-events: auto;
   position: absolute;
