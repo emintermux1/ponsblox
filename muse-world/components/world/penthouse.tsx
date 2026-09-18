@@ -753,13 +753,9 @@ export function Penthouse({
         inspecting={inspecting}
         onInspect={onInspect ?? (() => undefined)}
       />
-<<<<<<< HEAD
       <DeskChair position={[3.28, 0, 0.12]} />
       <DeskChair position={[4.12, 0, 0.12]} />
-      <IdeaWall packet={packet} pins={wallPins} builderPos={builderPos} />
-=======
       <IdeaWall packet={packet} pins={wallPins} builderPos={builderPos} world={world} />
->>>>>>> 98034e7 (Show living ink on Muse World idea-wall papers.)
       <City count={cityCount} />
       {dense ? <Haze /> : null}
     </group>
