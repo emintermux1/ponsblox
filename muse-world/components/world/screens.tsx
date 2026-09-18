@@ -215,7 +215,9 @@ function paintHero(
 ) {
   ctx.fillStyle = "#efe6d4";
   ctx.font = `800 ${titlePx}px ui-sans-serif, system-ui`;
-  ctx.fillText(tapeHeadline(tape), x, y);
+  const title =
+    tape.source === "sim" ? tapeHeadline(tape) : (tape.ticker ?? tape.name ?? tapeStamp(tape.source));
+  ctx.fillText(title, x, y);
   const change = formatChange(tape.changePct);
   ctx.fillStyle = changeColor(tape);
   ctx.font = `700 ${Math.round(titlePx * 0.42)}px ui-sans-serif, system-ui`;
