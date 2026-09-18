@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // CommonJS shim preloaded by the node test runner.
+    "tests/preload.cjs",
   ]),
 ]);
 
