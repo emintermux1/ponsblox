@@ -26,7 +26,14 @@ export type ScreenView = {
   source: string;
 };
 
-const LIVE: readonly ScreenSource[] = ["gecko", "dexscreener", "birdeye", "gmgn", "helius"];
+const LIVE: readonly ScreenSource[] = [
+  "gecko",
+  "dexscreener",
+  "birdeye",
+  "gmgn",
+  "helius",
+  "solana",
+];
 
 export function quietScreenPulse(): ScreenPulse {
   return {
