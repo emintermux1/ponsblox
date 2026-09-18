@@ -18,10 +18,12 @@ import {
   MOBILE_INTRO_SHOTS,
   playIntro,
   readShot,
+  shotForInspect,
   shotForPreset,
   shotSettled,
+  TAPE_SHOT,
 } from "./camera";
-import { GROK_ORB_POS } from "./layout";
+import { GROK_ORB_POS, SCREEN_POS } from "./layout";
 
 test("cinemaDt clamps a tab-resume spike and ignores negatives", () => {
   assert.equal(cinemaDt(2), 1 / 24);
@@ -122,4 +124,11 @@ test("tap-to-look presets still resolve at narrow width", () => {
   assert.ok(trader.target[0] > 0);
   assert.ok(lookLimits(true).minDistance > 4);
   assert.ok(lookLimits(true).maxPolarAngle < Math.PI * 0.7);
+});
+
+test("inspecting tape looks at Urania's monitor", () => {
+  assert.deepEqual(TAPE_SHOT.target, SCREEN_POS.tape);
+  assert.deepEqual(shotForInspect("tape").target, SCREEN_POS.tape);
+  assert.ok(lookLimits(true, "tape").minDistance < 3);
+  assert.ok(lookLimits(false, "tape").minDistance < LOOK_CAM.minDistance);
 });

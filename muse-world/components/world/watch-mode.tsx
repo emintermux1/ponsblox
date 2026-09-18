@@ -3,10 +3,13 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { activityLine, asCaption } from "@/components/watch/copy";
+import { DexScreenerFrame } from "@/components/world/dex-screen";
 import { usePerf } from "@/components/world/perf-context";
 import { useTape } from "@/components/world/tape-context";
+import { dexEmbedSrc, dexHonesty } from "@/lib/world/dex-embed";
+import { watchDexRect, type OverlayRect } from "@/lib/world/dex-overlay";
 import { GROK_ORB_POS, SCREEN_POS, wallSlotWorld } from "@/lib/world/layout";
-import { tapeHeadline } from "@/lib/world/tape";
+import { tapeHeadline, tapeStamp } from "@/lib/world/tape";
 import { projectLoft, watchFrame } from "@/lib/world/perf";
 import { screenView, type ScreenPulse } from "@/lib/world/screen-texture";
 import type { MuseId, MuseState, PacketEndpoint, ScreenId, WorldSnapshot } from "@/types/world";
@@ -302,6 +305,47 @@ function screenLabel(id: ScreenId): string {
   }
 }
 
+function WatchTapeDex({
+  frame,
+}: {
+  frame: { x: number; y: number; scale: number };
+}) {
+  const tape = useTape();
+  const src = dexEmbedSrc(tape);
+  const [box, setBox] = useState<OverlayRect | null>(null);
+
+  useEffect(() => {
+    const update = () => {
+      setBox(
+        watchDexRect(projectLoft(SCREEN_POS.tape), frame, window.innerWidth, window.innerHeight),
+      );
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [frame.scale, frame.x, frame.y]);
+
+  if (!src || !box) {
+    return null;
+  }
+
+  return (
+    <div
+      className="loft-dex-screen"
+      data-dex-embed="live"
+      data-dex-mark={dexHonesty(tape.source)}
+      style={{ left: box.left, top: box.top, width: box.width, height: box.height }}
+    >
+      <DexScreenerFrame
+        src={src}
+        mark={dexHonesty(tape.source)}
+        headline={tape.ticker ?? tapeHeadline(tape)}
+        stamp={tapeStamp(tape.source)}
+      />
+    </div>
+  );
+}
+
 function WatchScreens({
   inspecting,
   onInspect,
@@ -313,16 +357,19 @@ function WatchScreens({
   return (
     <>
       {SCREEN_IDS.map((id) => {
+        if (id === "tape") {
+          return null;
+        }
         const point = projectLoft(SCREEN_POS[id]);
         return (
           <button
             key={id}
             type="button"
             onClick={() => onInspect(id)}
-            className="absolute z-20 flex h-4 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden bg-[#0e1216] text-[5px] leading-none text-[#d7b56a]"
+            className="absolute z-20 flex h-4 w-10 items-center justify-center overflow-hidden bg-[#0e1216] text-[5px] leading-none text-[#d7b56a]"
             style={{
-              left: `${point.left}%`,
-              top: `${point.top}%`,
+              left: `calc(${point.left}% - 1.25rem)`,
+              top: `calc(${point.top}% - 0.5rem)`,
               boxShadow: inspecting === id ? "0 0 10px rgba(74,106,130,0.7)" : undefined,
             }}
             aria-label={screenLabel(id)}
@@ -406,6 +453,7 @@ export function WatchMode({
         ))}
         <WatchPacket world={world} now={now} />
       </motion.div>
+      <WatchTapeDex frame={frame} />
       <WatchMind world={world} />
     </div>
   );

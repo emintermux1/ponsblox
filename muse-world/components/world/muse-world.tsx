@@ -69,6 +69,7 @@ export function MuseWorld({
       data-loft-tier={budget.tier}
       data-look-cam={LOOK_CAM_NAME}
       data-orbit-controls={ORBIT_CONTROLS_NAME}
+      data-dex-host="tape"
     >
       {ready && webgl ? (
         <Canvas

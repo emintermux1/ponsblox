@@ -1,7 +1,7 @@
 import gsap from "gsap";
 import { PerspectiveCamera, Vector3, type Camera } from "three";
-import { GROK_ORB_POS } from "@/lib/world/layout";
-import type { CameraPreset, MuseId } from "@/types/world";
+import { GROK_ORB_POS, SCREEN_POS } from "@/lib/world/layout";
+import type { CameraPreset, MuseId, ScreenId } from "@/types/world";
 import { assertNever } from "@/types/world";
 
 export type Shot = {
@@ -119,7 +119,7 @@ export function shotForPreset(
     case "SCROLLER":
       return lookAtMuse([-6.4, 1.9, 3.8], [-4.1, 0.59, 1.15], musePos, 32);
     case "TRADER":
-      return lookAtMuse([4.8, 3.1, 6.4], [3.35, 0.86, -0.15], musePos, 40);
+      return lookAtMuse([3.95, 2.28, 4.15], [3.35, 0.86, -0.15], musePos, 36);
     case "BUILDER":
       return lookAtMuse([3.8, 2.2, 6.2], [6.3, 0.74, 2.8], musePos, 34);
     case "GROK":
@@ -314,7 +314,46 @@ export function fitShotToViewport(shot: Shot, width: number, height: number): Sh
   };
 }
 
-export function lookLimits(compact: boolean): LookLimits {
+export const TAPE_SHOT: Shot = {
+  position: [2.86, 1.48, 1.92],
+  target: [SCREEN_POS.tape[0], SCREEN_POS.tape[1], SCREEN_POS.tape[2]],
+  fov: 28,
+};
+
+export const NOTES_SHOT: Shot = {
+  position: [4.06, 1.48, 1.92],
+  target: [SCREEN_POS.notes[0], SCREEN_POS.notes[1], SCREEN_POS.notes[2]],
+  fov: 28,
+};
+
+export function shotForInspect(id: ScreenId, compact = false): Shot {
+  switch (id) {
+    case "tape":
+      return compact
+        ? { position: [2.86, 1.68, 2.85], target: TAPE_SHOT.target, fov: 34 }
+        : TAPE_SHOT;
+    case "notes":
+      return compact
+        ? { position: [4.06, 1.68, 2.85], target: NOTES_SHOT.target, fov: 34 }
+        : NOTES_SHOT;
+    default:
+      return assertNever(id);
+  }
+}
+
+export function lookLimits(compact: boolean, inspecting: ScreenId | null = null): LookLimits {
+  if (inspecting === "tape" || inspecting === "notes") {
+    return {
+      minDistance: compact ? 2.15 : 1.65,
+      maxDistance: compact ? 16.8 : LOOK_CAM.maxDistance,
+      minPolarAngle: compact ? Math.PI * 0.22 : LOOK_CAM.minPolarAngle,
+      maxPolarAngle: compact ? Math.PI * 0.5 : LOOK_CAM.maxPolarAngle,
+      dampingFactor: LOOK_CAM.dampingFactor,
+      rotateSpeed: compact ? 0.78 : LOOK_CAM.rotateSpeed,
+      zoomSpeed: LOOK_CAM.zoomSpeed,
+      panSpeed: LOOK_CAM.panSpeed,
+    };
+  }
   if (!compact) {
     return LOOK_CAM;
   }

@@ -19,13 +19,14 @@ import {
   playIntro,
   proxyFromCamera,
   readShot,
+  shotForInspect,
   shotForPreset,
   shotSettled,
   writeShot,
   type Shot,
   type ShotProxy,
 } from "@/lib/world/camera";
-import type { CameraPreset, MuseId } from "@/types/world";
+import type { CameraPreset, MuseId, ScreenId } from "@/types/world";
 import { assertNever } from "@/types/world";
 
 type Drive =
@@ -57,12 +58,14 @@ export function CameraRig({
   preset,
   selected,
   musePos,
+  inspecting = null,
   introDone,
   onIntroDone,
 }: {
   preset: CameraPreset;
   selected: MuseId | null;
   musePos: [number, number, number] | null;
+  inspecting?: ScreenId | null;
   introDone: boolean;
   onIntroDone: () => void;
 }) {
@@ -70,7 +73,7 @@ export function CameraRig({
   const gl = useThree((state) => state.gl);
   const { reducedMotion, hidden, cameraFar, tier } = usePerf();
   const compact = tier === "phone";
-  const limits = lookLimits(compact);
+  const limits = lookLimits(compact, inspecting);
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const startShot = (() => {
     const { width, height } = viewportSize();
@@ -163,11 +166,14 @@ export function CameraRig({
       return;
     }
     const { width, height } = viewportSize();
-    const next = fitShotToViewport(shotForPreset(preset, selected, musePosRef.current), width, height);
+    const aimed = inspecting
+      ? shotForInspect(inspecting, compact)
+      : shotForPreset(preset, selected, musePosRef.current);
+    const next = fitShotToViewport(aimed, width, height);
     proxy.current = proxyFromCamera(camera, next);
     drive.current = { kind: "ease", to: next };
     setLookFree(true);
-  }, [camera, introDone, preset, selected]);
+  }, [camera, compact, inspecting, introDone, preset, selected]);
 
   useEffect(() => {
     const el = gl.domElement;

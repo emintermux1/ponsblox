@@ -277,8 +277,8 @@ canvas {
 .loft-dex-pane {
   pointer-events: auto;
   display: flex;
-  width: 380px;
-  height: 220px;
+  width: 300px;
+  height: 174px;
   flex-direction: column;
   overflow: hidden;
   background: #0b1117;
@@ -293,6 +293,11 @@ canvas {
   flex-direction: column;
   overflow: hidden;
   background: #0b1117;
+  transform: none;
+}
+
+.loft-dex-screen[hidden] {
+  display: none;
 }
 
 .loft-dex-screen-bar {
