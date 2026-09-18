@@ -106,7 +106,7 @@ function walkToward(
   const dz = target[2] - z;
   const dist = Math.hypot(dx, dz);
   if (dist < 0.08) {
-    return { ...muse, activity: "IDLE", position: target };
+    return { ...muse, activity: "CHILLING", position: target };
   }
   return {
     ...muse,
@@ -120,21 +120,20 @@ function nextActivity(muse: MuseState, pulse: boolean): MuseActivity {
   switch (muse.id) {
     case "scroller":
       if (pulse && Math.random() < 0.55) return "REACTING";
-      return Math.random() < 0.82 ? "SCROLLING" : "THINKING";
+      return Math.random() < 0.88 ? "SCROLLING" : "THINKING";
     case "trader":
       if (pulse) return "THINKING";
       if (Math.random() < 0.45) return "WATCHING";
-      if (Math.random() < 0.7) return "TRADING";
+      if (Math.random() < 0.72) return "TRADING";
       return "THINKING";
     case "chill":
-      if (Math.random() < 0.28) return "WALKING";
-      if (Math.random() < 0.48) return "SMOKING";
-      if (Math.random() < 0.7) return "CHILLING";
-      if (Math.random() < 0.82) return "WATCHING";
-      return "IDLE";
+      if (Math.random() < 0.4) return "WALKING";
+      if (Math.random() < 0.58) return "SMOKING";
+      if (Math.random() < 0.86) return "CHILLING";
+      return "WATCHING";
     case "builder":
       if (pulse && Math.random() < 0.4) return "REACTING";
-      return Math.random() < 0.7 ? "RESEARCHING" : "THINKING";
+      return Math.random() < 0.74 ? "RESEARCHING" : "THINKING";
     default:
       return assertNever(muse.id);
   }
@@ -215,8 +214,8 @@ export function tickSnapshot(
 
   for (const id of Object.keys(muses) as MuseId[]) {
     let muse = clearExpiredThought(muses[id], now);
-    if (muse.id === "chill" && (muse.activity === "WALKING" || Math.random() < 0.18)) {
-      muse = walkToward(muse, chillHome(now), 0.045);
+    if (muse.id === "chill" && (muse.activity === "WALKING" || Math.random() < 0.3)) {
+      muse = walkToward(muse, chillHome(now), 0.07);
     } else {
       muse = applyActivity(muse, nextActivity(muse, spiked), ticker);
     }
