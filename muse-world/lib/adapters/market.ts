@@ -574,13 +574,10 @@ async function peekGeckoCandles(pool: string | null): Promise<TapeCandle[]> {
 }
 
 function rowsOf(group: MarketHits): MarketHit[] {
-  if (Array.isArray(group)) {
-    return [...group];
+  if (typeof group === "string") {
+    return [];
   }
-  if (group && typeof group === "object") {
-    return [group];
-  }
-  return [];
+  return (Array.isArray(group) ? group : [group]) as MarketHit[];
 }
 
 function firstMint(...groups: MarketHits[]): string | null {
