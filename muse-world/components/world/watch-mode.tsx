@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { activityLine, asCaption } from "@/components/watch/copy";
 import { usePerf } from "@/components/world/perf-context";
-import { useTape } from "@/components/world/tape-context";
+import { useTape, useTickets } from "@/components/world/tape-context";
 import { GROK_ORB_POS, SCREEN_POS, wallSlotWorld } from "@/lib/world/layout";
-import { tapeHeadline } from "@/lib/world/tape";
+import { formatChange, formatPrice, pairTitle } from "@/lib/world/tape";
 import { projectLoft, watchFrame } from "@/lib/world/perf";
 import { screenView, type ScreenPulse } from "@/lib/world/screen-texture";
 import type { MuseId, MuseState, PacketEndpoint, ScreenId, WorldSnapshot } from "@/types/world";
@@ -161,9 +161,13 @@ function Furniture({ pulse }: { pulse: ScreenPulse }) {
   const desk = projectLoft([3.4, 0, -0.85]);
   const wall = projectLoft([7.55, 0, 2.6]);
   const table = projectLoft([-2.7, 0, 2.2]);
+  const tape = useTape();
+  const { flash } = useTickets();
   const view = screenView(pulse);
   const changeColor =
     view.changeTone === "up" ? "#7ee3a4" : view.changeTone === "down" ? "#ef8b8b" : "#d7c9a6";
+  const price = formatPrice(tape.priceUsd);
+  const change = formatChange(tape.changePct) ?? view.change;
 
   return (
     <>
@@ -180,23 +184,32 @@ function Furniture({ pulse }: { pulse: ScreenPulse }) {
         <div className="absolute inset-x-2 -top-6 flex justify-between gap-1">
           <span
             data-screen="desk-left"
-            className="flex h-7 w-12 flex-col items-center justify-center rounded-[1px] bg-[#1a3b52] shadow-[0_0_10px_#7eb7d455]"
+            className="flex h-8 w-14 flex-col items-center justify-center rounded-[1px] bg-[#0b1118] shadow-[0_0_10px_#7eb7d455]"
           >
-            <span className="text-[6px] font-semibold tracking-[0.08em] text-[#ecf6ff]">{view.title}</span>
-            <span className="text-[6px] font-semibold" style={{ color: changeColor }}>
-              {view.change}
+            <span className="max-w-[52px] truncate text-[5px] font-semibold tracking-[0.04em] text-[#ecf6ff]">
+              {pairTitle(tape)}
+            </span>
+            <span className="text-[6px] font-semibold text-[#f4ead4]">{price ? `$${price}` : "—"}</span>
+            <span className="text-[5px] font-semibold" style={{ color: changeColor }}>
+              {change}
             </span>
           </span>
           <span
             data-screen="desk-right"
-            className="flex h-7 w-12 flex-col items-center justify-center rounded-[1px] bg-[#1a3b52] shadow-[0_0_10px_#7eb7d455]"
+            className="flex h-8 w-14 flex-col items-center justify-center rounded-[1px] bg-[#0b1118] shadow-[0_0_10px_#7dcea055]"
           >
-            <span className="text-[6px] font-semibold tracking-[0.08em] text-[#ecf6ff]">{view.title}</span>
-            <span className="text-[6px] font-semibold" style={{ color: changeColor }}>
-              {view.change}
+            <span className="text-[5px] tracking-[0.12em] text-[#c9ae7a]">SIM</span>
+            <span className="flex gap-1 text-[6px] font-semibold">
+              <span style={{ color: flash?.side === "BUY" ? "#0b1118" : "#7ee3a4", background: flash?.side === "BUY" ? "#7ee3a4" : "transparent" }}>
+                BUY
+              </span>
+              <span style={{ color: flash?.side === "SELL" ? "#0b1118" : "#ef8b8b", background: flash?.side === "SELL" ? "#ef8b8b" : "transparent" }}>
+                SELL
+              </span>
             </span>
           </span>
         </div>
+        <span className="absolute left-1/2 top-[42%] h-1 w-8 -translate-x-1/2 rounded-[1px] bg-[#1a1916]" aria-hidden />
         <span
           data-screen="laptop"
           className="absolute -right-4 -top-3 flex h-7 w-11 flex-col items-center justify-center bg-[#16344a] shadow-[0_0_8px_#7eb7d440]"
@@ -301,9 +314,9 @@ function WatchGrok({
 function screenLabel(id: ScreenId): string {
   switch (id) {
     case "tape":
-      return "Tape";
+      return "Pair";
     case "notes":
-      return "Notes";
+      return "Tickets";
     default:
       return assertNever(id);
   }
@@ -334,7 +347,7 @@ function WatchScreens({
             }}
             aria-label={screenLabel(id)}
           >
-            {tapeHeadline(tape)}
+            {id === "notes" ? "BUY / SELL" : pairTitle(tape)}
           </button>
         );
       })}

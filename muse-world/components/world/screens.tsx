@@ -6,15 +6,22 @@ import { useFrame } from "@react-three/fiber";
 import { CanvasTexture, SRGBColorSpace, type MeshStandardMaterial } from "three";
 import { loftPickHandlers } from "@/components/world/loft-cursor";
 import { usePerf } from "@/components/world/perf-context";
-import { useTape } from "@/components/world/tape-context";
+import { useTape, useTickets } from "@/components/world/tape-context";
 import {
   formatChange,
+  formatCompactUsd,
   formatPrice,
+  pairTitle,
   rowLabel,
   tapeHeadline,
   tapeStamp,
   type TapeView,
 } from "@/lib/world/tape";
+import {
+  ticketVerb,
+  type SimTicket,
+  type TicketFlash,
+} from "@/lib/world/tickets";
 import type { PlateKind } from "@/lib/world/plates";
 import type { ScreenId } from "@/types/world";
 import { assertNever } from "@/types/world";
@@ -70,7 +77,7 @@ function glowFor(kind: LcdKind): string {
     case "tape":
       return "#7ec8b0";
     case "notes":
-      return "#f0d8b4";
+      return "#7dcea0";
     case "tv":
       return "#9bb6c8";
     default:
@@ -266,26 +273,121 @@ function paintFeed(ctx: CanvasRenderingContext2D, w: number, h: number, tape: Ta
 }
 
 function paintTape(ctx: CanvasRenderingContext2D, w: number, h: number, tape: TapeView) {
-  ctx.fillStyle = "#0c1014";
+  ctx.fillStyle = "#0b1118";
   ctx.fillRect(0, 0, w, h);
-  paintHero(ctx, tape, 28, 78, 62);
-  ctx.fillStyle = "#151a20";
-  ctx.fillRect(20, 150, 620, h - 178);
-  drawCandles(ctx, tape, 36, 166, 588, h - 214);
-  drawSpark(ctx, tape, 36, 166, 588, h - 214);
-  drawRows(ctx, tape, 656, 150, 284, 58, 6);
+  ctx.fillStyle = "#121922";
+  ctx.fillRect(0, 0, w, 92);
+  ctx.fillStyle = "#efe6d4";
+  ctx.font = "700 22px ui-sans-serif, system-ui";
+  ctx.fillText(pairTitle(tape), 24, 36);
+  const price = formatPrice(tape.priceUsd);
+  const change = formatChange(tape.changePct);
+  ctx.fillStyle = "#f4ead4";
+  ctx.font = "700 34px ui-sans-serif, system-ui";
+  ctx.fillText(price ? `$${price}` : tape.source === "sim" ? "SIM" : "—", 24, 76);
+  ctx.fillStyle = tape.changePct != null && tape.changePct < 0 ? "#ef8b8b" : "#7ee3a4";
+  ctx.font = "700 22px ui-sans-serif, system-ui";
+  ctx.fillText(change ?? "—", 280, 76);
+  ctx.fillStyle = "#8d8370";
+  ctx.font = "12px ui-sans-serif, system-ui";
+  const dex = tape.dexId ? tape.dexId : "pair";
+  ctx.fillText(`${tapeStamp(tape.source)}  ·  ${dex}  ·  no fills`, 24, 108);
+  ctx.fillStyle = "#10161d";
+  ctx.fillRect(16, 120, w - 32, h - 176);
+  drawCandles(ctx, tape, 28, 132, w - 56, h - 204);
+  const vol = formatCompactUsd(tape.volumeUsd);
+  const liq = formatCompactUsd(tape.liquidityUsd);
+  ctx.fillStyle = "#6a7380";
+  ctx.font = "12px ui-sans-serif, system-ui";
+  ctx.fillText(
+    [vol ? `VOL ${vol}` : null, liq ? `LIQ ${liq}` : null, "public OHLCV", "no fills"]
+      .filter(Boolean)
+      .join("   ·   "),
+    24,
+    h - 24,
+  );
 }
 
-function paintNotes(ctx: CanvasRenderingContext2D, w: number, h: number, tape: TapeView) {
-  ctx.fillStyle = "#ead9c0";
+function paintButton(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  label: string,
+  sub: string,
+  color: string,
+  lit: boolean,
+) {
+  ctx.fillStyle = lit ? color : "#1a222c";
+  roundRect(ctx, x, y, w, h, 14);
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lit ? 3 : 1.5;
+  roundRect(ctx, x, y, w, h, 14);
+  ctx.stroke();
+  ctx.fillStyle = lit ? "#0b1118" : color;
+  ctx.font = "700 28px ui-sans-serif, system-ui";
+  ctx.fillText(label, x + 28, y + 42);
+  ctx.font = "600 13px ui-sans-serif, system-ui";
+  ctx.fillText(sub, x + 28, y + 68);
+}
+
+function paintNotes(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  tape: TapeView,
+  tickets: readonly SimTicket[],
+  flash: TicketFlash | null,
+) {
+  ctx.fillStyle = "#0b1118";
   ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = "#efe6d4";
+  ctx.font = "700 22px ui-sans-serif, system-ui";
+  ctx.fillText("TICKET", 24, 36);
+  ctx.fillStyle = "#c9ae7a";
+  ctx.font = "12px ui-sans-serif, system-ui";
+  ctx.fillText("SIM  ·  UI only  ·  fills []  ·  no withdraw", 24, 58);
+  const price = formatPrice(tape.priceUsd);
+  const quoted = tape.source !== "sim" && price ? `$${price}` : "SIM · no quote";
   ctx.fillStyle = "#f4ead4";
-  ctx.fillRect(18, 16, w - 36, h - 32);
-  paintHero(ctx, tape, 40, 86, 52);
-  ctx.fillStyle = "#e6d3b4";
-  ctx.fillRect(36, 160, 560, 250);
-  drawCandles(ctx, tape, 48, 176, 536, 218);
-  drawRows(ctx, tape, 616, 160, 308, 58, 6);
+  ctx.font = "700 20px ui-sans-serif, system-ui";
+  ctx.fillText(`${pairTitle(tape)}   ${quoted}`, 24, 88);
+  ctx.fillStyle = "#6a7380";
+  ctx.font = "12px ui-sans-serif, system-ui";
+  ctx.fillText(
+    tape.source === "sim" ? "local ticket unless a public quote returns" : `${tapeStamp(tape.source)} quote`,
+    24,
+    110,
+  );
+  paintButton(ctx, 24, 128, 440, 88, "BUY", "YES", "#7ee3a4", flash?.side === "BUY");
+  paintButton(ctx, 496, 128, 440, 88, "SELL", "NO", "#ef8b8b", flash?.side === "SELL");
+  ctx.fillStyle = "#8d8370";
+  ctx.font = "12px ui-sans-serif, system-ui";
+  ctx.fillText("open SIM tickets", 24, 244);
+  if (tickets.length === 0) {
+    ctx.fillStyle = "#5a6470";
+    ctx.fillText("none — click BUY or SELL for a local SIM ticket", 24, 272);
+    return;
+  }
+  tickets.slice(0, 4).forEach((ticket, index) => {
+    const y = 258 + index * 58;
+    ctx.fillStyle = index % 2 === 0 ? "#121922" : "#0f161d";
+    roundRect(ctx, 24, y, w - 48, 50, 10);
+    ctx.fill();
+    ctx.fillStyle = ticket.side === "BUY" ? "#7ee3a4" : "#ef8b8b";
+    ctx.font = "700 16px ui-sans-serif, system-ui";
+    ctx.fillText(`${ticket.side} / ${ticketVerb(ticket.side)}`, 40, y + 22);
+    ctx.fillStyle = "#d8c6a6";
+    ctx.font = "12px ui-sans-serif, system-ui";
+    const quote = ticket.quoteUsd != null ? `$${formatPrice(ticket.quoteUsd)}` : "no quote";
+    ctx.fillText(
+      `${ticket.ticker ?? "pair"}  ${quote}  ·  ${ticket.label}  ·  fills []`,
+      40,
+      y + 40,
+    );
+  });
 }
 
 function paintTv(ctx: CanvasRenderingContext2D, w: number, h: number, tape: TapeView) {
@@ -302,7 +404,12 @@ function paintTv(ctx: CanvasRenderingContext2D, w: number, h: number, tape: Tape
   drawRows(ctx, tape, 720, 150, 216, 56, 6);
 }
 
-function paintLcd(kind: LcdKind, tape: TapeView): HTMLCanvasElement | null {
+function paintLcd(
+  kind: LcdKind,
+  tape: TapeView,
+  tickets: readonly SimTicket[] = [],
+  flash: TicketFlash | null = null,
+): HTMLCanvasElement | null {
   if (typeof document === "undefined") {
     return null;
   }
@@ -326,7 +433,7 @@ function paintLcd(kind: LcdKind, tape: TapeView): HTMLCanvasElement | null {
       paintTape(ctx, w, h, tape);
       return canvas;
     case "notes":
-      paintNotes(ctx, w, h, tape);
+      paintNotes(ctx, w, h, tape, tickets, flash);
       return canvas;
     case "tv":
       paintTv(ctx, w, h, tape);
@@ -344,11 +451,16 @@ function asMap(canvas: HTMLCanvasElement): CanvasTexture {
   return tex;
 }
 
-function useLiveMap(kind: LcdKind, tape: TapeView): CanvasTexture | null {
+function useLiveMap(
+  kind: LcdKind,
+  tape: TapeView,
+  tickets: readonly SimTicket[],
+  flash: TicketFlash | null,
+): CanvasTexture | null {
   const map = useMemo(() => {
-    const canvas = paintLcd(kind, tape);
+    const canvas = paintLcd(kind, tape, tickets, flash);
     return canvas ? asMap(canvas) : null;
-  }, [kind, tape]);
+  }, [kind, tape, tickets, flash]);
 
   useEffect(() => {
     return () => {
@@ -390,7 +502,8 @@ export function LiveLcd({
   wash?: number;
 }) {
   const tape = useTape();
-  const map = useLiveMap(kind, tape);
+  const { tickets, flash } = useTickets();
+  const map = useLiveMap(kind, tape, tickets, flash);
   const material = useRef<MeshStandardMaterial>(null);
   const { extraLights } = usePerf();
 
@@ -563,6 +676,7 @@ export function MonitorDevice({
   active?: boolean;
   onInspect?: (id: ScreenId) => void;
 }) {
+  const { submit } = useTickets();
   return (
     <group
       position={position}
@@ -599,6 +713,24 @@ export function MonitorDevice({
         <group position={[0, 0.01, 0.017]}>
           <LiveLcd kind={kind} width={0.88} height={0.5} intensity={active ? 1.32 : 1.12} wash={0.82} />
         </group>
+        {kind === "notes" ? (
+          <>
+            <mesh
+              position={[-0.22, -0.08, 0.022]}
+              {...loftPickHandlers(() => submit("BUY"))}
+            >
+              <planeGeometry args={[0.4, 0.12]} />
+              <meshBasicMaterial transparent opacity={0} />
+            </mesh>
+            <mesh
+              position={[0.22, -0.08, 0.022]}
+              {...loftPickHandlers(() => submit("SELL"))}
+            >
+              <planeGeometry args={[0.4, 0.12]} />
+              <meshBasicMaterial transparent opacity={0} />
+            </mesh>
+          </>
+        ) : null}
       </group>
     </group>
   );

@@ -5,6 +5,7 @@ import {
   MARKET_BUDGET_MS,
   MARKET_LIVE_TTL_MS,
   peekMarketPulse,
+  publicOhlcvUrls,
   resetMarketPulseForTests,
 } from "./market.ts";
 
@@ -198,6 +199,54 @@ describe("market adapter fetch", () => {
           url.includes("birdeye.so") || url.includes("openapi.gmgn.ai") || url.includes("helius-rpc.com"),
       ),
     );
+    assert.deepEqual(pulse.fills, []);
+  });
+
+  it("loads public Dex/Gecko OHLCV for a DexScreener pair and never invents bars", async () => {
+    clearPaidKeys();
+    resetMarketPulseForTests();
+    const pair = "Czfq3xZZDmsdGdUyrNLtRhGc47cXcZtLG4crryfu44zE";
+    const urls = publicOhlcvUrls(pair);
+    assert.ok(urls[0]?.includes("geckoterminal.com"));
+    assert.ok(urls[1]?.includes("api.coingecko.com/api/v3/onchain"));
+    mock.method(globalThis, "fetch", async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("latest/dex/search")) {
+        return jsonOk({
+          pairs: [
+            {
+              chainId: "solana",
+              dexId: "raydium",
+              pairAddress: pair,
+              baseToken: {
+                address: "EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm",
+                symbol: "WIF",
+                name: "dogwifhat",
+              },
+              priceUsd: "1.25",
+              priceChange: { h24: 2.2 },
+              volume: { h24: 12_000 },
+              liquidity: { usd: 40_000 },
+            },
+          ],
+        });
+      }
+      if (url.includes("ohlcv/minute") && url.includes(pair)) {
+        return jsonOk({
+          data: { attributes: { ohlcv_list: [[100, 1, 1.2, 0.9, 1.1]] } },
+        });
+      }
+      if (url.includes("mainnet-beta.solana.com")) {
+        return jsonOk({ jsonrpc: "2.0", result: 9 });
+      }
+      return new Response("nope", { status: 500 });
+    });
+    const pulse = await peekMarketPulse();
+    assert.equal(pulse.source, "dexscreener");
+    assert.equal(pulse.ticker, "WIF");
+    assert.equal(pulse.pairAddress, pair);
+    assert.equal(pulse.candles.length, 1);
+    assert.equal(pulse.candles[0]?.c, 1.1);
     assert.deepEqual(pulse.fills, []);
   });
 });

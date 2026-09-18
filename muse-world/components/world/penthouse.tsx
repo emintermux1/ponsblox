@@ -533,11 +533,33 @@ function DeskChair({ position }: { position: [number, number, number] }) {
   );
 }
 
-function DeskKeyboard({ x }: { x: number }) {
+function DeskKeyboard({ x, z = 0.4 }: { x: number; z?: number }) {
   return (
-    <group position={[x, 0.785, 0.22]}>
-      <Panel args={[0.38, 0.016, 0.14]} position={[0, 0, 0]} color="#1a1916" roughness={0.42} metalness={0.18} />
-      <Panel args={[0.34, 0.008, 0.1]} position={[0, 0.01, 0]} color="#2a2824" roughness={0.5} />
+    <group position={[x, 0.792, z]} rotation={[0.04, 0, 0]}>
+      <Panel args={[0.38, 0.018, 0.15]} position={[0, 0, 0]} color="#1a1916" roughness={0.4} metalness={0.2} />
+      {Array.from({ length: 5 }, (_, row) =>
+        Array.from({ length: 14 }, (__, col) => (
+          <Panel
+            key={`${row}-${col}`}
+            args={[0.02, 0.008, 0.016]}
+            position={[-0.15 + col * 0.023, 0.012, -0.04 + row * 0.02]}
+            color="#3a3834"
+            roughness={0.48}
+          />
+        )),
+      )}
+    </group>
+  );
+}
+
+function DeskMouse({ x }: { x: number }) {
+  return (
+    <group position={[x, 0.79, 0.44]}>
+      <mesh rotation={[0.08, 0.18, 0]} scale={[1, 0.38, 1.15]}>
+        <sphereGeometry args={[0.028, 14, 10]} />
+        <meshStandardMaterial color="#1a1916" roughness={0.36} metalness={0.2} />
+      </mesh>
+      <Panel args={[0.008, 0.006, 0.018]} position={[0, 0.012, -0.004]} color="#2c2a26" roughness={0.42} />
     </group>
   );
 }
@@ -597,7 +619,9 @@ function Desk({
         active={inspecting === "notes"}
         onInspect={onInspect}
       />
-      <DeskKeyboard x={0.62} />
+      <DeskKeyboard x={-0.12} />
+      <DeskMouse x={0.16} />
+      <DeskKeyboard x={0.72} z={0.22} />
       <Panel args={[0.42, 0.02, 0.3]} position={[1.18, 0.8, 0.22]} color={PAPER} roughness={0.82} />
       <Panel args={[0.36, 0.015, 0.26]} position={[1.2, 0.82, 0.2]} color="#d7c6aa" roughness={0.8} />
       <Panel args={[0.22, 0.03, 0.16]} position={[-1.28, 0.8, 0.28]} color="#3a2c20" roughness={0.7} />

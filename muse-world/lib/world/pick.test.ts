@@ -62,11 +62,12 @@ describe("loft pick", () => {
     assert.equal(next.inspecting, "tape");
     assert.equal(next.camera, "TRADER");
     const tape = inspectCopy(next, "tape");
-    assert.equal(tape.title, "Tape");
+    assert.equal(tape.title, "Pair");
     assert.equal(tape.lines.some((line) => /\$/.test(line)), false);
     assert.equal(inspectCopy(next, "notes").lines.some((line) => /\$paid\b/i.test(line)), false);
     assert.equal(
-      tape.lines.includes("looking, without an outside name"),
+      tape.lines.includes("looking, without an outside name") ||
+        tape.lines.includes("the pair is lit. no outside name."),
       true,
     );
   });

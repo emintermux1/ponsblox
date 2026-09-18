@@ -6,7 +6,7 @@ import { SceneGate } from "@/components/watch/scene-gate";
 import { MuseWorld } from "@/components/world/muse-world";
 import { WatchMode } from "@/components/world/watch-mode";
 import { PerfProvider } from "@/components/world/perf-context";
-import { TapeProvider } from "@/components/world/tape-context";
+import { TapeProvider, TicketProvider } from "@/components/world/tape-context";
 import { useLivingWorld } from "@/components/world/use-living-world";
 import { usePerfBudget } from "@/components/world/use-perf";
 
@@ -18,6 +18,7 @@ export function SpectatorFrame() {
   return (
     <PerfProvider value={budget}>
       <TapeProvider tape={living.tape}>
+      <TicketProvider>
       <MotionConfig reducedMotion="user">
         <SpectatorHud
           world={living.world}
@@ -55,6 +56,7 @@ export function SpectatorFrame() {
           />
         </SceneGate>
       </MotionConfig>
+      </TicketProvider>
       </TapeProvider>
     </PerfProvider>
   );

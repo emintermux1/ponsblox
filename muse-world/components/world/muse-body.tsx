@@ -35,8 +35,8 @@ function phaseFor(id: MuseId): number {
 function holdsLaptop(id: MuseId): boolean {
   switch (id) {
     case "scroller":
-    case "trader":
       return true;
+    case "trader":
     case "chill":
     case "builder":
       return false;
@@ -255,8 +255,11 @@ function motionFor(activity: MuseActivity, t: number, phase: number): Motion {
       motion.sway = [0.12, 0.04 * look, 0.03 * shift];
       break;
     case "TRADING": {
-      const tap = Math.sin(t * 7.2 + phase);
-      motion.sway = [0.14, 0.03, tap * 0.025];
+      const tap = Math.sin(t * 9.4 + phase);
+      const glance = Math.sin(t * 0.52 + phase);
+      motion.sway = [0.1, glance * 0.08, tap * 0.04];
+      motion.facing = glance * 0.42;
+      motion.offset[1] += Math.abs(tap) * 0.004;
       break;
     }
     case "RESEARCHING":
@@ -278,6 +281,14 @@ function motionFor(activity: MuseActivity, t: number, phase: number): Motion {
       return assertNever(activity);
   }
   return motion;
+}
+
+function applyTraderDesk(motion: Motion, t: number, phase: number) {
+  const tap = Math.sin(t * 9.4 + phase);
+  const glance = Math.sin(t * 0.52 + phase);
+  motion.sway = [0.1, glance * 0.08, tap * 0.04];
+  motion.facing = glance * 0.42;
+  motion.offset[1] += Math.abs(tap) * 0.004;
 }
 
 function dampRot(group: Group | null, rot: [number, number, number], lambda: number, dt: number) {
@@ -320,6 +331,14 @@ export function MuseBody({
       pauseExtras ? 0 : state.clock.elapsedTime,
       phase,
     );
+    if (
+      muse.id === "trader" &&
+      seated &&
+      muse.activity !== "REACTING" &&
+      muse.activity !== "WALKING"
+    ) {
+      applyTraderDesk(motion, pauseExtras ? 0 : state.clock.elapsedTime, phase);
+    }
     if (seated) {
       motion.offset[1] -= 0.08;
     }

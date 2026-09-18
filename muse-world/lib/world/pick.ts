@@ -153,28 +153,19 @@ export function inspectCopy(
     case "tape": {
       const trader = world.muses.trader;
       return {
-        title: "Tape",
+        title: "Pair",
         lines: [
           trader.mind.watching
             ? "looking, without an outside name"
-            : "the tape is lit. no outside name.",
+            : "the pair is lit. no outside name.",
           `ACT ${trader.mind.action}`,
         ],
       };
     }
     case "notes": {
-      const builder = world.muses.builder;
-      const memory = builder.mind.memory.trim();
-      const lines: string[] = [];
-      if (memory && memory !== "nothing sticky") {
-        lines.push(memory);
-      }
-      if (builder.mind.goal.trim()) {
-        lines.push(builder.mind.goal);
-      }
       return {
-        title: "Notes",
-        lines: lines.length > 0 ? lines : ["the desk is lit. no card yet."],
+        title: "Tickets",
+        lines: ["SIM ticket desk. no fills.", "BUY and SELL stay local."],
       };
     }
     default:

@@ -27,6 +27,10 @@ export type TapeView = {
   source: TapeSource;
   changePct: number | null;
   priceUsd: number | null;
+  pairAddress: string | null;
+  dexId: string | null;
+  volumeUsd: number | null;
+  liquidityUsd: number | null;
   candles: readonly TapeCandle[];
   rows: readonly TapeRowView[];
   fills: readonly [];
@@ -41,6 +45,10 @@ export function quietTape(): TapeView {
     source: "sim",
     changePct: null,
     priceUsd: null,
+    pairAddress: null,
+    dexId: null,
+    volumeUsd: null,
+    liquidityUsd: null,
     candles: [],
     rows: [],
     fills: [],
@@ -158,6 +166,11 @@ export function tapeFromPulse(pulse: {
   changePct?: unknown;
   priceChange24h?: unknown;
   priceUsd?: unknown;
+  pairAddress?: unknown;
+  pool?: unknown;
+  dexId?: unknown;
+  volumeUsd?: unknown;
+  liquidityUsd?: unknown;
   candles?: unknown;
   tape?: unknown;
 }): TapeView {
@@ -167,6 +180,12 @@ export function tapeFromPulse(pulse: {
   if (source === "sim" || (!ticker && !name)) {
     return quietTape();
   }
+  const pair =
+    typeof pulse.pairAddress === "string" && pulse.pairAddress.length >= 32
+      ? pulse.pairAddress
+      : typeof pulse.pool === "string" && pulse.pool.length >= 32
+        ? pulse.pool
+        : null;
   return {
     kind: tapeKindOf(pulse.kind),
     ticker,
@@ -175,6 +194,10 @@ export function tapeFromPulse(pulse: {
     source,
     changePct: parseFiniteNumber(pulse.changePct) ?? parseFiniteNumber(pulse.priceChange24h),
     priceUsd: parseFiniteNumber(pulse.priceUsd),
+    pairAddress: pair,
+    dexId: typeof pulse.dexId === "string" && pulse.dexId.trim() ? pulse.dexId.trim() : null,
+    volumeUsd: parseFiniteNumber(pulse.volumeUsd),
+    liquidityUsd: parseFiniteNumber(pulse.liquidityUsd),
     candles: sanitizeCandles(pulse.candles),
     rows: rowsFromPulse(pulse, source),
     fills: [],
@@ -245,6 +268,29 @@ export function tapeHeadline(tape: TapeView): string {
     return title;
   }
   return tapeStamp(tape.source);
+}
+
+export function pairTitle(tape: TapeView): string {
+  if (tape.source === "sim") {
+    return "SIM · quiet";
+  }
+  if (tape.name && tape.ticker && tape.name.toUpperCase() !== tape.ticker) {
+    return `${tape.name}  ${tape.ticker}`;
+  }
+  return tape.name ?? tape.ticker ?? tapeStamp(tape.source);
+}
+
+export function formatCompactUsd(value: number | null): string | null {
+  if (value == null || !Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+  if (value >= 1_000_000) {
+    return `$${(value / 1_000_000).toFixed(1)}M`;
+  }
+  if (value >= 1_000) {
+    return `$${(value / 1_000).toFixed(1)}K`;
+  }
+  return `$${value.toFixed(0)}`;
 }
 
 export function sparkCloses(candles: readonly TapeCandle[]): number[] {

@@ -3,7 +3,10 @@ import { describe, it } from "node:test";
 import { candlesFromOhlcvList, mergeMarketPulse, withPublicTape } from "@/lib/adapters/parse";
 import {
   formatChange,
+  formatCompactUsd,
+  formatPrice,
   paidSafeTicker,
+  pairTitle,
   quietTape,
   tapeFromPulse,
   tapeHeadline,
@@ -90,6 +93,28 @@ describe("public tape honesty", () => {
     assert.equal(tape.rows[1]?.changePct, -1.26);
     assert.equal(tape.rows[1]?.source, "dexscreener");
     assert.equal(tape.priceUsd, 1.25);
+    assert.deepEqual(tape.fills, []);
+  });
+
+  it("keeps a Dex pair name, dollar, and only real OHLCV", () => {
+    const tape = tapeFromPulse({
+      kind: "VIRAL_POST",
+      ticker: "WIF",
+      name: "dogwifhat",
+      source: "dexscreener",
+      priceUsd: 1.25,
+      changePct: 3.5,
+      volumeUsd: 22_000,
+      liquidityUsd: 80_000,
+      pairAddress: "poolwifxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      dexId: "raydium",
+      candles: [[1, 1, 1.1, 0.9, 1.02]],
+    });
+    assert.equal(pairTitle(tape), "dogwifhat  WIF");
+    assert.equal(formatPrice(tape.priceUsd), "1.25");
+    assert.equal(formatCompactUsd(tape.volumeUsd), "$22.0K");
+    assert.equal(tape.dexId, "raydium");
+    assert.equal(tape.candles.length, 1);
     assert.deepEqual(tape.fills, []);
   });
 

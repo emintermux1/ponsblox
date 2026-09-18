@@ -281,19 +281,21 @@ function hitFromDexPair(pair: DexPair): MarketHit | null {
 }
 
 async function peekDexBoosts(): Promise<{ status: ProviderStatus; mints: string[]; hits: MarketHit[] }> {
-  const [boosts, profiles] = await Promise.all([
+  const [boosts, profiles, latest] = await Promise.all([
     readProvider("https://api.dexscreener.com/token-boosts/top/v1", UA, MARKET_FETCH_MS),
     readProvider("https://api.dexscreener.com/token-profiles/latest/v1", UA, MARKET_FETCH_MS),
+    readProvider("https://api.dexscreener.com/token-boosts/latest/v1", UA, MARKET_FETCH_MS),
   ]);
-  if (boosts.status === "skip" && profiles.status === "skip") {
+  if (boosts.status === "skip" && profiles.status === "skip" && latest.status === "skip") {
     return { status: "skip", mints: [], hits: [] };
   }
-  if (boosts.status !== "ok" && profiles.status !== "ok") {
+  if (boosts.status !== "ok" && profiles.status !== "ok" && latest.status !== "ok") {
     return { status: "error", mints: [], hits: [] };
   }
   const mints = [
     ...solanaBoostMints(boosts.status === "ok" ? boosts.body : []),
     ...solanaBoostMints(profiles.status === "ok" ? profiles.body : []),
+    ...solanaBoostMints(latest.status === "ok" ? latest.body : []),
   ].filter((mint, index, all) => all.indexOf(mint) === index);
   const hits = mints.slice(0, TAPE_LIMIT).flatMap((mint) => {
     const hit = skipPaidHit({
@@ -320,10 +322,18 @@ async function peekDexPairs(mints: string[]): Promise<MarketHits> {
   if (result.status !== "ok") {
     return result.status;
   }
-  const ranked = dexPairsOf(result.body)
+  const hits = rankDexHits(result.body);
+  return hits.length ? hits : "error";
+}
+
+function rankDexHits(body: unknown): MarketHit[] {
+  const ranked = dexPairsOf(body)
     .map(hitFromDexPair)
     .filter((hit): hit is MarketHit => Boolean(hit))
-    .sort((a, b) => (b.liquidityUsd ?? 0) - (a.liquidityUsd ?? 0));
+    .sort(
+      (a, b) =>
+        (b.liquidityUsd ?? 0) - (a.liquidityUsd ?? 0) || (b.volumeUsd ?? 0) - (a.volumeUsd ?? 0),
+    );
   const seen = new Set<string>();
   const hits: MarketHit[] = [];
   for (const hit of ranked) {
@@ -334,7 +344,37 @@ async function peekDexPairs(mints: string[]): Promise<MarketHits> {
     seen.add(key);
     hits.push(hit);
   }
+  return hits;
+}
+
+/** musefomo pair hydrate: latest/dex/tokens/{mint} plus tokens/v1. */
+async function peekDexLatest(mint: string | null): Promise<MarketHits> {
+  if (!mint || !looksLikeMint(mint) || mint === SOL_MINT) {
+    return "skip";
+  }
+  const result = await readProvider(
+    `https://api.dexscreener.com/latest/dex/tokens/${mint}`,
+    UA,
+    MARKET_FETCH_MS,
+  );
+  if (result.status !== "ok") {
+    return result.status;
+  }
+  const hits = rankDexHits(result.body);
   return hits.length ? hits : "error";
+}
+
+async function peekDexSearchPairs(): Promise<MarketHits> {
+  const result = await readProvider(
+    "https://api.dexscreener.com/latest/dex/search?q=SOL",
+    UA,
+    MARKET_FETCH_MS,
+  );
+  if (result.status !== "ok") {
+    return result.status;
+  }
+  const hits = rankDexHits(result.body);
+  return hits.length ? hits.slice(0, TAPE_LIMIT) : "error";
 }
 
 function mapBirdeyeHits(body: unknown): MarketHit[] {
@@ -556,21 +596,35 @@ async function confirmHelius(mint: string | null): Promise<HeliusConfirm | Provi
   return { symbol, mint: body.result.id ?? mint };
 }
 
-async function peekGeckoCandles(pool: string | null): Promise<TapeCandle[]> {
+/** Public Dex/Gecko OHLCV hosts from musefomo — never invent bars. */
+export function publicOhlcvUrls(pool: string): string[] {
+  const qs = "ohlcv/minute?aggregate=15&limit=20&currency=usd";
+  return [
+    `https://api.geckoterminal.com/api/v2/networks/solana/pools/${pool}/${qs}`,
+    `https://api.coingecko.com/api/v3/onchain/networks/solana/pools/${pool}/${qs}`,
+  ];
+}
+
+function ohlcvListOf(body: unknown): unknown {
+  return (body as { data?: { attributes?: { ohlcv_list?: unknown } } } | null)?.data?.attributes
+    ?.ohlcv_list;
+}
+
+async function peekPublicCandles(pool: string | null): Promise<TapeCandle[]> {
   if (!pool) {
     return [];
   }
-  const result = await readProvider(
-    `https://api.geckoterminal.com/api/v2/networks/solana/pools/${pool}/ohlcv/minute?aggregate=15&limit=20`,
-    UA,
-    MARKET_FETCH_MS,
-  );
-  if (result.status !== "ok") {
-    return [];
+  for (const url of publicOhlcvUrls(pool)) {
+    const result = await readProvider(url, UA, MARKET_FETCH_MS);
+    if (result.status !== "ok") {
+      continue;
+    }
+    const candles = candlesFromOhlcvList(ohlcvListOf(result.body));
+    if (candles.length) {
+      return candles;
+    }
   }
-  const list = (result.body as { data?: { attributes?: { ohlcv_list?: unknown } } } | null)?.data
-    ?.attributes?.ohlcv_list;
-  return candlesFromOhlcvList(list);
+  return [];
 }
 
 function rowsOf(group: MarketHits): MarketHit[] {
@@ -625,18 +679,19 @@ function collectMints(...groups: MarketHits[]): string[] {
 
 async function gatherPulse(now: number): Promise<MarketPulse> {
   const started = Date.now();
-  const [gecko, dexBoosts, birdeye, gmgn, solana, solUsd] = await Promise.all([
+  const [gecko, dexBoosts, dexSearch, birdeye, gmgn, solana, solUsd] = await Promise.all([
     peekGecko(),
     peekDexBoosts(),
+    peekDexSearchPairs(),
     peekBirdeye(),
     peekGmgn(),
     peekSolana(),
     peekSolUsd(),
   ]);
   const remaining = Math.max(0, MARKET_BUDGET_MS - (Date.now() - started));
-  const seed = firstMint(gecko, dexBoosts.hits, birdeye, gmgn) ?? dexBoosts.mints[0] ?? null;
-  const pool = firstPool(gecko, birdeye, gmgn);
-  const hydrateMints = collectMints(gecko, dexBoosts.hits, birdeye, gmgn);
+  const seed = firstMint(gecko, dexSearch, dexBoosts.hits, birdeye, gmgn) ?? dexBoosts.mints[0] ?? null;
+  const pool = firstPool(gecko, dexSearch, birdeye, gmgn);
+  const hydrateMints = collectMints(gecko, dexSearch, dexBoosts.hits, birdeye, gmgn);
   for (const mint of dexBoosts.mints) {
     if (!hydrateMints.includes(mint)) {
       hydrateMints.push(mint);
@@ -646,19 +701,34 @@ async function gatherPulse(now: number): Promise<MarketPulse> {
     remaining > 250
       ? await Promise.all([
           hydrateMints.length ? peekDexPairs(hydrateMints) : Promise.resolve<MarketHits>("skip"),
+          peekDexLatest(seed),
           confirmHelius(seed),
-          peekGeckoCandles(pool),
+          peekPublicCandles(pool),
         ])
-      : (["skip", "skip", []] as const);
+      : (["skip", "skip", "skip", []] as const);
   const dexPairs = wave2[0];
-  const helius = wave2[1];
-  const candles = wave2[2];
-  const dexscreener: MarketHits =
-    typeof dexPairs !== "string"
+  const dexLatest = wave2[1];
+  const helius = wave2[2];
+  let candles = wave2[3];
+  const dexHits = [
+    ...rowsOf(dexPairs),
+    ...rowsOf(dexLatest),
+    ...rowsOf(dexSearch),
+    ...dexBoosts.hits.filter((hit) => Boolean(hit.ticker)),
+  ];
+  const dexscreener: MarketHits = dexHits.length
+    ? dexHits
+    : typeof dexPairs === "string" && dexPairs !== "skip"
       ? dexPairs
-      : dexBoosts.hits.length
-        ? dexBoosts.hits
+      : typeof dexSearch === "string" && dexSearch !== "skip"
+        ? dexSearch
         : dexBoosts.status;
+  if (!candles.length) {
+    const laterPool = firstPool(dexPairs, dexLatest, dexSearch);
+    if (laterPool && laterPool !== pool && Date.now() - started < MARKET_BUDGET_MS - 200) {
+      candles = await peekPublicCandles(laterPool);
+    }
+  }
   return mergeMarketPulse({
     gecko,
     dexscreener,

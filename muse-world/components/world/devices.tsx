@@ -84,7 +84,7 @@ function FaceWash({
 export function DeskKit() {
   return (
     <group position={[3.4, 0, -0.85]}>
-      <group position={[-0.58, 0.785, 0.2]}>
+      <group position={[-1.28, 0.785, 0.16]}>
         <LaptopDevice kind="tape" />
       </group>
       <Mug position={[1.22, 0.82, 0.28]} color="#d7c6aa" />
@@ -93,7 +93,7 @@ export function DeskKit() {
       <Cable position={[-0.82, 0.79, 0.3]} />
       <StickyStack position={[1.18, 0.8, 0.02]} />
       <FaceWash position={[-0.58, 1.18, 0.42]} color="#7ec8b0" intensity={0.55} distance={2.4} />
-      <FaceWash position={[0.62, 1.18, 0.42]} color="#f0d8b4" intensity={0.48} distance={2.2} />
+      <FaceWash position={[0.62, 1.18, 0.42]} color="#7dcea0" intensity={0.48} distance={2.2} />
     </group>
   );
 }
