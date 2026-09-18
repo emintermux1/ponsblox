@@ -5,6 +5,7 @@ import { test } from "node:test";
 import { MUSE_IDS } from "@/types/world";
 import { GROK_PORTRAIT } from "./cast";
 import {
+  MUSE_FUR_JPG,
   MUSE_PLUSH_JPG,
   MUSE_PLUSH_PNG,
   isMusePlushSrc,
@@ -36,6 +37,13 @@ test("every loft muse wears the official cream plush still", () => {
   assert.equal(png[1], 0x50);
   assert.ok(statSync(jpgPath).size > 80_000);
   assert.ok(statSync(pngPath).size > 80_000);
+
+  const furPath = resolve(publicRoot, MUSE_FUR_JPG.replace(/^\//, ""));
+  const fur = readFileSync(furPath);
+  assert.equal(fur[0], 0xff);
+  assert.equal(fur[1], 0xd8);
+  assert.ok(statSync(furPath).size > 12_000);
+  assert.equal(isMusePlushSrc(MUSE_FUR_JPG), true);
 });
 
 test("Grok stays a pill-eye orb, not the Muse plush", () => {

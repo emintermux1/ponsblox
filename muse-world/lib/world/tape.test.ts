@@ -108,6 +108,15 @@ describe("public tape honesty", () => {
     assert.equal(tape.candles.length, 1);
     assert.deepEqual(tape.fills, []);
     assert.equal(tapeStamp("dexscreener"), "LIVE · dexscreener");
+    const paired = tapeFromPulse({
+      kind: "VIRAL_POST",
+      ticker: "WIF",
+      source: "dexscreener",
+      pairAddress: "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN",
+      mint: "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN",
+    });
+    assert.equal(paired.pairAddress, "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN");
+    assert.equal(paired.mint, "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN");
   });
 
   it("keeps dexscreener and solana pulses live instead of remapping them to SIM", () => {

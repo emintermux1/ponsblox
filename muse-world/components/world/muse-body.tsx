@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group, Mesh } from "three";
 import { loftPickHandlers } from "@/components/world/loft-cursor";
-import { MusePlushCard } from "@/components/world/muse-plush";
+import { OfficialMuse } from "@/components/world/muse-figure";
 import { NameTag } from "@/components/world/name-tag";
 import { usePerf } from "@/components/world/perf-context";
 import { damp } from "@/lib/world/camera";
@@ -374,7 +374,7 @@ export function MuseBody({
       ) : null}
       <group ref={sway}>
         <group ref={torso}>
-          <MusePlushCard id={muse.id} />
+          <OfficialMuse id={muse.id} />
           {laptop ? (
             <group position={[0, 0.42, 0.42]}>
               <Laptop />

@@ -90,6 +90,7 @@ export type MuseState = {
   thoughtUntil: number;
   position: [number, number, number];
   facing: number;
+  heading: MuseActivity | null;
   mind: MuseMind;
 };
 

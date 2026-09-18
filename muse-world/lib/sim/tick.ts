@@ -27,7 +27,7 @@ export type Pulse = {
   source?: string;
 };
 
-const WALK_SPEED = 0.32;
+const WALK_SPEED = 0.72;
 
 const THOUGHTS: Record<MuseId, string[]> = {
   scroller: [
@@ -160,12 +160,13 @@ function walkToward(
   const dz = target[2] - z;
   const dist = Math.hypot(dx, dz);
   if (dist < 0.1 || dist <= speed) {
-    return { ...muse, activity: arrive, position: target, facing: arriveFacing };
+    return { ...muse, activity: arrive, heading: null, position: target, facing: arriveFacing };
   }
   const step = Math.min(speed, dist);
   return {
     ...muse,
     activity: "WALKING",
+    heading: arrive,
     facing: Math.atan2(dx, dz),
     position: [x + (dx / dist) * step, y + dy * 0.35, z + (dz / dist) * step],
   };
@@ -225,10 +226,13 @@ function shouldSwitch(muse: MuseState, spiked: boolean, random: () => number): b
   if (muse.activity === "IDLE") {
     return true;
   }
-  return random() < 0.11;
+  return random() < 0.28;
 }
 
 function desiredActivity(muse: MuseState, spiked: boolean, random: () => number): MuseActivity {
+  if (muse.activity === "WALKING" && muse.heading) {
+    return livingActivity(muse.heading, muse.id);
+  }
   if (!shouldSwitch(muse, spiked, random)) {
     return livingActivity(muse.activity, muse.id);
   }
@@ -242,7 +246,7 @@ function stepMuse(muse: MuseState, desired: MuseActivity, ticker: string | null)
     return walkToward(muse, dest.position, WALK_SPEED, arrive, dest.facing);
   }
   return applyActivity(
-    { ...muse, position: dest.position, facing: dest.facing },
+    { ...muse, heading: null, position: dest.position, facing: dest.facing },
     arrive,
     ticker,
   );

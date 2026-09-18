@@ -128,12 +128,38 @@ describe("purposeful work", () => {
     world.muses.trader = {
       ...world.muses.trader,
       activity: "WALKING",
+      heading: "TRADING",
       position: [-2.4, 0.62, 3.1],
     };
     const next = tickSnapshot(world, { kind: "QUIET", ticker: null }, 20_000, () => 0.01);
     assert.equal(next.muses.trader.activity, "WALKING");
     assert.ok(next.muses.trader.position[0] > -2.4);
     assert.ok(next.muses.trader.position[0] < 3.4);
+  });
+
+  it("walks scroller to the window when watching", () => {
+    const world = seedWorld();
+    world.muses.scroller = {
+      ...world.muses.scroller,
+      activity: "WATCHING",
+      heading: "WATCHING",
+    };
+    const next = tickSnapshot(world, { kind: "QUIET", ticker: null }, 20_000, () => 0.99);
+    assert.equal(next.muses.scroller.activity, "WALKING");
+    assert.ok(next.muses.scroller.position[0] < STATIONS.scrollerSofa.position[0]);
+    assert.ok(next.muses.scroller.position[2] < STATIONS.scrollerSofa.position[2]);
+  });
+
+  it("walks trader toward Grok when thinking", () => {
+    const world = seedWorld();
+    world.muses.trader = {
+      ...world.muses.trader,
+      activity: "THINKING",
+      heading: "THINKING",
+    };
+    const next = tickSnapshot(world, { kind: "QUIET", ticker: null }, 20_000, () => 0.99);
+    assert.equal(next.muses.trader.activity, "WALKING");
+    assert.ok(next.muses.trader.position[0] > STATIONS.traderDesk.position[0]);
   });
 
   it("keeps chill on the armchair when already there", () => {

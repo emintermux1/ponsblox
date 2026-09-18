@@ -112,7 +112,14 @@ export function GrokOrb({
     }
     const t = pauseExtras ? 0 : state.clock.elapsedTime;
     const bob = pauseExtras ? 0 : 0.028 * Math.sin(t * 1.15);
-    root.current.position.y = damp(root.current.position.y, GROK_ORB_POS[1] + bob, 4.2, delta);
+    const hover: [number, number, number] = [
+      lookAt[0] + 0.38,
+      lookAt[1] + 0.26 + bob,
+      lookAt[2] + 0.34,
+    ];
+    root.current.position.x = damp(root.current.position.x, hover[0], 2.2, delta);
+    root.current.position.y = damp(root.current.position.y, hover[1], 2.2, delta);
+    root.current.position.z = damp(root.current.position.z, hover[2], 2.2, delta);
     lookGroupAt(face.current, lookAt);
     if (!pauseExtras) {
       pulseEmissive(body.current, waking, honesty, t);
@@ -139,50 +146,6 @@ export function GrokOrb({
   );
 }
 
-function GrokWatcher({
-  index,
-  lookAt,
-  onWake,
-}: {
-  index: number;
-  lookAt: [number, number, number];
-  onWake: () => void;
-}) {
-  const root = useRef<Group>(null);
-  const face = useRef<Group>(null);
-  const { glass, pauseExtras, shadows } = usePerf();
-  const physical = physicalGlass(glass);
-  const radius = 0.55 + index * 0.18;
-  const lift = 0.22 + index * 0.08;
-
-  useFrame((state) => {
-    if (!root.current) {
-      return;
-    }
-    const t = pauseExtras ? index : state.clock.elapsedTime;
-    const angle = t * (0.55 + index * 0.12) + index * 2.2;
-    root.current.position.set(
-      lookAt[0] + Math.cos(angle) * radius,
-      lookAt[1] + lift + Math.sin(t * 1.3 + index) * 0.04,
-      lookAt[2] + Math.sin(angle) * radius,
-    );
-    lookGroupAt(face.current, lookAt);
-  });
-
-  return (
-    <group ref={root} userData={{ grok: "watch" }} {...loftPickHandlers(onWake)}>
-      <mesh visible={false}>
-        <sphereGeometry args={[0.16, 10, 10]} />
-      </mesh>
-      <OrbSkin radius={0.09} physical={physical} shadows={shadows} />
-      <group ref={face} scale={0.46}>
-        <PillEye x={-0.055} />
-        <PillEye x={0.055} />
-      </group>
-    </group>
-  );
-}
-
 export function GrokPresence({
   waking,
   honesty,
@@ -194,11 +157,5 @@ export function GrokPresence({
   lookAt: [number, number, number];
   onWake: () => void;
 }) {
-  return (
-    <group>
-      <GrokOrb waking={waking} honesty={honesty} lookAt={lookAt} onWake={onWake} />
-      <GrokWatcher index={0} lookAt={lookAt} onWake={onWake} />
-      <GrokWatcher index={1} lookAt={lookAt} onWake={onWake} />
-    </group>
-  );
+  return <GrokOrb waking={waking} honesty={honesty} lookAt={lookAt} onWake={onWake} />;
 }
