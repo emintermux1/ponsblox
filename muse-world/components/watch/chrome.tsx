@@ -223,7 +223,8 @@ function NameStrip({
         aria-label={GROK_NAME}
         onClick={onGrok}
       >
-        Grok
+        <span>Grok</span>
+        <span className="loft-strip-role">{grokMark}</span>
       </button>
     </nav>
   );
