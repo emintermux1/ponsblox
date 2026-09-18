@@ -1,8 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { WorldHud } from "@/components/world/hud";
-import { useLivingWorld } from "@/components/world/use-living-world";
+import type { MuseId, WorldSnapshot } from "@/types/world";
 
 const Canvas = dynamic(
   () => import("@react-three/fiber").then((mod) => mod.Canvas),
@@ -14,12 +13,19 @@ const LivingScene = dynamic(
   { ssr: false },
 );
 
-export function MuseWorld() {
-  const { world, introDone, introLine, setIntroDone, select, setCamera, toggleMind } =
-    useLivingWorld();
-
+export function MuseWorld({
+  world,
+  introDone,
+  onIntroDone,
+  onSelect,
+}: {
+  world: WorldSnapshot;
+  introDone: boolean;
+  onIntroDone: () => void;
+  onSelect: (id: MuseId) => void;
+}) {
   return (
-    <main className="relative h-dvh w-full overflow-hidden bg-[#0b0c10]">
+    <main className="relative h-dvh w-full overflow-hidden bg-transparent">
       <Canvas
         shadows
         dpr={[1, 1.6]}
@@ -29,17 +35,10 @@ export function MuseWorld() {
         <LivingScene
           world={world}
           introDone={introDone}
-          onIntroDone={() => setIntroDone(true)}
-          onSelect={select}
+          onIntroDone={onIntroDone}
+          onSelect={onSelect}
         />
       </Canvas>
-      <WorldHud
-        world={world}
-        introLine={introLine}
-        onPreset={setCamera}
-        onSelect={select}
-        onEnterMind={toggleMind}
-      />
     </main>
   );
 }

@@ -55,7 +55,9 @@ canvas {
   position: relative;
   height: 100dvh;
   overflow: hidden;
-  background: var(--loft-ink);
+  background:
+    linear-gradient(rgba(12, 9, 7, 0.45), rgba(12, 9, 7, 0.45)),
+    url("/og-loft.jpg") center / cover no-repeat;
 }
 
 .loft-grain,
@@ -83,17 +85,43 @@ canvas {
   );
 }
 
-.loft-chrome {
-  text-shadow: 0 1px 14px rgba(8, 6, 4, 0.72);
+.loft-entry-caption {
+  word-spacing: 0.16em;
+  letter-spacing: 0.04em;
+}
+
+.loft-entry-cta {
+  letter-spacing: 0.18em;
+}
+
+.loft-chrome-in {
+  animation: loft-chrome-in 0.8s ease-out;
+}
+
+@keyframes loft-chrome-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loft-chrome-in {
+    animation: none;
+  }
 }
 
 .loft-veil {
-  background: linear-gradient(
-    180deg,
-    rgba(12, 9, 7, 0.58) 0%,
-    rgba(12, 9, 7, 0.18) 42%,
-    rgba(12, 9, 7, 0.64) 100%
-  );
+  background:
+    linear-gradient(
+      180deg,
+      rgba(12, 9, 7, 0.52) 0%,
+      rgba(12, 9, 7, 0.26) 42%,
+      rgba(12, 9, 7, 0.6) 100%
+    ),
+    url("/og-loft.jpg") center / cover no-repeat;
 }
 
 .loft-glass {

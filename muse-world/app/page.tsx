@@ -1,4 +1,4 @@
-import { MuseWorld } from "@/components/world/muse-world";
+import { SpectatorFrame } from "@/components/watch/frame";
 
 export default function Home() {
   return (
@@ -6,7 +6,7 @@ export default function Home() {
       <h1 className="sr-only">
         Muse World. A living penthouse. Four muses. You watch.
       </h1>
-      <MuseWorld />
+      <SpectatorFrame />
       <div className="loft-grain" aria-hidden />
       <div className="loft-vignette" aria-hidden />
     </div>

@@ -70,24 +70,14 @@ export function SpectatorChrome({
 
   return (
     <div className="loft-chrome pointer-events-none absolute inset-0 z-40 text-loft-paper">
-      <AnimatePresence>
-        {!settled ? (
-          <EntryVeil
-            key="veil"
-            mindOpen={world.mindOpen}
-            onEnter={enterMind}
-            onLeave={leaveMind}
-          />
-        ) : null}
-      </AnimatePresence>
-
-      {settled ? (
-        <motion.div
-          className="pointer-events-none absolute inset-0"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: reduceMotion ? 0 : 0.8, ease: "easeOut" }}
-        >
+      {!settled ? (
+        <EntryVeil
+          mindOpen={world.mindOpen}
+          onEnter={enterMind}
+          onLeave={leaveMind}
+        />
+      ) : (
+        <div className="loft-chrome-in pointer-events-none absolute inset-0">
           <Wordmark signal={signal} />
           <Locations camera={world.camera} onPreset={onPreset} />
           <Roster world={world} selectedId={world.selected} onSelect={onSelect} />
@@ -123,14 +113,14 @@ export function SpectatorChrome({
               </motion.p>
             ) : null}
           </AnimatePresence>
-        </motion.div>
-      ) : null}
+        </div>
+      )}
     </div>
   );
 }
 
 function useEntrySettled(reduceMotion: boolean): boolean {
-  const [settled, setSettled] = useState(reduceMotion);
+  const [settled, setSettled] = useState(false);
 
   useEffect(() => {
     if (reduceMotion) {
@@ -154,21 +144,16 @@ function EntryVeil({
   onLeave: () => void;
 }) {
   return (
-    <motion.div
-      className="loft-veil absolute inset-0 flex flex-col items-center justify-center"
-      initial={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.9, ease: "easeOut" }}
-    >
+    <div className="loft-veil absolute inset-0 flex flex-col items-center justify-center">
       <p className="font-serif text-[clamp(3.4rem,9vw,7rem)] italic leading-none tracking-[-0.03em]">
         {WORDMARK}
       </p>
       <span className="loft-rule mt-5" />
-      <p className="mt-5 font-serif text-[15px] italic text-loft-paper/72 md:text-[17px]">
+      <p className="loft-entry-caption mt-6 text-[15px] text-loft-paper/88 md:text-[16px]">
         {ENTRY_CAPTION}
       </p>
       <MindButton mindOpen={mindOpen} onEnter={onEnter} onLeave={onLeave} />
-    </motion.div>
+    </div>
   );
 }
 
@@ -178,7 +163,7 @@ function Wordmark({ signal }: { signal: LastSignal }) {
       <p className="font-serif text-[1.65rem] italic leading-none tracking-[-0.03em] md:text-[1.85rem]">
         {WORDMARK}
       </p>
-      <p className="mt-1 text-[9px] tracking-[0.28em] text-loft-brass/80">
+      <p className="mt-1 text-[9px] tracking-[0.18em] text-loft-brass/80">
         {WORLD_MARK}
       </p>
       <p className="mt-4 flex items-center gap-2 text-[10px] tracking-[0.16em] text-loft-paper/55">
@@ -345,7 +330,7 @@ function MindButton({
     <button
       type="button"
       onClick={mindOpen ? onLeave : onEnter}
-      className="pointer-events-auto mt-5 text-[10px] tracking-[0.32em] text-loft-brass transition-colors duration-300 hover:text-loft-paper"
+      className="loft-entry-cta pointer-events-auto mt-6 text-[11px] text-loft-brass transition-colors duration-300 hover:text-loft-paper"
     >
       {mindOpen ? LEAVE_MIND : ENTER_MIND}
     </button>

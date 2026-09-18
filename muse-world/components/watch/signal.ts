@@ -111,9 +111,7 @@ function streetHonesty(signal: StreetSignal): LastSignal {
     case "gecko":
       return {
         mark: "REAL",
-        line: signal.ticker
-          ? `outside — they noticed ${signal.ticker}`
-          : "outside — a pulse arrived",
+        line: "outside — gecko answered",
       };
     default:
       return assertNever(signal);
