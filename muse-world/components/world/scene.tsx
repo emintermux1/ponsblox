@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect } from "react";
-import { ContactShadows, SoftShadows } from "@react-three/drei";
+import { ContactShadows } from "@react-three/drei";
 import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
 import { MuseBody } from "@/components/world/muse-body";
 import { MuseMindField } from "@/components/world/mind";
@@ -45,14 +45,14 @@ export function LivingScene({
   return (
     <>
       <AreaLights />
-      <SoftShadows size={18} samples={8} focus={0.75} />
-      <color attach="background" args={["#0d1520"]} />
-      <fog attach="fog" args={["#15202c", 16, 50]} />
-      <hemisphereLight args={["#6d8498", "#1c1612", 0.36]} />
+      <color attach="background" args={["#15202c"]} />
+      <fog attach="fog" args={["#243646", 28, 70]} />
+      <ambientLight intensity={0.28} color="#d2c0a6" />
+      <hemisphereLight args={["#7f96aa", "#3a2c20", 0.55]} />
       <directionalLight
         position={[7, 9.5, -5]}
-        intensity={0.62}
-        color="#9eb4c8"
+        intensity={0.72}
+        color="#c5d2de"
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
@@ -64,19 +64,19 @@ export function LivingScene({
         shadow-camera-bottom={-8}
         shadow-bias={-0.00025}
       />
-      <directionalLight position={[-4, 5.5, 6]} intensity={0.22} color="#e6d0ae" />
+      <directionalLight position={[-4, 6.2, 7]} intensity={0.85} color="#f3d7b0" />
       <rectAreaLight
         width={16}
         height={3.2}
-        intensity={3.4}
-        color="#7f9aaf"
+        intensity={8}
+        color="#8eabbf"
         position={[0, 2.15, -4.42]}
         rotation={[0, Math.PI, 0]}
       />
       <rectAreaLight
         width={6.2}
         height={0.16}
-        intensity={5.2}
+        intensity={10}
         color="#f0d4ae"
         position={[-3.2, 4.52, 0.2]}
         rotation={[-Math.PI / 2, 0, 0]}
@@ -84,13 +84,16 @@ export function LivingScene({
       <rectAreaLight
         width={5}
         height={0.16}
-        intensity={3.6}
+        intensity={7}
         color="#e8cba6"
         position={[3.3, 4.52, -0.7]}
         rotation={[-Math.PI / 2, 0, 0]}
       />
-      <pointLight position={[-6.55, 1.72, 3.55]} intensity={0.38} color="#e4c49a" distance={7} decay={2} />
-      <pointLight position={[3.4, 1.55, -0.5]} intensity={0.22} color="#d7c4a6" distance={6} decay={2} />
+      <pointLight position={[-3.2, 4.2, 0.4]} intensity={1.35} color="#f2d4a8" distance={11} decay={2} />
+      <pointLight position={[3.3, 4.2, -0.5]} intensity={0.95} color="#ebc9a0" distance={9} decay={2} />
+      <pointLight position={[-6.55, 1.72, 3.55]} intensity={0.85} color="#e4c49a" distance={8} decay={2} />
+      <pointLight position={[3.4, 1.7, -0.5]} intensity={0.45} color="#d7c4a6" distance={6} decay={2} />
+      <pointLight position={[0, 3.4, -3.4]} intensity={0.4} color="#9bb3c4" distance={10} decay={2} />
       <CameraRig
         preset={world.camera}
         selected={world.selected}

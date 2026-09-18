@@ -44,11 +44,11 @@ export function MuseWorld() {
   const introLine = useIntroCopy();
 
   return (
-    <main className="relative h-dvh w-full overflow-hidden bg-[#0d1520]">
+    <main className="relative h-dvh w-full overflow-hidden bg-[#15202c]">
       <Canvas
-        shadows
+        shadows="percentage"
         dpr={[1, 1.6]}
-        camera={{ position: [1.1, 3.15, 11.4], fov: 36, near: 0.1, far: 80 }}
+        camera={{ position: [1.1, 3.15, 11.4], fov: 36, near: 0.1, far: 90 }}
         gl={{
           antialias: true,
           alpha: false,

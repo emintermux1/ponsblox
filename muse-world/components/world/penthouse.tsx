@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Html, MeshReflectorMaterial } from "@react-three/drei";
+import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import {
   BackSide,
@@ -21,15 +21,15 @@ import {
 } from "@/lib/world/layout";
 import type { SpatialPacket, WallPin } from "@/types/world";
 
-const WOOD = "#2b2118";
-const WOOD_DEEP = "#1a1410";
-const WOOD_GRAIN = "#3a2c20";
-const ALUMINUM = "#8e8c87";
-const ALUMINUM_DARK = "#5e5c58";
-const LEATHER = "#1b1815";
-const LEATHER_SOFT = "#2a2520";
-const PAPER = "#e4d6bf";
-const CONCRETE = "#6c6964";
+const WOOD = "#7a5840";
+const WOOD_DEEP = "#4a3426";
+const WOOD_GRAIN = "#8a6750";
+const ALUMINUM = "#c8c5be";
+const ALUMINUM_DARK = "#6a6762";
+const LEATHER = "#5c4a3e";
+const LEATHER_SOFT = "#6e5a4c";
+const PAPER = "#ead9c0";
+const CONCRETE = "#8a8680";
 
 function rand(seed: number) {
   const next = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
@@ -66,7 +66,7 @@ function makeWood(size = 512) {
   canvas.height = size;
   const ctx = canvas.getContext("2d");
   if (!ctx) return canvas;
-  ctx.fillStyle = "#2c2118";
+  ctx.fillStyle = "#7a5840";
   ctx.fillRect(0, 0, size, size);
   let seed = 90210;
   for (let x = 0; x < size; x += 2) {
@@ -160,10 +160,10 @@ function BlueHourSky() {
         varying vec3 vDir;
         void main() {
           float h = vDir.y;
-          vec3 zenith = vec3(0.035, 0.055, 0.082);
-          vec3 mid = vec3(0.09, 0.14, 0.20);
-          vec3 horizon = vec3(0.27, 0.35, 0.43);
-          vec3 blush = vec3(0.40, 0.29, 0.22);
+          vec3 zenith = vec3(0.10, 0.14, 0.20);
+          vec3 mid = vec3(0.22, 0.30, 0.40);
+          vec3 horizon = vec3(0.52, 0.62, 0.72);
+          vec3 blush = vec3(0.62, 0.44, 0.34);
           vec3 ground = vec3(0.04, 0.045, 0.06);
           vec3 col = mix(horizon, mid, smoothstep(0.0, 0.24, h));
           col = mix(col, zenith, smoothstep(0.16, 0.72, h));
@@ -196,7 +196,7 @@ function City() {
       items.push({
         x: ((i * 53) % 34) - 17,
         z: -12 - ((i * 17) % 22),
-        h: 3.2 + ((i * 19) % 11),
+        h: 1.7 + ((i * 19) % 6) * 0.38,
         w: 0.85 + ((i * 5) % 6) * 0.18,
         d: 0.75 + ((i * 7) % 5) * 0.16,
         tex: i % 3,
@@ -223,32 +223,52 @@ function City() {
             map={facades[tower.tex]}
             emissive="#c9b089"
             emissiveMap={facades[tower.tex]}
-            emissiveIntensity={0.32}
+            emissiveIntensity={0.85}
             roughness={0.52}
             metalness={0.22}
           />
         </mesh>
       ))}
-      <mesh position={[-3.2, 7.4, -26]}>
-        <boxGeometry args={[1.1, 16.2, 1.1]} />
+      <mesh position={[0, 3.82, -7.8]}>
+        <planeGeometry args={[26, 1.85]} />
+        <meshBasicMaterial color="#6d8aa0" />
+      </mesh>
+      <mesh position={[0, 2.86, -7.79]}>
+        <planeGeometry args={[26, 0.28]} />
+        <meshBasicMaterial color="#8ea6b8" />
+      </mesh>
+      <mesh position={[0, 2.18, -7.78]}>
+        <planeGeometry args={[26, 0.26]} />
+        <meshBasicMaterial color="#c4a07a" transparent opacity={0.34} depthWrite={false} />
+      </mesh>
+      <mesh position={[0, 3.6, -18]}>
+        <planeGeometry args={[70, 5.2]} />
+        <meshBasicMaterial color="#7a93a8" transparent opacity={0.4} depthWrite={false} />
+      </mesh>
+      <mesh position={[0, 1.55, -17.6]}>
+        <planeGeometry args={[70, 2.1]} />
+        <meshBasicMaterial color="#8d6a52" transparent opacity={0.22} depthWrite={false} />
+      </mesh>
+      <mesh position={[-3.2, 4.4, -27]}>
+        <boxGeometry args={[0.9, 9.2, 0.9]} />
         <meshStandardMaterial
           color="#141820"
           map={facades[0]}
           emissive="#c9b089"
           emissiveMap={facades[0]}
-          emissiveIntensity={0.26}
+          emissiveIntensity={0.7}
           roughness={0.48}
           metalness={0.28}
         />
       </mesh>
-      <mesh position={[6.8, 5.1, -21.5]}>
-        <boxGeometry args={[3.4, 10.8, 1.4]} />
+      <mesh position={[6.8, 2.9, -22]}>
+        <boxGeometry args={[3.2, 6.4, 1.3]} />
         <meshStandardMaterial
           color="#171c24"
           map={facades[1]}
           emissive="#c9b089"
           emissiveMap={facades[1]}
-          emissiveIntensity={0.22}
+          emissiveIntensity={0.6}
           roughness={0.5}
           metalness={0.2}
         />
@@ -261,9 +281,9 @@ function Haze() {
   const layers = useMemo(
     () =>
       [
-        [0, 2.4, -9.5, 42, 8, 0.09],
-        [0, 3.1, -16, 56, 11, 0.08],
-        [0, 4.2, -24, 70, 14, 0.07],
+        [0, 1.15, -11, 42, 3.2, 0.1],
+        [0, 1.35, -17, 56, 3.6, 0.09],
+        [0, 1.55, -24, 70, 4.0, 0.08],
       ] as const,
     [],
   );
@@ -320,29 +340,29 @@ function WindowWall() {
       <mesh>
         <boxGeometry args={[18.6, 4.52, 0.04]} />
         <meshPhysicalMaterial
-          color="#6a7682"
-          metalness={0.16}
-          roughness={0.055}
+          color="#8a96a2"
+          metalness={0.12}
+          roughness={0.04}
           transparent
-          opacity={0.2}
-          transmission={0.18}
-          thickness={0.28}
+          opacity={0.08}
+          transmission={0.28}
+          thickness={0.2}
           ior={1.5}
         />
       </mesh>
-      <Panel args={[18.9, 0.1, 0.16]} position={[0, 2.3, 0.02]} color={ALUMINUM} metalness={0.86} roughness={0.32} />
-      <Panel args={[18.9, 0.14, 0.2]} position={[0, -2.24, 0.04]} color={ALUMINUM_DARK} metalness={0.8} roughness={0.36} />
+      <Panel args={[18.9, 0.16, 0.2]} position={[0, 2.28, 0.05]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
+      <Panel args={[18.9, 0.18, 0.24]} position={[0, -2.22, 0.06]} color={ALUMINUM_DARK} metalness={0.8} roughness={0.34} />
       {bays.map((x) => (
         <Panel
           key={x}
-          args={[0.045, 4.52, 0.12]}
-          position={[x, 0, 0.03]}
+          args={[0.16, 4.52, 0.16]}
+          position={[x, 0, 0.06]}
           color={ALUMINUM}
           metalness={0.86}
           roughness={0.3}
         />
       ))}
-      <Panel args={[18.9, 0.03, 0.1]} position={[0, 0.15, 0.03]} color={ALUMINUM} metalness={0.84} roughness={0.33} />
+      <Panel args={[18.9, 0.05, 0.12]} position={[0, 0.12, 0.05]} color={ALUMINUM} metalness={0.84} roughness={0.3} />
     </group>
   );
 }
@@ -351,8 +371,8 @@ function LoungeChair() {
   return (
     <group position={[-1.82, 0, 3.42]} rotation={[0, -0.55, 0]}>
       <Panel args={[0.92, 0.1, 0.86]} position={[0, 0.12, 0]} color={WOOD_DEEP} roughness={0.7} />
-      <Panel args={[0.86, 0.14, 0.78]} position={[0, 0.24, 0.02]} color={LEATHER} roughness={0.88} />
-      <Panel args={[0.86, 0.4, 0.12]} position={[0, 0.48, -0.34]} color={LEATHER} roughness={0.84} />
+      <Panel args={[0.86, 0.14, 0.78]} position={[0, 0.24, 0.02]} color={LEATHER} roughness={0.64} />
+      <Panel args={[0.86, 0.4, 0.12]} position={[0, 0.48, -0.34]} color={LEATHER} roughness={0.6} />
       <Panel args={[0.08, 0.22, 0.72]} position={[-0.42, 0.18, 0]} color={ALUMINUM} metalness={0.84} roughness={0.3} />
       <Panel args={[0.08, 0.22, 0.72]} position={[0.42, 0.18, 0]} color={ALUMINUM} metalness={0.84} roughness={0.3} />
     </group>
@@ -363,19 +383,19 @@ function Lounge() {
   return (
     <group position={[-4.15, 0, 1.35]}>
       <Panel args={[3.55, 0.1, 1.5]} position={[0, 0.12, 0]} color={WOOD_DEEP} roughness={0.7} />
-      <Panel args={[3.42, 0.2, 1.28]} position={[0, 0.26, 0.02]} color={LEATHER} roughness={0.86} />
+      <Panel args={[3.42, 0.2, 1.28]} position={[0, 0.26, 0.02]} color={LEATHER} roughness={0.62} />
       {[-1.05, 0, 1.05].map((x) => (
         <Panel
           key={x}
           args={[1.02, 0.16, 0.86]}
           position={[x, 0.42, 0.08]}
           color={LEATHER_SOFT}
-          roughness={0.88}
+          roughness={0.7}
         />
       ))}
-      <Panel args={[3.42, 0.58, 0.2]} position={[0, 0.66, -0.56]} color={LEATHER} roughness={0.84} />
-      <Panel args={[0.2, 0.46, 1.12]} position={[-1.62, 0.58, 0.02]} color={LEATHER} roughness={0.84} />
-      <Panel args={[0.2, 0.46, 1.12]} position={[1.62, 0.58, 0.02]} color={LEATHER} roughness={0.84} />
+      <Panel args={[3.42, 0.58, 0.2]} position={[0, 0.66, -0.56]} color={LEATHER} roughness={0.6} />
+      <Panel args={[0.2, 0.46, 1.12]} position={[-1.62, 0.58, 0.02]} color={LEATHER} roughness={0.6} />
+      <Panel args={[0.2, 0.46, 1.12]} position={[1.62, 0.58, 0.02]} color={LEATHER} roughness={0.6} />
       <Panel args={[0.08, 0.12, 1.22]} position={[-1.78, 0.14, 0]} color={ALUMINUM} metalness={0.84} roughness={0.3} />
       <Panel args={[0.08, 0.12, 1.22]} position={[1.78, 0.14, 0]} color={ALUMINUM} metalness={0.84} roughness={0.3} />
     </group>
@@ -444,16 +464,23 @@ function FloorLamp() {
       </mesh>
       <mesh position={[0, 1.78, 0]}>
         <cylinderGeometry args={[0.16, 0.2, 0.14, 20]} />
-        <meshStandardMaterial color="#d8c9ae" emissive="#c9ae84" emissiveIntensity={0.45} roughness={0.55} />
+        <meshStandardMaterial color="#d8c9ae" emissive="#c9ae84" emissiveIntensity={1.15} roughness={0.5} />
       </mesh>
     </group>
   );
 }
 
-function Desk() {
+function Desk({ wood }: { wood: CanvasTexture }) {
   return (
     <group position={[3.4, 0, -0.85]}>
-      <Panel args={[3.28, 0.05, 1.18]} position={[0, 0.76, 0]} color={WOOD} roughness={0.48} metalness={0.08} />
+      <Panel
+        args={[3.28, 0.05, 1.18]}
+        position={[0, 0.76, 0]}
+        color="#4a2c18"
+        roughness={0.46}
+        metalness={0.06}
+        map={wood}
+      />
       <Panel args={[3.28, 0.018, 1.18]} position={[0, 0.73, 0]} color={ALUMINUM_DARK} metalness={0.8} roughness={0.35} />
       <Panel args={[0.05, 0.7, 1.12]} position={[-1.52, 0.36, 0]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
       <Panel args={[0.05, 0.7, 1.12]} position={[1.52, 0.36, 0]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
@@ -506,7 +533,7 @@ function FlyingWallCard({
   return (
     <mesh ref={mesh}>
       <boxGeometry args={[0.62, 0.38, 0.02]} />
-      <meshStandardMaterial color="#f3e6c8" emissive="#8a7348" emissiveIntensity={0.5} roughness={0.72} />
+      <meshStandardMaterial color="#ead9c0" roughness={0.78} />
     </mesh>
   );
 }
@@ -536,7 +563,7 @@ function IdeaWall({
 
   return (
     <group position={IDEA_WALL_ORIGIN} rotation={[0, -Math.PI / 2, 0]}>
-      <Panel args={[3.85, 2.55, 0.07]} position={[0, 0, 0]} color={WOOD_DEEP} roughness={0.7} />
+      <Panel args={[3.85, 2.55, 0.07]} position={[0, 0, 0]} color={WOOD} roughness={0.62} />
       <Panel args={[3.9, 0.03, 0.08]} position={[0, 1.28, 0.02]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
       <Panel args={[3.9, 0.03, 0.08]} position={[0, -1.28, 0.02]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
       {IDEA_WALL_CARDS.map((card) => (
@@ -553,12 +580,7 @@ function IdeaWall({
             <group key={pin.id} position={[x, y, z]}>
               <mesh>
                 <boxGeometry args={[0.58, 0.34, 0.018]} />
-                <meshStandardMaterial
-                  color="#f3e6c8"
-                  emissive="#8a7348"
-                  emissiveIntensity={0.28}
-                  roughness={0.7}
-                />
+                <meshStandardMaterial color={PAPER} roughness={0.8} />
               </mesh>
               <Html center distanceFactor={8} style={{ pointerEvents: "none" }}>
                 <span className="whitespace-nowrap font-serif text-[9px] tracking-[0.18em] text-[#3a3226]/80">
@@ -591,35 +613,29 @@ function Structure({
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0.4]} receiveShadow>
         <planeGeometry args={[20, 12]} />
-        <MeshReflectorMaterial
+        <meshPhysicalMaterial
           color={CONCRETE}
           map={concrete}
-          metalness={0.16}
-          roughness={0.42}
-          blur={[280, 80]}
-          resolution={768}
-          mixBlur={1}
-          mixStrength={0.28}
-          mirror={0.12}
-          depthScale={0.7}
-          minDepthThreshold={0.35}
-          maxDepthThreshold={1.35}
+          metalness={0.22}
+          roughness={0.28}
+          clearcoat={0.4}
+          clearcoatRoughness={0.22}
         />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-3.5, 0.012, 1.9]} receiveShadow>
         <planeGeometry args={[7.4, 5.6]} />
-        <meshStandardMaterial color="#2a2622" roughness={0.92} metalness={0.02} />
+        <meshStandardMaterial color="#4f463e" roughness={0.9} metalness={0.02} />
       </mesh>
       <Panel args={[20.2, 0.16, 12.2]} position={[0, 4.68, 0.4]} color={WOOD_DEEP} roughness={0.78} map={wood} />
       <Panel args={[6.4, 0.04, 0.22]} position={[-3.2, 4.58, 0.2]} color={ALUMINUM} metalness={0.86} roughness={0.28} />
       <Panel args={[5.2, 0.04, 0.22]} position={[3.3, 4.58, -0.7]} color={ALUMINUM} metalness={0.86} roughness={0.28} />
       <mesh position={[-3.2, 4.56, 0.2]}>
         <boxGeometry args={[6.2, 0.015, 0.1]} />
-        <meshStandardMaterial color="#ead7b4" emissive="#d7b889" emissiveIntensity={0.55} />
+        <meshStandardMaterial color="#ead7b4" emissive="#d7b889" emissiveIntensity={1.1} />
       </mesh>
       <mesh position={[3.3, 4.56, -0.7]}>
         <boxGeometry args={[5.0, 0.015, 0.1]} />
-        <meshStandardMaterial color="#ead7b4" emissive="#d7b889" emissiveIntensity={0.4} />
+        <meshStandardMaterial color="#ead7b4" emissive="#d7b889" emissiveIntensity={0.9} />
       </mesh>
       <Panel args={[0.16, 4.7, 12]} position={[-9.92, 2.35, 0.4]} color={WOOD} roughness={0.72} map={wood} />
       <Panel args={[0.16, 4.7, 12]} position={[9.92, 2.35, 0.4]} color={WOOD} roughness={0.72} map={wood} />
@@ -663,7 +679,7 @@ export function Penthouse({
   wallPins?: WallPin[];
   builderPos?: [number, number, number];
 }) {
-  const concrete = useMemo(() => asMap(makeSpeckle(512, "#6c6964", 404, 9000), 3, 2), []);
+  const concrete = useMemo(() => asMap(makeSpeckle(512, "#8a8680", 404, 9000), 3, 2), []);
   const wood = useMemo(() => asMap(makeWood(), 2, 1), []);
 
   useLayoutEffect(() => {
@@ -683,7 +699,7 @@ export function Penthouse({
       <CoffeeTable />
       <Hookah />
       <FloorLamp />
-      <Desk />
+      <Desk wood={wood} />
       <IdeaWall packet={packet} pins={wallPins} builderPos={builderPos} />
       <City />
       <Haze />
