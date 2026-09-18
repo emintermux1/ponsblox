@@ -26,6 +26,7 @@ export function SpectatorFrame() {
         <SceneGate>
           <MuseWorld
             world={living.world}
+            pulse={living.pulse}
             introDone={living.introDone}
             onIntroDone={() => living.setIntroDone(true)}
             onSelect={living.select}

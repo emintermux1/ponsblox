@@ -3,7 +3,7 @@ import { afterEach, describe, it, mock } from "node:test";
 
 import { seedWorld } from "../world/defaults";
 import { honestyFromLabel } from "../adapters/source";
-import { applyActivity, tickSnapshot } from "./tick";
+import { applyActivity, pickTicker, tickSnapshot } from "./tick";
 
 afterEach(() => {
   mock.restoreAll();
@@ -33,12 +33,22 @@ describe("client tick purity", () => {
     });
     const muse = seedWorld().muses.trader;
     const frozen = structuredClone(muse);
-    const next = applyActivity(muse, "WATCHING", "PAID");
+    const next = applyActivity(muse, "WATCHING", "JUP");
 
     assert.equal(fetchMock.mock.callCount(), 0);
     assert.deepEqual(muse, frozen);
     assert.equal(next.activity, "WATCHING");
-    assert.equal(next.mind.watching, "PAID");
+    assert.equal(next.mind.watching, "JUP");
+  });
+});
+
+describe("junk tickers stay off the tape", () => {
+  it("does not watch PAID from a junk pulse", () => {
+    const next = tickSnapshot(seedWorld(), { kind: "TREND_SPIKE", ticker: "PAID" });
+    assert.notEqual(next.muses.trader.mind.watching, "PAID");
+    assert.notEqual(next.muses.scroller.mind.watching, "PAID");
+    assert.notEqual(pickTicker("PAID"), "PAID");
+    assert.equal(pickTicker("WIF"), "WIF");
   });
 });
 
@@ -49,7 +59,7 @@ describe("tick events stay SIM", () => {
     });
 
     for (let i = 0; i < 64; i += 1) {
-      const next = tickSnapshot(seedWorld(), { kind: "TREND_SPIKE", ticker: "PAID" });
+      const next = tickSnapshot(seedWorld(), { kind: "TREND_SPIKE", ticker: "JUP" });
       for (const event of next.events) {
         assert.equal(honestyFromLabel(event.source), "sim");
         assert.notEqual(event.source, "bot");

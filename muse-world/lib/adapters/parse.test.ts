@@ -4,12 +4,15 @@ import { describe, it } from "node:test";
 import {
   claimsExecutedFill,
   classifyGrokBias,
+  cleanTicker,
   grokEventText,
   grokReplyFromWake,
   grokSourceLabel,
   ingestAuthorized,
+  isJunkTicker,
   mergeMarketPulse,
   mintFromGeckoTokenId,
+  pulseDisplayName,
   quietMarketPulse,
   quietProviders,
   resolveWakeResult,
@@ -77,28 +80,93 @@ describe("market pulse", () => {
     );
   });
 
+  it("skips PAID, pad coins, and other junk symbols", () => {
+    assert.equal(tickerFromSymbol("PAID"), null);
+    assert.equal(tickerFromSymbol("$PAID"), null);
+    assert.equal(tickerFromName("PAID / SOL"), null);
+    assert.equal(tickerFromSymbol("SNAPPAD"), null);
+    assert.equal(tickerFromSymbol("GITPAD"), null);
+    assert.equal(cleanTicker("PAID"), null);
+    assert.equal(isJunkTicker("PAID"), true);
+    assert.equal(isJunkTicker("WIF"), false);
+    assert.equal(pulseDisplayName("PAID", "PAID"), null);
+    assert.equal(pulseDisplayName("dogwifhat", "WIF"), "dogwifhat");
+  });
+
   it("prefers gecko then birdeye/gmgn and never invents fills", () => {
     const gecko = mergeMarketPulse({
-      gecko: { source: "gecko", ticker: "WIF", mint: "mint1", volumeUsd: 50_000 },
-      birdeye: { source: "birdeye", ticker: "BONK", mint: "mint2", volumeUsd: 90_000 },
+      gecko: {
+        source: "gecko",
+        ticker: "WIF",
+        name: "dogwifhat",
+        mint: "mint1",
+        volumeUsd: 50_000,
+        changePct: 4.2,
+      },
+      birdeye: {
+        source: "birdeye",
+        ticker: "BONK",
+        name: "Bonk",
+        mint: "mint2",
+        volumeUsd: 90_000,
+        changePct: 1.1,
+      },
       gmgn: "skip",
       helius: "skip",
     });
     assert.equal(gecko.source, "gecko");
     assert.equal(gecko.kind, "TREND_SPIKE");
+    assert.equal(gecko.name, "dogwifhat");
+    assert.equal(gecko.changePct, 4.2);
     assert.deepEqual(gecko.fills, []);
 
     const fallback = mergeMarketPulse({
       gecko: "error",
-      birdeye: { source: "birdeye", ticker: "PINT", mint: "mint3", volumeUsd: 1_000 },
+      birdeye: {
+        source: "birdeye",
+        ticker: "PINT",
+        name: "PINT",
+        mint: "mint3",
+        volumeUsd: 1_000,
+        changePct: -2.5,
+      },
       gmgn: "skip",
-      helius: { symbol: null, mint: "mint3" },
+      helius: { symbol: null, name: null, mint: "mint3" },
     });
     assert.equal(fallback.source, "birdeye");
     assert.equal(fallback.ticker, "PINT");
+    assert.equal(fallback.changePct, -2.5);
     assert.deepEqual(fallback.fills, []);
     assert.equal(fallback.providers.gecko, "error");
     assert.equal(fallback.providers.helius, "ok");
+  });
+
+  it("drops a PAID gecko row and uses the next live provider", () => {
+    const pulse = mergeMarketPulse({
+      gecko: {
+        source: "gecko",
+        ticker: "PAID",
+        name: "PAID",
+        mint: "mint-paid",
+        volumeUsd: 99_000,
+        changePct: 80,
+      },
+      birdeye: {
+        source: "birdeye",
+        ticker: "WIF",
+        name: "dogwifhat",
+        mint: "mint1",
+        volumeUsd: 12_000,
+        changePct: 3.1,
+      },
+      gmgn: "skip",
+      helius: "skip",
+    });
+    assert.equal(pulse.source, "birdeye");
+    assert.equal(pulse.ticker, "WIF");
+    assert.notEqual(pulse.ticker, "PAID");
+    assert.equal(pulse.name, "dogwifhat");
+    assert.deepEqual(pulse.fills, []);
   });
 
   it("fails open to sim quiet with empty fills when nothing live answers", () => {
@@ -110,18 +178,29 @@ describe("market pulse", () => {
     });
     assert.deepEqual(pulse, quietMarketPulse(quietProviders()));
     assert.equal(pulse.source, "sim");
+    assert.equal(pulse.name, null);
+    assert.equal(pulse.changePct, null);
     assert.deepEqual(pulse.fills, []);
   });
 
   it("lets helius fill a missing ticker without inventing a new source", () => {
     const pulse = mergeMarketPulse({
-      gecko: { source: "gecko", ticker: null, mint: "mint9", volumeUsd: 12_000 },
+      gecko: {
+        source: "gecko",
+        ticker: null,
+        name: null,
+        mint: "mint9",
+        volumeUsd: 12_000,
+        changePct: 1.4,
+      },
       birdeye: "skip",
       gmgn: "skip",
-      helius: { symbol: "JUP", mint: "mint9" },
+      helius: { symbol: "JUP", name: "Jupiter", mint: "mint9" },
     });
     assert.equal(pulse.source, "gecko");
     assert.equal(pulse.ticker, "JUP");
+    assert.equal(pulse.name, "Jupiter");
+    assert.equal(pulse.changePct, 1.4);
     assert.deepEqual(pulse.fills, []);
   });
 });

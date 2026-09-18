@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group, Mesh } from "three";
 import { usePerf } from "@/components/world/perf-context";
+import { PhoneScreen } from "@/components/world/screens";
 import { damp } from "@/lib/world/camera";
 import type { MuseActivity, MuseId, MuseState } from "@/types/world";
 import { assertNever } from "@/types/world";
@@ -137,22 +138,7 @@ function Scarf() {
 }
 
 function Phone() {
-  return (
-    <group>
-      <mesh>
-        <boxGeometry args={[0.1, 0.17, 0.018]} />
-        <meshStandardMaterial color="#11110f" roughness={0.3} metalness={0.4} />
-      </mesh>
-      <mesh position={[0, 0, 0.011]}>
-        <planeGeometry args={[0.082, 0.14]} />
-        <meshStandardMaterial
-          color="#1a2430"
-          emissive="#3a4d66"
-          emissiveIntensity={0.55}
-        />
-      </mesh>
-    </group>
-  );
+  return <PhoneScreen />;
 }
 
 function Card() {

@@ -1,13 +1,16 @@
+import { tickerFromName } from "@/lib/adapters/parse";
 import type { GrokSource, MuseId, WorldEvent, WorldEventKind } from "@/types/world";
 import { assertNever } from "@/types/world";
 
 export type HonestySource = "real" | "sim";
 
-export type MarketOrigin = "gecko" | "sim";
+export type MarketOrigin = "gecko" | "birdeye" | "gmgn" | "helius" | "sim";
 
 export type MarketPulse = {
   kind: WorldEventKind | "QUIET";
   ticker: string | null;
+  name?: string | null;
+  changePct?: number | null;
   source: MarketOrigin;
 };
 
@@ -42,6 +45,9 @@ export function honestyFromLabel(source: PacketLabel): HonestySource {
     case "bot":
     case "xai":
     case "gecko":
+    case "birdeye":
+    case "gmgn":
+    case "helius":
       return assertSource("real");
     case "sim":
     case "world":
@@ -77,17 +83,6 @@ type MarketFetchOutcome =
   | { status: "http-error" }
   | { status: "network-error" };
 
-function tickerFromName(name: string | undefined): string | null {
-  if (!name) {
-    return null;
-  }
-  const token = name.split("/")[0]?.trim();
-  if (!token || token.length > 8) {
-    return null;
-  }
-  return token.toUpperCase();
-}
-
 export function marketPulseFromFetch(outcome: MarketFetchOutcome): MarketPulse {
   switch (outcome.status) {
     case "http-error":
@@ -95,7 +90,7 @@ export function marketPulseFromFetch(outcome: MarketFetchOutcome): MarketPulse {
       return simMarketPulse();
     case "ok": {
       const body = outcome.body as { data?: GeckoPool[] };
-      const row = body.data?.[0];
+      const row = (body.data ?? []).find((item) => tickerFromName(item.attributes?.name));
       if (!row) {
         return simMarketPulse();
       }

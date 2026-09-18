@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { mostAwakeId } from "@/components/watch/copy";
 import { tickSnapshot, type Pulse } from "@/lib/sim/tick";
+import { quietScreenPulse, sanitizeScreenPulse, type ScreenPulse } from "@/lib/world/screen-texture";
 import { INTRO_CLEAR_MS, INTRO_COPY_AT_MS, presetForMuse } from "@/lib/world/camera";
 import { seedWorld } from "@/lib/world/defaults";
 import { PERF_BUDGET } from "@/lib/world/perf";
@@ -27,7 +28,10 @@ export function useLivingWorld() {
   const [introLine, setIntroLine] = useState<string | null>(
     prefersReducedMotion() ? null : INTRO_COPY[0],
   );
-  const [pulse, setPulse] = useState<Pulse>({ kind: "QUIET", ticker: null });
+  const [pulse, setPulse] = useState<Pulse>(() => ({
+    kind: "QUIET",
+    ...quietScreenPulse(),
+  }));
 
   useEffect(() => {
     if (prefersReducedMotion()) {
@@ -59,7 +63,16 @@ export function useLivingWorld() {
         const market = await fetch("/api/market", { cache: "no-store" });
         if (market.ok) {
           const next = (await market.json()) as Pulse;
-          if (!cancelled) setPulse(next);
+          if (!cancelled) {
+            const tape = sanitizeScreenPulse(next);
+            const kind =
+              tape.source === "sim"
+                ? "QUIET"
+                : next.kind === "TREND_SPIKE" || next.kind === "VIRAL_POST"
+                  ? next.kind
+                  : "QUIET";
+            setPulse({ kind, ...tape });
+          }
         }
       } catch {
         /* fail-open local sim */
@@ -128,5 +141,6 @@ export function useLivingWorld() {
     select,
     setCamera,
     toggleMind,
+    pulse: pulse as ScreenPulse,
   };
 }

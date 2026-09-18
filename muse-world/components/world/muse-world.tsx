@@ -6,6 +6,7 @@ import { ACESFilmicToneMapping } from "three";
 import { PerfProvider, usePerf } from "@/components/world/perf-context";
 import { WatchMode } from "@/components/world/watch-mode";
 import type { RenderMode } from "@/lib/world/perf";
+import type { ScreenPulse } from "@/lib/world/screen-texture";
 import type { MuseId, WorldSnapshot } from "@/types/world";
 import { assertNever } from "@/types/world";
 
@@ -32,6 +33,7 @@ function isWebglMode(mode: RenderMode): boolean {
 
 export function MuseWorld({
   world,
+  pulse,
   introDone,
   onIntroDone,
   onSelect,
@@ -39,6 +41,7 @@ export function MuseWorld({
   markWebglLost,
 }: {
   world: WorldSnapshot;
+  pulse: ScreenPulse;
   introDone: boolean;
   onIntroDone: () => void;
   onSelect: (id: MuseId) => void;
@@ -86,6 +89,7 @@ export function MuseWorld({
           <PerfProvider value={budget}>
             <LivingScene
               world={world}
+              pulse={pulse}
               introDone={introDone}
               onIntroDone={onIntroDone}
               onSelect={onSelect}
@@ -93,7 +97,7 @@ export function MuseWorld({
           </PerfProvider>
         </Canvas>
       ) : null}
-      {ready && !webgl ? <WatchMode world={world} onSelect={onSelect} /> : null}
+      {ready && !webgl ? <WatchMode world={world} pulse={pulse} onSelect={onSelect} /> : null}
     </main>
   );
 }

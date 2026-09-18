@@ -6,6 +6,7 @@ import { activityLine, asCaption } from "@/components/watch/copy";
 import { usePerf } from "@/components/world/perf-context";
 import { wallSlotWorld } from "@/lib/world/layout";
 import { projectLoft, watchFrame } from "@/lib/world/perf";
+import { screenView, type ScreenPulse } from "@/lib/world/screen-texture";
 import type { MuseId, MuseState, PacketEndpoint, WorldSnapshot } from "@/types/world";
 import { MIND_NODES, MUSE_IDS, assertNever } from "@/types/world";
 
@@ -133,11 +134,14 @@ function CitySilhouette() {
   );
 }
 
-function Furniture() {
+function Furniture({ pulse }: { pulse: ScreenPulse }) {
   const couch = projectLoft([-4.15, 0, 1.35]);
   const desk = projectLoft([3.4, 0, -0.85]);
   const wall = projectLoft([7.55, 0, 2.6]);
   const table = projectLoft([-2.7, 0, 2.2]);
+  const view = screenView(pulse);
+  const changeColor =
+    view.changeTone === "up" ? "#7ee3a4" : view.changeTone === "down" ? "#ef8b8b" : "#d7c9a6";
 
   return (
     <>
@@ -152,9 +156,19 @@ function Furniture() {
         style={{ left: `${desk.left}%`, top: `${desk.top}%` }}
       >
         <div className="absolute inset-x-3 -top-3 flex justify-between">
-          <span className="h-3 w-5 bg-[#0e1216]" />
-          <span className="h-3 w-5 bg-[#0e1216]" />
+          <span className="flex h-4 w-7 items-center justify-center bg-[#16344a] text-[5px] tracking-[0.08em] text-[#ecf6ff]">
+            {view.title}
+          </span>
+          <span
+            className="flex h-4 w-7 items-center justify-center bg-[#16344a] text-[5px] tracking-[0.08em]"
+            style={{ color: changeColor }}
+          >
+            {view.change}
+          </span>
         </div>
+        <span className="absolute -right-2 -top-2 flex h-3 w-4 items-center justify-center bg-[#1a3b52] text-[4px] text-[#ecf6ff]">
+          {view.title}
+        </span>
       </div>
       <div
         className="absolute z-10 h-[26%] w-[5%] -translate-x-1/2 -translate-y-1/2 bg-[#1a1713]"
@@ -218,9 +232,11 @@ function WatchPacket({ world, now }: { world: WorldSnapshot; now: number }) {
 
 export function WatchMode({
   world,
+  pulse,
   onSelect,
 }: {
   world: WorldSnapshot;
+  pulse: ScreenPulse;
   onSelect: (id: MuseId) => void;
 }) {
   const { reducedMotion, hidden } = usePerf();
@@ -263,7 +279,7 @@ export function WatchMode({
           <div className="absolute left-[9%] top-[8%] h-[46%] w-[40%] bg-[#5c4a3e]/55" />
           <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-[#15202c]/35 to-transparent" />
         </div>
-        <Furniture />
+        <Furniture pulse={pulse} />
         {MUSE_IDS.map((id) => (
           <MuseFigure
             key={id}

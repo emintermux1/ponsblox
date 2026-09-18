@@ -1,3 +1,4 @@
+import { cleanTicker } from "@/lib/adapters/parse";
 import { chillHome, PACKET_HOLD_MS } from "@/lib/world/layout";
 import { pickStoryBeat, upsertWallPin, type StoryBeat } from "@/lib/sim/stories";
 import type {
@@ -13,6 +14,9 @@ import { assertNever } from "@/types/world";
 export type Pulse = {
   kind: WorldEventKind | "QUIET";
   ticker: string | null;
+  name?: string | null;
+  changePct?: number | null;
+  source?: string;
 };
 
 const THOUGHTS: Record<MuseId, string[]> = {
@@ -45,10 +49,10 @@ const THOUGHTS: Record<MuseId, string[]> = {
   ],
 };
 
-const TICKERS = ["PAID", "WIF", "BONK", "PINT", "JUP", "PENGU"];
+const TICKERS = ["WIF", "BONK", "PINT", "JUP", "PENGU"];
 
 export function pickTicker(fallback: string | null): string {
-  return fallback ?? TICKERS[Math.floor(Math.random() * TICKERS.length)] ?? "WIF";
+  return cleanTicker(fallback) ?? TICKERS[Math.floor(Math.random() * TICKERS.length)] ?? "WIF";
 }
 
 function pick<T>(items: T[], random: () => number): T {
@@ -407,7 +411,9 @@ export function tickSnapshot(
   random = Math.random,
 ): WorldSnapshot {
   const subject =
-    pulse.ticker ?? world.muses.trader.mind.watching ?? world.muses.scroller.mind.watching;
+    cleanTicker(pulse.ticker) ??
+    cleanTicker(world.muses.trader.mind.watching) ??
+    cleanTicker(world.muses.scroller.mind.watching);
   const spiked = pulse.kind === "TREND_SPIKE" || pulse.kind === "VIRAL_POST";
   const events = world.events;
   const packet = world.packet && now - world.packet.t < PACKET_HOLD_MS ? world.packet : null;

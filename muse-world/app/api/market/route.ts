@@ -10,6 +10,8 @@ export async function GET() {
     return Response.json({
       kind: "QUIET",
       ticker: null,
+      name: null,
+      changePct: null,
       mint: null,
       source: "sim",
       providers: {

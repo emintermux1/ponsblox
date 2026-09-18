@@ -42,6 +42,30 @@ describe("market fail-open", () => {
     assert.equal(pulse.source, "sim");
     assert.equal(honestyFromLabel(pulse.source), "sim");
   });
+
+  it("skips a PAID pool and stays SIM when nothing clean remains", () => {
+    const pulse = marketPulseFromFetch({
+      status: "ok",
+      body: { data: [{ attributes: { name: "PAID / SOL", volume_usd: { h1: "90000" } } }] },
+    });
+    assert.equal(pulse.source, "sim");
+    assert.equal(pulse.ticker, null);
+  });
+
+  it("walks past a pad coin to the first clean gecko ticker", () => {
+    const pulse = marketPulseFromFetch({
+      status: "ok",
+      body: {
+        data: [
+          { attributes: { name: "SNAPPAD / SOL", volume_usd: { h1: "90000" } } },
+          { attributes: { name: "WIF / SOL", volume_usd: { h1: "12000" } } },
+        ],
+      },
+    });
+    assert.equal(pulse.source, "gecko");
+    assert.equal(pulse.ticker, "WIF");
+    assert.equal(honestyFromLabel(pulse.source), "real");
+  });
 });
 
 describe("grok wake without webhook", () => {
@@ -76,10 +100,13 @@ describe("events never mark SIM packets as REAL", () => {
     assert.equal(honestyFromLabel("sim"), "sim");
   });
 
-  it("maps bot, xai, and gecko labels to real", () => {
+  it("maps bot, xai, and live tape labels to real", () => {
     assert.equal(honestyFromLabel("bot"), "real");
     assert.equal(honestyFromLabel("xai"), "real");
     assert.equal(honestyFromLabel("gecko"), "real");
+    assert.equal(honestyFromLabel("birdeye"), "real");
+    assert.equal(honestyFromLabel("gmgn"), "real");
+    assert.equal(honestyFromLabel("helius"), "real");
   });
 
   it("refuses to upgrade a SIM packet to a live label", () => {
@@ -88,6 +115,7 @@ describe("events never mark SIM packets as REAL", () => {
     assert.throws(() => assertSimNotReal("sim", "bot"), /SIM packet cannot be marked REAL/);
     assert.throws(() => assertSimNotReal("sim", "xai"), /SIM packet cannot be marked REAL/);
     assert.throws(() => assertSimNotReal("sim", "gecko"), /SIM packet cannot be marked REAL/);
+    assert.throws(() => assertSimNotReal("sim", "birdeye"), /SIM packet cannot be marked REAL/);
   });
 
   it("does not treat a sim-shaped xai object as a live Grok reply", () => {

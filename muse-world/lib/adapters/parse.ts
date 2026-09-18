@@ -29,23 +29,46 @@ export type ProviderStatus = "ok" | "skip" | "error";
 export type MarketHit = {
   source: Exclude<MarketProviderId, "helius">;
   ticker: string | null;
+  name: string | null;
   mint: string | null;
   volumeUsd: number;
+  changePct: number | null;
 };
 
 export type HeliusConfirm = {
   symbol: string | null;
+  name: string | null;
   mint: string | null;
 };
 
 export type MarketPulse = {
   kind: "TREND_SPIKE" | "VIRAL_POST" | "QUIET";
   ticker: string | null;
+  name: string | null;
+  changePct: number | null;
   mint: string | null;
   source: MarketProviderId | "sim";
   providers: Record<MarketProviderId, ProviderStatus>;
   fills: readonly [];
 };
+
+const JUNK_TICKERS = new Set([
+  "PAID",
+  "LONGER",
+  "NVDAX3L",
+  "REDDITPAD",
+  "WIKIPAD",
+  "ROBLOXPAD",
+  "SKINPAD",
+  "GITPAD",
+  "SNAPPAD",
+  "INDEXPAD",
+  "PONS",
+  "SOL",
+  "WSOL",
+  "USDC",
+  "USDT",
+]);
 
 export type GrokWorldEvent = {
   id: string;
@@ -152,23 +175,81 @@ export function makeGrokEvent(input: {
   };
 }
 
+export function normalizeTicker(symbol: string | undefined | null): string | null {
+  if (!symbol) {
+    return null;
+  }
+  const token = symbol.trim().replace(/^\$/, "");
+  if (!token || token.length > 8) {
+    return null;
+  }
+  if (/[^A-Za-z0-9]/.test(token)) {
+    return null;
+  }
+  return token.toUpperCase();
+}
+
+export function isJunkTicker(symbol: string | undefined | null): boolean {
+  const token = normalizeTicker(symbol);
+  if (!token) {
+    return true;
+  }
+  if (JUNK_TICKERS.has(token) || token.endsWith("PAD")) {
+    return true;
+  }
+  return /^\d+$/.test(token);
+}
+
+export function cleanTicker(symbol: string | undefined | null): string | null {
+  const token = normalizeTicker(symbol);
+  if (!token || isJunkTicker(token)) {
+    return null;
+  }
+  return token;
+}
+
 export function tickerFromName(name: string | undefined): string | null {
   if (!name) {
     return null;
   }
-  const token = name.split("/")[0]?.trim();
-  return tickerFromSymbol(token);
+  return cleanTicker(name.split("/")[0]);
 }
 
 export function tickerFromSymbol(symbol: string | undefined | null): string | null {
-  if (!symbol) {
+  return cleanTicker(symbol);
+}
+
+export function finiteChange(value: unknown): number | null {
+  const amount = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(amount) || Math.abs(amount) > 10_000) {
     return null;
   }
-  const token = symbol.trim();
-  if (!token || token.length > 8) {
-    return null;
+  return amount;
+}
+
+export function isJunkDisplayName(name: string | null | undefined): boolean {
+  const raw = name?.split("/")[0]?.trim().replace(/^\$/, "") ?? "";
+  if (!raw) {
+    return true;
   }
-  return token.toUpperCase();
+  const upper = raw.toUpperCase();
+  if (upper === "PAID" || JUNK_TICKERS.has(upper) || upper.endsWith("PAD")) {
+    return true;
+  }
+  const compact = upper.replace(/[^A-Z0-9]/g, "");
+  return compact === "PAID" || JUNK_TICKERS.has(compact) || compact.endsWith("PAD");
+}
+
+export function pulseDisplayName(
+  name: string | null | undefined,
+  ticker: string | null,
+): string | null {
+  const clean = cleanTicker(ticker);
+  const raw = name?.split("/")[0]?.trim() ?? "";
+  if (raw && !isJunkDisplayName(raw)) {
+    return raw.length > 18 ? (clean ?? raw.slice(0, 18)) : raw;
+  }
+  return clean;
 }
 
 export function mintFromGeckoTokenId(id: string | undefined): string | null {
@@ -196,6 +277,8 @@ export function quietMarketPulse(
   return {
     kind: "QUIET",
     ticker: null,
+    name: null,
+    changePct: null,
     mint: null,
     source: "sim",
     providers,
@@ -215,16 +298,22 @@ export function mergeMarketPulse(input: {
     gmgn: statusOf(input.gmgn),
     helius: statusOf(input.helius),
   });
-  const hit = asHit(input.gecko) ?? asHit(input.birdeye) ?? asHit(input.gmgn);
+  const hit = asCleanHit(input.gecko) ?? asCleanHit(input.birdeye) ?? asCleanHit(input.gmgn);
   if (!hit) {
     return quietMarketPulse(providers);
   }
   const helius = typeof input.helius === "object" ? input.helius : null;
-  const ticker = hit.ticker ?? tickerFromSymbol(helius?.symbol);
+  const ticker = cleanTicker(hit.ticker) ?? cleanTicker(helius?.symbol);
+  const name = pulseDisplayName(hit.name ?? helius?.name, ticker);
   const mint = hit.mint ?? helius?.mint ?? null;
+  if (!ticker && !name) {
+    return quietMarketPulse(providers);
+  }
   return {
     kind: hit.volumeUsd > 40_000 ? "TREND_SPIKE" : "VIRAL_POST",
     ticker,
+    name,
+    changePct: finiteChange(hit.changePct),
     mint,
     source: hit.source,
     providers,
@@ -239,9 +328,25 @@ function statusOf(value: MarketHit | HeliusConfirm | ProviderStatus): ProviderSt
   return "ok";
 }
 
-function asHit(value: MarketHit | ProviderStatus): MarketHit | null {
+function asCleanHit(value: MarketHit | ProviderStatus): MarketHit | null {
   if (typeof value === "string") {
     return null;
   }
-  return value;
+  const ticker = cleanTicker(value.ticker);
+  const name = pulseDisplayName(value.name, ticker);
+  if (isJunkTicker(value.ticker) && isJunkDisplayName(value.name) && !value.mint) {
+    return null;
+  }
+  if (value.ticker && isJunkTicker(value.ticker)) {
+    return null;
+  }
+  if (!ticker && !name && !value.mint) {
+    return null;
+  }
+  return {
+    ...value,
+    ticker,
+    name,
+    changePct: finiteChange(value.changePct),
+  };
 }

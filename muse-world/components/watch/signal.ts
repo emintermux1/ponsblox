@@ -43,7 +43,12 @@ export function useStreetSignal(): StreetSignal {
         if (cancelled) {
           return;
         }
-        if (body.source === "gecko") {
+        if (
+          body.source === "gecko" ||
+          body.source === "birdeye" ||
+          body.source === "gmgn" ||
+          body.source === "helius"
+        ) {
           setSignal({
             status: "gecko",
             at: Date.now(),
@@ -111,7 +116,7 @@ function streetHonesty(signal: StreetSignal): LastSignal {
     case "gecko":
       return {
         mark: "REAL",
-        line: "outside — gecko answered",
+        line: "outside — live tape",
       };
     default:
       return assertNever(signal);

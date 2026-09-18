@@ -1,42 +1,83 @@
 import "server-only";
 
 import {
+  finiteChange,
   mergeMarketPulse,
   mintFromGeckoTokenId,
+  pulseDisplayName,
   quietMarketPulse,
   quietProviders,
   tickerFromName,
   tickerFromSymbol,
   type HeliusConfirm,
   type MarketHit,
+  type MarketProviderId,
   type MarketPulse,
   type ProviderStatus,
 } from "@/lib/adapters/parse";
-import { assertSource, honestyFromLabel } from "@/lib/adapters/source";
+import { assertSource, honestyFromLabel, type PacketLabel } from "@/lib/adapters/source";
+import { assertNever } from "@/types/world";
 
 export type { MarketPulse };
 
 type GeckoPool = {
   attributes?: {
     name?: string;
-    volume_usd?: { h1?: string };
+    volume_usd?: { h1?: string; h24?: string };
+    price_change_percentage?: { m5?: string; h1?: string; h6?: string; h24?: string };
   };
   relationships?: {
     base_token?: { data?: { id?: string } };
   };
 };
 
+type ListedToken = {
+  address?: string;
+  token_address?: string;
+  symbol?: string;
+  name?: string;
+  volume?: number;
+  volume24hUSD?: number;
+  v24hUSD?: number;
+  price_change_percent?: number | string;
+  price_change_percent1h?: number | string;
+  price24hChangePercent?: number | string;
+  priceChange24hPercent?: number | string;
+  priceChange24h?: number | string;
+  v24hChangePercent?: number | string;
+};
+
 const UA = { Accept: "application/json", "User-Agent": "MuseWorld/1.0" };
 const LIVE_TTL_MS = 12_000;
 const STALE_LIVE_MS = 60_000;
+const TREND_LIMIT = 12;
 
 let lastPulse: MarketPulse = quietMarketPulse(quietProviders());
 let lastAt = 0;
 let lastLiveAt = 0;
 
+export function resetMarketPulseCache(): void {
+  lastPulse = quietMarketPulse(quietProviders());
+  lastAt = 0;
+  lastLiveAt = 0;
+}
+
+function marketLabel(source: MarketPulse["source"]): PacketLabel {
+  switch (source) {
+    case "sim":
+    case "gecko":
+    case "birdeye":
+    case "gmgn":
+    case "helius":
+      return source;
+    default:
+      return assertNever(source);
+  }
+}
+
 function stampPulse(pulse: MarketPulse): MarketPulse {
-  assertSource(honestyFromLabel(pulse.source === "sim" ? "sim" : "gecko"));
-  return pulse;
+  assertSource(honestyFromLabel(marketLabel(pulse.source)));
+  return { ...pulse, fills: [] };
 }
 
 async function readJson(
@@ -55,6 +96,50 @@ async function readJson(
   return response.json();
 }
 
+function hitFromListed(
+  source: Exclude<MarketProviderId, "helius">,
+  row: ListedToken,
+): MarketHit | null {
+  const ticker = tickerFromSymbol(row.symbol) ?? tickerFromName(row.name);
+  const name = pulseDisplayName(row.name ?? row.symbol, ticker);
+  const mint = row.address ?? row.token_address ?? null;
+  if (!ticker && !name) {
+    return null;
+  }
+  return {
+    source,
+    ticker,
+    name,
+    mint,
+    volumeUsd: Number(row.volume24hUSD ?? row.v24hUSD ?? row.volume ?? 0),
+    changePct: finiteChange(
+      row.price_change_percent1h ??
+        row.price24hChangePercent ??
+        row.priceChange24hPercent ??
+        row.v24hChangePercent ??
+        row.price_change_percent ??
+        row.priceChange24h,
+    ),
+  };
+}
+
+function geckoHit(row: GeckoPool): MarketHit | null {
+  const ticker = tickerFromName(row.attributes?.name);
+  const name = pulseDisplayName(row.attributes?.name, ticker);
+  if (!ticker && !name) {
+    return null;
+  }
+  const change = row.attributes?.price_change_percentage;
+  return {
+    source: "gecko",
+    ticker,
+    name,
+    mint: mintFromGeckoTokenId(row.relationships?.base_token?.data?.id),
+    volumeUsd: Number(row.attributes?.volume_usd?.h1 ?? row.attributes?.volume_usd?.h24 ?? 0),
+    changePct: finiteChange(change?.h1 ?? change?.h24 ?? change?.h6 ?? change?.m5),
+  };
+}
+
 async function peekGecko(): Promise<MarketHit | ProviderStatus> {
   try {
     const body = (await readJson(
@@ -62,16 +147,17 @@ async function peekGecko(): Promise<MarketHit | ProviderStatus> {
       UA,
       1800,
     )) as { data?: GeckoPool[] } | null;
-    const row = body?.data?.[0];
-    if (!row) {
+    const rows = body?.data ?? [];
+    if (rows.length === 0) {
       return "error";
     }
-    return {
-      source: "gecko",
-      ticker: tickerFromName(row.attributes?.name),
-      mint: mintFromGeckoTokenId(row.relationships?.base_token?.data?.id),
-      volumeUsd: Number(row.attributes?.volume_usd?.h1 ?? 0),
-    };
+    for (const row of rows.slice(0, TREND_LIMIT)) {
+      const hit = geckoHit(row);
+      if (hit) {
+        return hit;
+      }
+    }
+    return "error";
   } catch {
     return "error";
   }
@@ -84,21 +170,21 @@ async function peekBirdeye(): Promise<MarketHit | ProviderStatus> {
   }
   try {
     const body = (await readJson(
-      "https://public-api.birdeye.so/defi/token_trending?sort_by=rank&sort_type=asc&offset=0&limit=1",
+      `https://public-api.birdeye.so/defi/token_trending?sort_by=rank&sort_type=asc&offset=0&limit=${TREND_LIMIT}`,
       { ...UA, "X-API-KEY": key, "x-chain": "solana" },
       1800,
-    )) as { data?: { tokens?: { address?: string; symbol?: string; volume24hUSD?: number; v24hUSD?: number }[] } } | null;
-    const row = body?.data?.tokens?.[0];
-    const mint = row?.address ?? null;
-    if (!mint) {
+    )) as { data?: { tokens?: ListedToken[] } } | null;
+    const rows = body?.data?.tokens ?? [];
+    if (rows.length === 0) {
       return "error";
     }
-    return {
-      source: "birdeye",
-      ticker: tickerFromSymbol(row?.symbol),
-      mint,
-      volumeUsd: Number(row?.volume24hUSD ?? row?.v24hUSD ?? 0),
-    };
+    for (const row of rows) {
+      const hit = hitFromListed("birdeye", row);
+      if (hit) {
+        return hit;
+      }
+    }
+    return "error";
   } catch {
     return "error";
   }
@@ -111,21 +197,21 @@ async function peekGmgn(): Promise<MarketHit | ProviderStatus> {
   }
   try {
     const body = await readJson(
-      "https://openapi.gmgn.ai/v1/market/rank?chain=sol&interval=1h&limit=1&orderby=volume",
+      `https://openapi.gmgn.ai/v1/market/rank?chain=sol&interval=1h&limit=${TREND_LIMIT}&orderby=volume`,
       { ...UA, "x-api-key": key },
       1800,
     );
-    const row = firstListedToken(body);
-    const mint = row?.address ?? row?.token_address ?? null;
-    if (!mint) {
+    const rows = listedTokens(body);
+    if (rows.length === 0) {
       return "error";
     }
-    return {
-      source: "gmgn",
-      ticker: tickerFromSymbol(row?.symbol),
-      mint,
-      volumeUsd: Number(row?.volume ?? 0),
-    };
+    for (const row of rows) {
+      const hit = hitFromListed("gmgn", row);
+      if (hit) {
+        return hit;
+      }
+    }
+    return "error";
   } catch {
     return "error";
   }
@@ -156,13 +242,17 @@ async function confirmHelius(mint: string | null): Promise<HeliusConfirm | Provi
       return "error";
     }
     const body = (await response.json()) as {
-      result?: { id?: string; content?: { metadata?: { symbol?: string } } };
+      result?: {
+        id?: string;
+        content?: { metadata?: { symbol?: string; name?: string } };
+      };
     };
-    const symbol = body.result?.content?.metadata?.symbol ?? null;
     if (!body.result) {
       return "error";
     }
-    return { symbol: tickerFromSymbol(symbol), mint: body.result.id ?? mint };
+    const symbol = tickerFromSymbol(body.result.content?.metadata?.symbol ?? null);
+    const name = pulseDisplayName(body.result.content?.metadata?.name, symbol);
+    return { symbol, name, mint: body.result.id ?? mint };
   } catch {
     return "error";
   }
@@ -203,20 +293,27 @@ export async function peekMarketPulse(): Promise<MarketPulse> {
   }
 }
 
-function firstListedToken(
-  body: unknown,
-): { address?: string; token_address?: string; symbol?: string; volume?: number } | null {
+function listedTokens(body: unknown): ListedToken[] {
   if (!body || typeof body !== "object") {
-    return null;
+    return [];
   }
   const root = body as Record<string, unknown>;
   const data = root.data;
   const nested = data && typeof data === "object" && !Array.isArray(data) ? (data as Record<string, unknown>) : null;
   const lists = [data, nested?.rank, nested?.list, nested?.tokens, root.rank, root.list, root.tokens];
+  const out: ListedToken[] = [];
   for (const list of lists) {
-    if (Array.isArray(list) && list[0] && typeof list[0] === "object") {
-      return list[0] as { address?: string; token_address?: string; symbol?: string; volume?: number };
+    if (!Array.isArray(list)) {
+      continue;
+    }
+    for (const row of list) {
+      if (row && typeof row === "object") {
+        out.push(row as ListedToken);
+      }
+    }
+    if (out.length > 0) {
+      return out.slice(0, TREND_LIMIT);
     }
   }
-  return null;
+  return out;
 }

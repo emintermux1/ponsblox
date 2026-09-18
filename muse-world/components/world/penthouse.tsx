@@ -21,6 +21,7 @@ import {
   worldToWallLocal,
 } from "@/lib/world/layout";
 import type { CityLod, GlassQuality } from "@/lib/world/perf";
+import { DeskLaptop, DeskMonitors } from "@/components/world/screens";
 import type { SpatialPacket, WallPin } from "@/types/world";
 import { assertNever } from "@/types/world";
 
@@ -535,26 +536,10 @@ function Desk({ wood }: { wood: CanvasTexture }) {
       <Panel args={[3.28, 0.018, 1.18]} position={[0, 0.73, 0]} color={ALUMINUM_DARK} metalness={0.8} roughness={0.35} />
       <Panel args={[0.05, 0.7, 1.12]} position={[-1.52, 0.36, 0]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
       <Panel args={[0.05, 0.7, 1.12]} position={[1.52, 0.36, 0]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
-      {[-0.58, 0.62].map((x) => (
-        <group key={x} position={[x, 1.2, -0.28]} rotation={[-0.1, 0, 0]}>
-          <mesh castShadow>
-            <boxGeometry args={[0.92, 0.56, 0.03]} />
-            <meshStandardMaterial color="#161513" metalness={0.72} roughness={0.26} />
-          </mesh>
-          <mesh position={[0, 0, 0.018]}>
-            <planeGeometry args={[0.86, 0.5]} />
-            <meshPhysicalMaterial
-              color="#0e1216"
-              metalness={0.35}
-              roughness={0.08}
-              transparent
-              opacity={0.88}
-            />
-          </mesh>
-        </group>
-      ))}
-      <Panel args={[0.42, 0.02, 0.3]} position={[1.18, 0.8, 0.22]} color={PAPER} roughness={0.82} />
-      <Panel args={[0.36, 0.015, 0.26]} position={[1.2, 0.82, 0.2]} color="#d7c6aa" roughness={0.8} />
+      <DeskMonitors />
+      <DeskLaptop />
+      <Panel args={[0.42, 0.02, 0.3]} position={[1.42, 0.8, 0.38]} color={PAPER} roughness={0.82} />
+      <Panel args={[0.36, 0.015, 0.26]} position={[1.44, 0.82, 0.36]} color="#d7c6aa" roughness={0.8} />
     </group>
   );
 }
