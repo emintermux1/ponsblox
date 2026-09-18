@@ -6,6 +6,7 @@ import { useFrame } from "@react-three/fiber";
 import type { Group } from "three";
 import { usePerf } from "@/components/world/perf-context";
 import { PACKET_TRAVEL_MS, packetAccent } from "@/lib/world/layout";
+import { packetCardText } from "@/lib/world/wall-copy";
 import type { PacketEndpoint, PacketKind, SpatialPacket } from "@/types/world";
 import { assertNever } from "@/types/world";
 
@@ -71,16 +72,18 @@ export function TravelPacket({
     return null;
   }
 
+  const line = packet ? packetCardText(packet.label) : null;
+
   return (
     <group ref={group} visible={Boolean(packet)}>
       <PacketBody
         kind={packet?.kind ?? "NOTE"}
         color={packet ? packetAccent(packet.from) : "#e8d2a0"}
       />
-      {packet ? (
+      {line ? (
         <Html center distanceFactor={8} style={{ pointerEvents: "none" }}>
-          <span className="whitespace-nowrap font-serif text-[10px] tracking-[0.16em] text-[#efe6d4]/75">
-            ${packet.label}
+          <span className="whitespace-nowrap font-serif text-[10px] italic tracking-[0.08em] text-[#efe6d4]/75">
+            {line}
           </span>
         </Html>
       ) : null}

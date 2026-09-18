@@ -11,6 +11,7 @@ import {
   type StoryInput,
 } from "./stories";
 import { tickSnapshot } from "./tick";
+import { isTickerSlopHeadline, wallNoteForSlot } from "../world/wall-copy";
 import type { MuseState, WorldEvent } from "../../types/world";
 
 function event(kind: WorldEvent["kind"], at: number, museId: WorldEvent["museId"] = "chill"): WorldEvent {
@@ -59,14 +60,17 @@ describe("wall slots", () => {
   it("fills empty slots then the oldest", () => {
     assert.equal(nextWallSlot([]), 0);
     const pins = [
-      { id: "a", label: "WIF", slot: 0, at: 10 },
-      { id: "b", label: "JUP", slot: 1, at: 3 },
-      { id: "c", label: "BONK", slot: 2, at: 8 },
-      { id: "d", label: "PINT", slot: 3, at: 9 },
-      { id: "e", label: "PAID", slot: 4, at: 7 },
+      { id: "a", label: "the tape leaned", slot: 0, at: 10 },
+      { id: "b", label: "let it go", slot: 1, at: 3 },
+      { id: "c", label: "same structure", slot: 2, at: 8 },
+      { id: "d", label: "thin book", slot: 3, at: 9 },
+      { id: "e", label: "later", slot: 4, at: 7 },
     ];
     assert.equal(nextWallSlot(pins), 1);
-    assert.equal(upsertWallPin(pins, "PENGU", 1, 20).find((pin) => pin.slot === 1)?.label, "PENGU");
+    const next = upsertWallPin(pins, "PENGU", 1, 20).find((pin) => pin.slot === 1);
+    assert.equal(next?.label, wallNoteForSlot(1));
+    assert.notEqual(next?.label, "PENGU");
+    assert.equal(isTickerSlopHeadline(next?.label), false);
   });
 });
 
@@ -133,7 +137,7 @@ describe("pickStoryBeat", () => {
     assert.equal(beat, null);
   });
 
-  it("asks the builder for a card after a thesis cooldown", () => {
+  it("skips a PAID pulse instead of asking for a PAID card", () => {
     const world = seedWorld();
     world.muses.trader.mind.watching = "PAID";
     world.muses.builder.activity = "RESEARCHING";
@@ -146,7 +150,23 @@ describe("pickStoryBeat", () => {
         random: () => 0.1,
       }),
     );
-    assert.deepEqual(beat, { type: "ask_card", ticker: "PAID" });
+    assert.equal(beat, null);
+  });
+
+  it("asks the builder for a card after a thesis cooldown", () => {
+    const world = seedWorld();
+    world.muses.trader.mind.watching = "WIF";
+    world.muses.builder.activity = "RESEARCHING";
+    const beat = pickStoryBeat(
+      input({
+        muses: world.muses,
+        pulseTicker: "WIF",
+        events: [event("THESIS_CREATED", 990_000, "builder")],
+        now: 1_000_000,
+        random: () => 0.1,
+      }),
+    );
+    assert.deepEqual(beat, { type: "ask_card", ticker: "WIF" });
   });
 
   it("shares a ticker from scroller to builder", () => {
@@ -252,7 +272,35 @@ describe("tickSnapshot stories", () => {
     );
     assert.equal(next.packet?.kind, "PIN");
     assert.equal(next.packet?.to, "wall");
-    assert.equal(next.wallPins[0]?.label, "JUP");
+    assert.equal(next.wallPins[0]?.label, wallNoteForSlot(next.wallPins[0]?.slot ?? 0));
+    assert.notEqual(next.wallPins[0]?.label, "JUP");
+    assert.notEqual(next.packet?.label, "JUP");
+    assert.equal(isTickerSlopHeadline(next.wallPins[0]?.label), false);
+    assert.doesNotMatch(next.wallPins[0]?.label ?? "", /\$PAID|\bPAID\b/);
     assert.equal(next.events[0]?.kind, "THESIS_CREATED");
+    assert.doesNotMatch(next.events[0]?.text ?? "", /\$PAID|\bPAID\b|\$JUP/);
+  });
+
+  it("never pins PAID from a PAID pulse", () => {
+    const world = seedWorld();
+    world.muses.trader.mind.watching = "PAID";
+    world.muses.builder.activity = "RESEARCHING";
+    const next = tickSnapshot(
+      world,
+      { kind: "TREND_SPIKE", ticker: "PAID" },
+      20_000,
+      () => 0.05,
+    );
+    assert.equal(next.muses.trader.mind.watching, null);
+    for (const pin of next.wallPins) {
+      assert.doesNotMatch(pin.label, /paid/i);
+      assert.equal(isTickerSlopHeadline(pin.label), false);
+    }
+    if (next.packet) {
+      assert.doesNotMatch(next.packet.label, /paid/i);
+    }
+    for (const item of next.events) {
+      assert.doesNotMatch(item.text, /\$PAID|\bPAID\b/);
+    }
   });
 });

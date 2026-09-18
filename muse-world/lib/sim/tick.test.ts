@@ -33,12 +33,19 @@ describe("client tick purity", () => {
     });
     const muse = seedWorld().muses.trader;
     const frozen = structuredClone(muse);
-    const next = applyActivity(muse, "WATCHING", "PAID");
+    const next = applyActivity(muse, "WATCHING", "WIF");
 
     assert.equal(fetchMock.mock.callCount(), 0);
     assert.deepEqual(muse, frozen);
     assert.equal(next.activity, "WATCHING");
-    assert.equal(next.mind.watching, "PAID");
+    assert.equal(next.mind.watching, "WIF");
+  });
+
+  it("does not keep PAID as a watched gecko ticker", () => {
+    const muse = seedWorld().muses.trader;
+    const next = applyActivity(muse, "WATCHING", "PAID");
+    assert.equal(next.mind.watching, null);
+    assert.notEqual(next.mind.watching, "PAID");
   });
 });
 
@@ -49,15 +56,20 @@ describe("tick events stay SIM", () => {
     });
 
     for (let i = 0; i < 64; i += 1) {
-      const next = tickSnapshot(seedWorld(), { kind: "TREND_SPIKE", ticker: "PAID" });
+      const next = tickSnapshot(seedWorld(), { kind: "TREND_SPIKE", ticker: "WIF" });
       for (const event of next.events) {
         assert.equal(honestyFromLabel(event.source), "sim");
         assert.notEqual(event.source, "bot");
         assert.notEqual(event.source, "xai");
+        assert.doesNotMatch(event.text, /\$PAID|\bPAID\b/);
       }
       if (next.packet) {
         assert.ok(next.packet.label);
         assert.notEqual(next.packet.from, undefined);
+        assert.doesNotMatch(next.packet.label, /\$PAID|\bPAID\b/);
+      }
+      for (const pin of next.wallPins) {
+        assert.doesNotMatch(pin.label, /\$PAID|\bPAID\b/);
       }
     }
 

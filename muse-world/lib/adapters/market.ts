@@ -5,6 +5,7 @@ import {
   mintFromGeckoTokenId,
   quietMarketPulse,
   quietProviders,
+  isPaidTicker,
   tickerFromName,
   tickerFromSymbol,
   type HeliusConfirm,
@@ -66,6 +67,10 @@ async function peekGecko(): Promise<MarketHit | ProviderStatus> {
     if (!row) {
       return "error";
     }
+    const rawName = row.attributes?.name?.split("/")[0]?.trim();
+    if (isPaidTicker(rawName)) {
+      return "error";
+    }
     return {
       source: "gecko",
       ticker: tickerFromName(row.attributes?.name),
@@ -93,6 +98,9 @@ async function peekBirdeye(): Promise<MarketHit | ProviderStatus> {
     if (!mint) {
       return "error";
     }
+    if (isPaidTicker(row?.symbol)) {
+      return "error";
+    }
     return {
       source: "birdeye",
       ticker: tickerFromSymbol(row?.symbol),
@@ -118,6 +126,9 @@ async function peekGmgn(): Promise<MarketHit | ProviderStatus> {
     const row = firstListedToken(body);
     const mint = row?.address ?? row?.token_address ?? null;
     if (!mint) {
+      return "error";
+    }
+    if (isPaidTicker(row?.symbol)) {
       return "error";
     }
     return {

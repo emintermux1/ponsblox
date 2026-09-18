@@ -15,6 +15,7 @@ import {
   resolveWakeResult,
   tickerFromName,
   tickerFromSymbol,
+  isPaidTicker,
 } from "./parse.ts";
 
 describe("grok wake/ingest", () => {
@@ -39,11 +40,11 @@ describe("grok wake/ingest", () => {
     assert.equal(grokSourceLabel("xai"), "xAI");
     assert.equal(grokSourceLabel("bot"), "Grok Bot");
     assert.match(
-      grokEventText("MUSE 02", "GROK_RESPONSE", "xai", "thin book, PASS"),
+      grokEventText("TAPE", "GROK_RESPONSE", "xai", "thin book, PASS"),
       /xAI/,
     );
     assert.doesNotMatch(
-      grokEventText("MUSE 02", "GROK_RESPONSE", "xai", "thin book, PASS"),
+      grokEventText("TAPE", "GROK_RESPONSE", "xai", "thin book, PASS"),
       /Grok Bot/,
     );
   });
@@ -71,6 +72,11 @@ describe("market pulse", () => {
     assert.equal(tickerFromName("WIF / SOL"), "WIF");
     assert.equal(tickerFromSymbol("bonk"), "BONK");
     assert.equal(tickerFromName("thisnameistoolong / SOL"), null);
+    assert.equal(isPaidTicker("PAID"), true);
+    assert.equal(isPaidTicker("paid"), true);
+    assert.equal(tickerFromSymbol("PAID"), null);
+    assert.equal(tickerFromSymbol("$PAID"), null);
+    assert.equal(tickerFromName("paid / SOL"), null);
     assert.equal(
       mintFromGeckoTokenId("solana_DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"),
       "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
@@ -111,6 +117,30 @@ describe("market pulse", () => {
     assert.deepEqual(pulse, quietMarketPulse(quietProviders()));
     assert.equal(pulse.source, "sim");
     assert.deepEqual(pulse.fills, []);
+  });
+
+  it("skips a PAID gecko pulse instead of putting it on the tape", () => {
+    const pulse = mergeMarketPulse({
+      gecko: { source: "gecko", ticker: "PAID", mint: "mint-paid", volumeUsd: 90_000 },
+      birdeye: "skip",
+      gmgn: "skip",
+      helius: { symbol: "PAID", mint: "mint-paid" },
+    });
+    assert.equal(pulse.kind, "QUIET");
+    assert.equal(pulse.ticker, null);
+    assert.equal(pulse.source, "sim");
+    assert.deepEqual(pulse.fills, []);
+  });
+
+  it("skips lowercase paid and does not fall through to a slop headline", () => {
+    const pulse = mergeMarketPulse({
+      gecko: { source: "gecko", ticker: "paid", mint: "mint-paid", volumeUsd: 12_000 },
+      birdeye: "skip",
+      gmgn: "skip",
+      helius: "skip",
+    });
+    assert.equal(pulse.kind, "QUIET");
+    assert.equal(pulse.ticker, null);
   });
 
   it("lets helius fill a missing ticker without inventing a new source", () => {

@@ -1,4 +1,6 @@
+import { isPaidTicker } from "@/lib/adapters/parse";
 import { PACKET_HOLD_MS, WALL_SLOT_COUNT } from "@/lib/world/layout";
+import { sanitizeWallPinLabel } from "@/lib/world/wall-copy";
 import type {
   MuseId,
   MuseState,
@@ -57,9 +59,10 @@ export function nextWallSlot(pins: WallPin[]): number {
 }
 
 export function upsertWallPin(pins: WallPin[], label: string, slot: number, now: number): WallPin[] {
+  const safe = sanitizeWallPinLabel(label, slot);
   const pin: WallPin = {
-    id: `pin_${now.toString(36)}_${label.toLowerCase()}`,
-    label,
+    id: `pin_${now.toString(36)}_${safe.toLowerCase().replace(/\s+/g, "_")}`,
+    label: safe,
     slot,
     at: now,
   };
@@ -70,7 +73,11 @@ export function storySubject(
   pulseTicker: string | null,
   muses: Record<MuseId, MuseState>,
 ): string | null {
-  return pulseTicker ?? muses.trader.mind.watching ?? muses.scroller.mind.watching;
+  const raw = pulseTicker ?? muses.trader.mind.watching ?? muses.scroller.mind.watching;
+  if (!raw || isPaidTicker(raw)) {
+    return null;
+  }
+  return raw;
 }
 
 export function pickStoryBeat(input: StoryInput): StoryBeat | null {

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { WorldEvent } from "@/types/world";
 import { assertNever } from "@/types/world";
 import { roomNote } from "@/components/watch/copy";
+import { isPaidTicker } from "@/lib/world/wall-copy";
 
 export type StreetSignal =
   | { status: "idle" }
@@ -44,10 +45,11 @@ export function useStreetSignal(): StreetSignal {
           return;
         }
         if (body.source === "gecko") {
+          const ticker = typeof body.ticker === "string" ? body.ticker : null;
           setSignal({
             status: "gecko",
             at: Date.now(),
-            ticker: typeof body.ticker === "string" ? body.ticker : null,
+            ticker: isPaidTicker(ticker) ? null : ticker,
           });
           return;
         }
@@ -73,7 +75,7 @@ export function useStreetSignal(): StreetSignal {
 export function streetTicker(signal: StreetSignal): string | null {
   switch (signal.status) {
     case "gecko":
-      return signal.ticker;
+      return isPaidTicker(signal.ticker) ? null : signal.ticker;
     case "idle":
     case "listening":
     case "unreachable":

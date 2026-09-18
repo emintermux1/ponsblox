@@ -1,3 +1,4 @@
+import { isPaidTicker, isTickerSlopHeadline } from "@/lib/world/wall-copy";
 import type {
   CameraPreset,
   MuseActivity,
@@ -108,7 +109,7 @@ export function asCaption(thought: string | null): string | null {
     return null;
   }
   const trimmed = thought.replace(/\s+/g, " ").trim();
-  if (!trimmed) {
+  if (!trimmed || isPaidTicker(trimmed) || isTickerSlopHeadline(trimmed)) {
     return null;
   }
   if (trimmed.includes("\n") || COT_MARK.test(trimmed) || trimmed.length > 64) {
@@ -222,10 +223,15 @@ export function watchingLine(
   watching: string | null,
   streetTicker: string | null,
 ): string | null {
-  if (!watching) {
-    return null;
+  if (!watching || isPaidTicker(watching) || isTickerSlopHeadline(watching)) {
+    return watching ? "looking, without an outside name" : null;
   }
-  if (streetTicker && watching === streetTicker) {
+  if (
+    streetTicker &&
+    watching === streetTicker &&
+    !isPaidTicker(streetTicker) &&
+    !isTickerSlopHeadline(streetTicker)
+  ) {
     return `held on ${watching}`;
   }
   return "looking, without an outside name";

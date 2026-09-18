@@ -1,3 +1,4 @@
+import { isPaidTicker } from "@/lib/adapters/parse";
 import type { GrokSource, MuseId, WorldEvent, WorldEventKind } from "@/types/world";
 import { assertNever } from "@/types/world";
 
@@ -82,7 +83,7 @@ function tickerFromName(name: string | undefined): string | null {
     return null;
   }
   const token = name.split("/")[0]?.trim();
-  if (!token || token.length > 8) {
+  if (!token || token.length > 8 || isPaidTicker(token)) {
     return null;
   }
   return token.toUpperCase();
@@ -97,6 +98,10 @@ export function marketPulseFromFetch(outcome: MarketFetchOutcome): MarketPulse {
       const body = outcome.body as { data?: GeckoPool[] };
       const row = body.data?.[0];
       if (!row) {
+        return simMarketPulse();
+      }
+      const rawName = row.attributes?.name?.split("/")[0]?.trim();
+      if (isPaidTicker(rawName)) {
         return simMarketPulse();
       }
       const ticker = tickerFromName(row.attributes?.name);

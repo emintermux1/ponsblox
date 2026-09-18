@@ -20,6 +20,7 @@ import {
   wallSlotLocal,
   worldToWallLocal,
 } from "@/lib/world/layout";
+import { wallCardText } from "@/lib/world/wall-copy";
 import type { CityLod, GlassQuality } from "@/lib/world/perf";
 import type { SpatialPacket, WallPin } from "@/types/world";
 import { assertNever } from "@/types/world";
@@ -614,9 +615,13 @@ function IdeaWall({
 
   return (
     <group position={IDEA_WALL_ORIGIN} rotation={[0, -Math.PI / 2, 0]}>
-      <Panel args={[3.85, 2.55, 0.07]} position={[0, 0, 0]} color={WOOD_DEEP} roughness={0.7} />
+      <Panel args={[3.85, 2.55, 0.07]} position={[0, 0, 0]} color={WOOD} roughness={0.68} />
       <Panel args={[3.9, 0.03, 0.08]} position={[0, 1.28, 0.02]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
       <Panel args={[3.9, 0.03, 0.08]} position={[0, -1.28, 0.02]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
+      <mesh position={[0, 1.32, 0.08]}>
+        <boxGeometry args={[3.4, 0.018, 0.04]} />
+        <meshStandardMaterial color="#ead7b4" emissive="#d7b889" emissiveIntensity={0.85} />
+      </mesh>
       {IDEA_WALL_CARDS.map((card) => (
         <mesh key={card.key} position={[card.x, card.y, 0.05]}>
           <boxGeometry args={[0.62, 0.38, 0.02]} />
@@ -627,17 +632,20 @@ function IdeaWall({
         .filter((pin) => pin.slot !== flyingSlot)
         .map((pin) => {
           const [x, y, z] = wallSlotLocal(pin.slot);
+          const line = wallCardText(pin.label);
           return (
             <group key={pin.id} position={[x, y, z]}>
               <mesh>
                 <boxGeometry args={[0.58, 0.34, 0.018]} />
                 <meshStandardMaterial color={PAPER} roughness={0.8} />
               </mesh>
-              <Html center distanceFactor={8} style={{ pointerEvents: "none" }}>
-                <span className="whitespace-nowrap font-serif text-[9px] tracking-[0.18em] text-[#3a3226]/80">
-                  ${pin.label}
-                </span>
-              </Html>
+              {line ? (
+                <Html center distanceFactor={8} style={{ pointerEvents: "none" }}>
+                  <span className="max-w-[5.6rem] text-center font-serif text-[8px] italic leading-3 text-[#3a3226]/75">
+                    {line}
+                  </span>
+                </Html>
+              ) : null}
             </group>
           );
         })}

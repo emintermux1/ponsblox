@@ -7,6 +7,7 @@ import {
   isAwake,
   PAGE_DESCRIPTION,
   SITE_ORIGIN,
+  watchingLine,
   WORDMARK,
   WORLD_MARK,
 } from "./copy";
@@ -21,6 +22,15 @@ test("first paint brand is Muse Grok at musegrok.world", () => {
 
 test("asCaption keeps a short literary line", () => {
   assert.equal(asCaption("the tape is leaning"), "the tape is leaning");
+});
+
+test("asCaption and watchingLine never surface PAID or ticker slop", () => {
+  assert.equal(asCaption("PAID"), null);
+  assert.equal(asCaption("$PAID"), null);
+  assert.equal(asCaption("WIF"), null);
+  assert.equal(watchingLine("PAID", "PAID"), "looking, without an outside name");
+  assert.equal(watchingLine("$PAID", null), "looking, without an outside name");
+  assert.doesNotMatch(watchingLine("PAID", "PAID") ?? "", /PAID/);
 });
 
 test("asCaption hides chain-of-thought shaped text", () => {

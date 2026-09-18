@@ -1,5 +1,7 @@
-import { chillHome, PACKET_HOLD_MS } from "@/lib/world/layout";
+import { isPaidTicker } from "@/lib/adapters/parse";
 import { pickStoryBeat, upsertWallPin, type StoryBeat } from "@/lib/sim/stories";
+import { chillHome, PACKET_HOLD_MS } from "@/lib/world/layout";
+import { packetNoteForBeat, sanitizePacket, sanitizeWallPins } from "@/lib/world/wall-copy";
 import type {
   MuseActivity,
   MuseId,
@@ -45,10 +47,13 @@ const THOUGHTS: Record<MuseId, string[]> = {
   ],
 };
 
-const TICKERS = ["PAID", "WIF", "BONK", "PINT", "JUP", "PENGU"];
+const TICKERS = ["WIF", "BONK", "PINT", "JUP", "PENGU"];
 
 export function pickTicker(fallback: string | null): string {
-  return fallback ?? TICKERS[Math.floor(Math.random() * TICKERS.length)] ?? "WIF";
+  if (fallback && !isPaidTicker(fallback)) {
+    return fallback;
+  }
+  return TICKERS[Math.floor(Math.random() * TICKERS.length)] ?? "WIF";
 }
 
 function pick<T>(items: T[], random: () => number): T {
@@ -153,7 +158,11 @@ export function applyActivity(
   ticker: string | null,
 ): MuseState {
   const mind = { ...muse.mind, nodes: { ...muse.mind.nodes } };
-  const about = ticker ?? "the room";
+  const aboutTicker = ticker && !isPaidTicker(ticker) ? ticker : null;
+  const about = aboutTicker ?? "the room";
+  if (isPaidTicker(mind.watching)) {
+    mind.watching = null;
+  }
   mind.nodes.GROK = nudge(mind.nodes.GROK, -0.016);
   switch (activity) {
     case "SCROLLING":
@@ -167,8 +176,8 @@ export function applyActivity(
       mind.observed = `weighing ${about}`;
       break;
     case "WATCHING":
-      if (ticker) {
-        mind.watching = ticker;
+      if (aboutTicker) {
+        mind.watching = aboutTicker;
       }
       mind.action = "WATCH";
       mind.nodes.ATTENTION = nudge(mind.nodes.ATTENTION, 0.05);
@@ -246,17 +255,24 @@ function applyStoryBeat(
         events: pushEvent(
           events,
           "NEW_DISCOVERY",
-          `${muses.scroller.name} discovered $${ticker}`,
+          `${muses.scroller.name} discovered something on the tape`,
           "scroller",
           now,
           random,
         ),
-        packet: { from: "scroller", to: "trader", label: ticker, t: now, kind: "NOTE" },
+        packet: {
+          from: "scroller",
+          to: "trader",
+          label: packetNoteForBeat("discovery"),
+          t: now,
+          kind: "NOTE",
+        },
         wallPins,
       };
     }
     case "thesis": {
       const ticker = beat.ticker;
+      const card = packetNoteForBeat("thesis", beat.slot);
       return {
         muses: {
           ...muses,
@@ -273,7 +289,7 @@ function applyStoryBeat(
         events: pushEvent(
           events,
           "THESIS_CREATED",
-          `${muses.builder.name} pinned a card on $${ticker}`,
+          `${muses.builder.name} pinned a card`,
           "builder",
           now,
           random,
@@ -281,12 +297,12 @@ function applyStoryBeat(
         packet: {
           from: "builder",
           to: "wall",
-          label: ticker,
+          label: card,
           t: now,
           kind: "PIN",
           slot: beat.slot,
         },
-        wallPins: upsertWallPin(wallPins, ticker, beat.slot, now),
+        wallPins: upsertWallPin(wallPins, card, beat.slot, now),
       };
     }
     case "ask_card":
@@ -298,12 +314,18 @@ function applyStoryBeat(
         events: pushEvent(
           events,
           "SOCIAL_REACTION",
-          `${muses.trader.name} wants a card on $${beat.ticker}`,
+          `${muses.trader.name} wants a card`,
           "trader",
           now,
           random,
         ),
-        packet: { from: "trader", to: "builder", label: beat.ticker, t: now, kind: "NOTE" },
+        packet: {
+          from: "trader",
+          to: "builder",
+          label: packetNoteForBeat("ask_card"),
+          t: now,
+          kind: "NOTE",
+        },
         wallPins,
       };
     case "share_builder":
@@ -315,12 +337,18 @@ function applyStoryBeat(
         events: pushEvent(
           events,
           "SOCIAL_REACTION",
-          `${muses.scroller.name} pinged ${muses.builder.name} · $${beat.ticker}`,
+          `${muses.scroller.name} pinged ${muses.builder.name}`,
           "scroller",
           now,
           random,
         ),
-        packet: { from: "scroller", to: "builder", label: beat.ticker, t: now, kind: "NOTE" },
+        packet: {
+          from: "scroller",
+          to: "builder",
+          label: packetNoteForBeat("share_builder"),
+          t: now,
+          kind: "NOTE",
+        },
         wallPins,
       };
     case "wave_chill":
@@ -348,12 +376,18 @@ function applyStoryBeat(
         events: pushEvent(
           events,
           "SOCIAL_REACTION",
-          `${muses.scroller.name} waved $${beat.ticker} at the couch`,
+          `${muses.scroller.name} waved at the couch`,
           "scroller",
           now,
           random,
         ),
-        packet: { from: "scroller", to: "chill", label: beat.ticker, t: now, kind: "NOTE" },
+        packet: {
+          from: "scroller",
+          to: "chill",
+          label: packetNoteForBeat("wave_chill"),
+          t: now,
+          kind: "NOTE",
+        },
         wallPins,
       };
     case "boredom":
@@ -385,9 +419,7 @@ function applyStoryBeat(
         events: pushEvent(
           events,
           "BOREDOM",
-          beat.ticker
-            ? `${muses.chill.name} lets $${beat.ticker} pass`
-            : `${muses.chill.name} does not care`,
+          `${muses.chill.name} does not care`,
           "chill",
           now,
           random,
@@ -406,16 +438,25 @@ export function tickSnapshot(
   now = Date.now(),
   random = Math.random,
 ): WorldSnapshot {
-  const subject =
-    pulse.ticker ?? world.muses.trader.mind.watching ?? world.muses.scroller.mind.watching;
-  const spiked = pulse.kind === "TREND_SPIKE" || pulse.kind === "VIRAL_POST";
+  const skippedPaid = isPaidTicker(pulse.ticker);
+  const pulseTicker = skippedPaid ? null : pulse.ticker;
+  const spiked =
+    !skippedPaid && (pulse.kind === "TREND_SPIKE" || pulse.kind === "VIRAL_POST");
+  const rawSubject =
+    pulseTicker ?? world.muses.trader.mind.watching ?? world.muses.scroller.mind.watching;
+  const subject = rawSubject && !isPaidTicker(rawSubject) ? rawSubject : null;
   const events = world.events;
-  const packet = world.packet && now - world.packet.t < PACKET_HOLD_MS ? world.packet : null;
-  const wallPins = world.wallPins ?? [];
+  const packet = sanitizePacket(
+    world.packet && now - world.packet.t < PACKET_HOLD_MS ? world.packet : null,
+  );
+  const wallPins = sanitizeWallPins(world.wallPins ?? []);
   const muses = { ...world.muses };
 
   for (const id of Object.keys(muses) as MuseId[]) {
     let muse = clearExpiredThought(muses[id], now);
+    if (isPaidTicker(muse.mind.watching)) {
+      muse = { ...muse, mind: { ...muse.mind, watching: null } };
+    }
     if (muse.id === "chill" && (muse.activity === "WALKING" || random() < 0.3)) {
       muse = walkToward(muse, chillHome(now), 0.07);
     } else {
@@ -443,7 +484,7 @@ export function tickSnapshot(
     packet,
     wallPins,
     spiked,
-    pulseTicker: pulse.ticker,
+    pulseTicker,
     now,
     random,
   });

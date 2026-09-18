@@ -152,6 +152,10 @@ export function makeGrokEvent(input: {
   };
 }
 
+export function isPaidTicker(symbol: string | undefined | null): boolean {
+  return Boolean(symbol && /^\$?paid$/i.test(symbol.trim()));
+}
+
 export function tickerFromName(name: string | undefined): string | null {
   if (!name) {
     return null;
@@ -165,7 +169,7 @@ export function tickerFromSymbol(symbol: string | undefined | null): string | nu
     return null;
   }
   const token = symbol.trim();
-  if (!token || token.length > 8) {
+  if (!token || token.length > 8 || isPaidTicker(token)) {
     return null;
   }
   return token.toUpperCase();
@@ -215,11 +219,15 @@ export function mergeMarketPulse(input: {
     gmgn: statusOf(input.gmgn),
     helius: statusOf(input.helius),
   });
-  const hit = asHit(input.gecko) ?? asHit(input.birdeye) ?? asHit(input.gmgn);
+  const hit =
+    usableHit(input.gecko) ?? usableHit(input.birdeye) ?? usableHit(input.gmgn);
   if (!hit) {
     return quietMarketPulse(providers);
   }
   const helius = typeof input.helius === "object" ? input.helius : null;
+  if (isPaidTicker(hit.ticker) || isPaidTicker(helius?.symbol)) {
+    return quietMarketPulse(providers);
+  }
   const ticker = hit.ticker ?? tickerFromSymbol(helius?.symbol);
   const mint = hit.mint ?? helius?.mint ?? null;
   return {
@@ -244,4 +252,12 @@ function asHit(value: MarketHit | ProviderStatus): MarketHit | null {
     return null;
   }
   return value;
+}
+
+function usableHit(value: MarketHit | ProviderStatus): MarketHit | null {
+  const hit = asHit(value);
+  if (!hit || isPaidTicker(hit.ticker)) {
+    return null;
+  }
+  return hit;
 }

@@ -34,8 +34,8 @@ function Lighting() {
         attach="fog"
         args={["#243646", extraLights ? 28 : 16, extraLights ? 70 : Math.min(50, cameraFar - 6)]}
       />
-      <ambientLight intensity={extraLights ? 0.28 : 0.22} color="#d2c0a6" />
-      <hemisphereLight args={["#7f96aa", "#3a2c20", extraLights ? 0.55 : 0.48]} />
+      <ambientLight intensity={extraLights ? 0.32 : 0.4} color="#d2c0a6" />
+      <hemisphereLight args={["#7f96aa", "#3a2c20", extraLights ? 0.58 : 0.64]} />
       <directionalLight
         position={[7, 9.5, -5]}
         intensity={extraLights ? 0.72 : 0.58}
@@ -89,7 +89,9 @@ function Lighting() {
           <pointLight position={[0, 3.4, -3.4]} intensity={0.4} color="#9bb3c4" distance={10} decay={2} />
         </>
       ) : (
-        <pointLight position={[0, 3.2, 2]} intensity={0.32} color="#e4c49a" distance={10} decay={2} />
+        <pointLight position={[0, 3.2, 2]} intensity={0.55} color="#e4c49a" distance={12} decay={2} />
+        <pointLight position={[7.1, 2.4, 2.5]} intensity={0.7} color="#f0d4ae" distance={8} decay={2} />
+        <pointLight position={[-2.4, 2.6, 2.2]} intensity={0.38} color="#e8cba6" distance={9} decay={2} />
       )}
     </>
   );

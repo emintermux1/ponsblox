@@ -42,6 +42,27 @@ describe("market fail-open", () => {
     assert.equal(pulse.source, "sim");
     assert.equal(honestyFromLabel(pulse.source), "sim");
   });
+
+  it("skips a PAID / paid gecko pool instead of pulsing it", () => {
+    const paid = marketPulseFromFetch({
+      status: "ok",
+      body: {
+        data: [{ attributes: { name: "PAID / SOL", volume_usd: { h1: "90000" } } }],
+      },
+    });
+    assert.equal(paid.kind, "QUIET");
+    assert.equal(paid.ticker, null);
+    assert.equal(paid.source, "sim");
+
+    const lower = marketPulseFromFetch({
+      status: "ok",
+      body: {
+        data: [{ attributes: { name: "paid / SOL", volume_usd: { h1: "12000" } } }],
+      },
+    });
+    assert.equal(lower.kind, "QUIET");
+    assert.equal(lower.ticker, null);
+  });
 });
 
 describe("grok wake without webhook", () => {
