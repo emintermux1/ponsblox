@@ -113,7 +113,7 @@ export function LivingScene({
             ]}
             visible={world.mindOpen && selected === id}
           />
-          <ThoughtChip muse={world.muses[id]} hush={world.mindOpen && selected === id} />
+          <ThoughtChip muse={world.muses[id]} hush={world.mindOpen || selected !== id} />
         </group>
       ))}
       <TravelPacket packet={world.packet} positions={positions} />
