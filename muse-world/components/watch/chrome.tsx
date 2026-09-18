@@ -42,7 +42,12 @@ export function SpectatorChrome({
   const inspect = world.inspecting ? inspectCopy(world, world.inspecting) : null;
 
   return (
-    <div className="loft-chrome" data-chrome="spectator" data-entry-veil="off">
+    <div
+      className="loft-chrome"
+      data-chrome="spectator"
+      data-chrome-compact={compact ? "true" : "false"}
+      data-entry-veil="off"
+    >
       <header className="loft-chrome-top">
         <Wordmark signal={signal} mode={mode} caption={caption} />
         <div className="loft-chrome-tools">
