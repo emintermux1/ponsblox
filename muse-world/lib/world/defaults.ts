@@ -82,5 +82,6 @@ export function seedWorld(): WorldSnapshot {
     muses: seedMuses(),
     events: [],
     packet: null,
+    wallPins: [],
   };
 }

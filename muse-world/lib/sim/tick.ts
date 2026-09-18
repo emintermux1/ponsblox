@@ -1,3 +1,5 @@
+import { chillHome, PACKET_HOLD_MS } from "@/lib/world/layout";
+import { pickStoryBeat, upsertWallPin, type StoryBeat } from "@/lib/sim/stories";
 import type {
   MuseActivity,
   MuseId,
@@ -49,8 +51,8 @@ export function pickTicker(fallback: string | null): string {
   return fallback ?? TICKERS[Math.floor(Math.random() * TICKERS.length)] ?? "WIF";
 }
 
-function pick<T>(items: T[]): T {
-  return items[Math.floor(Math.random() * items.length)] ?? items[0];
+function pick<T>(items: T[], random: () => number): T {
+  return items[Math.floor(random() * items.length)] ?? items[0];
 }
 
 function clamp01(value: number): number {
@@ -61,8 +63,8 @@ function nudge(value: number, delta: number): number {
   return clamp01(value + delta);
 }
 
-function eventId(): string {
-  return `ev_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+function eventId(now: number, random: () => number): string {
+  return `ev_${now.toString(36)}_${Math.floor(random() * 1_000_000).toString(36)}`;
 }
 
 function pushEvent(
@@ -70,23 +72,28 @@ function pushEvent(
   kind: WorldEventKind,
   text: string,
   museId: MuseId | null,
+  now: number,
+  random: () => number,
   source: WorldEvent["source"] = "world",
 ): WorldEvent[] {
+  if (kind === "POSITION_OPENED" || kind === "POSITION_CLOSED") {
+    return events;
+  }
   return [
     {
-      id: eventId(),
+      id: eventId(now, random),
       kind,
       museId,
       text,
-      at: Date.now(),
+      at: now,
       source,
     },
     ...events,
   ].slice(0, 24);
 }
 
-export function setThought(muse: MuseState, text: string, ms = 2600): MuseState {
-  return { ...muse, thought: text, thoughtUntil: Date.now() + ms };
+export function setThought(muse: MuseState, text: string, ms = 2600, now = Date.now()): MuseState {
+  return { ...muse, thought: text, thoughtUntil: now + ms };
 }
 
 function clearExpiredThought(muse: MuseState, now: number): MuseState {
@@ -116,25 +123,26 @@ function walkToward(
   };
 }
 
-function nextActivity(muse: MuseState, pulse: boolean): MuseActivity {
+function nextActivity(muse: MuseState, pulse: boolean, random: () => number): MuseActivity {
   switch (muse.id) {
     case "scroller":
-      if (pulse && Math.random() < 0.55) return "REACTING";
-      return Math.random() < 0.82 ? "SCROLLING" : "THINKING";
+      if (pulse && random() < 0.55) return "REACTING";
+      return random() < 0.82 ? "SCROLLING" : "THINKING";
     case "trader":
       if (pulse) return "THINKING";
-      if (Math.random() < 0.45) return "WATCHING";
-      if (Math.random() < 0.7) return "TRADING";
+      if (random() < 0.45) return "WATCHING";
+      if (random() < 0.7) return "TRADING";
       return "THINKING";
     case "chill":
-      if (Math.random() < 0.28) return "WALKING";
-      if (Math.random() < 0.48) return "SMOKING";
-      if (Math.random() < 0.7) return "CHILLING";
-      if (Math.random() < 0.82) return "WATCHING";
+      if (muse.mind.nodes.BOREDOM > 0.7 && random() < 0.4) return "WALKING";
+      if (random() < 0.28) return "WALKING";
+      if (random() < 0.48) return "SMOKING";
+      if (random() < 0.7) return "CHILLING";
+      if (random() < 0.82) return "WATCHING";
       return "IDLE";
     case "builder":
-      if (pulse && Math.random() < 0.4) return "REACTING";
-      return Math.random() < 0.7 ? "RESEARCHING" : "THINKING";
+      if (pulse && random() < 0.4) return "REACTING";
+      return random() < 0.7 ? "RESEARCHING" : "THINKING";
     default:
       return assertNever(muse.id);
   }
@@ -175,6 +183,7 @@ export function applyActivity(
     case "IDLE":
       mind.nodes.BOREDOM = nudge(mind.nodes.BOREDOM, 0.05);
       mind.nodes.ATTENTION = nudge(mind.nodes.ATTENTION, -0.04);
+      mind.nodes.FOMO = nudge(mind.nodes.FOMO, -0.03);
       mind.action = "IDLE";
       break;
     case "WALKING":
@@ -184,6 +193,12 @@ export function applyActivity(
     case "REACTING":
       mind.nodes.SOCIAL = nudge(mind.nodes.SOCIAL, 0.08);
       mind.nodes.ATTENTION = nudge(mind.nodes.ATTENTION, 0.1);
+      if (muse.id === "chill") {
+        mind.nodes.FOMO = nudge(mind.nodes.FOMO, -0.04);
+        mind.nodes.BOREDOM = nudge(mind.nodes.BOREDOM, 0.03);
+      } else {
+        mind.nodes.FOMO = nudge(mind.nodes.FOMO, 0.05);
+      }
       break;
     default:
       return assertNever(activity);
@@ -191,79 +206,231 @@ export function applyActivity(
   return { ...muse, activity, mind };
 }
 
-function chillHome(now: number): [number, number, number] {
-  const cycle = Math.floor(now / 14000) % 3;
-  if (cycle === 0) return [-1.6, 0.62, 3.5];
-  if (cycle === 1) return [-5.4, 0.62, 2.2];
-  return [-3.1, 0.62, 4.2];
+function applyStoryBeat(
+  beat: StoryBeat,
+  muses: Record<MuseId, MuseState>,
+  events: WorldEvent[],
+  packet: WorldSnapshot["packet"],
+  wallPins: WorldSnapshot["wallPins"],
+  now: number,
+  random: () => number,
+): Pick<WorldSnapshot, "muses" | "events" | "packet" | "wallPins"> {
+  switch (beat.type) {
+    case "discovery": {
+      const ticker = beat.ticker;
+      return {
+        muses: {
+          ...muses,
+          scroller: setThought(muses.scroller, "send to trader", 2600, now),
+          trader: applyActivity(
+            {
+              ...muses.trader,
+              mind: {
+                ...muses.trader.mind,
+                observed: `volume accelerating on ${ticker}`,
+                memory: `saw ${ticker} just now`,
+                watching: ticker,
+              },
+            },
+            "REACTING",
+            ticker,
+          ),
+        },
+        events: pushEvent(
+          events,
+          "NEW_DISCOVERY",
+          `${muses.scroller.name} discovered $${ticker}`,
+          "scroller",
+          now,
+          random,
+        ),
+        packet: { from: "scroller", to: "trader", label: ticker, t: now, kind: "NOTE" },
+        wallPins,
+      };
+    }
+    case "thesis": {
+      const ticker = beat.ticker;
+      return {
+        muses: {
+          ...muses,
+          builder: setThought(muses.builder, "card it", 2600, now),
+          trader: {
+            ...muses.trader,
+            mind: {
+              ...muses.trader.mind,
+              memory: `card inbound on ${ticker}`,
+              watching: muses.trader.mind.watching ?? ticker,
+            },
+          },
+        },
+        events: pushEvent(
+          events,
+          "THESIS_CREATED",
+          `${muses.builder.name} pinned a card on $${ticker}`,
+          "builder",
+          now,
+          random,
+        ),
+        packet: {
+          from: "builder",
+          to: "wall",
+          label: ticker,
+          t: now,
+          kind: "PIN",
+          slot: beat.slot,
+        },
+        wallPins: upsertWallPin(wallPins, ticker, beat.slot, now),
+      };
+    }
+    case "ask_card":
+      return {
+        muses: {
+          ...muses,
+          builder: setThought(muses.builder, "thread this", 2600, now),
+        },
+        events: pushEvent(
+          events,
+          "SOCIAL_REACTION",
+          `${muses.trader.name} wants a card on $${beat.ticker}`,
+          "trader",
+          now,
+          random,
+        ),
+        packet: { from: "trader", to: "builder", label: beat.ticker, t: now, kind: "NOTE" },
+        wallPins,
+      };
+    case "share_builder":
+      return {
+        muses: {
+          ...muses,
+          builder: setThought(muses.builder, "same structure", 2600, now),
+        },
+        events: pushEvent(
+          events,
+          "SOCIAL_REACTION",
+          `${muses.scroller.name} pinged ${muses.builder.name} · $${beat.ticker}`,
+          "scroller",
+          now,
+          random,
+        ),
+        packet: { from: "scroller", to: "builder", label: beat.ticker, t: now, kind: "NOTE" },
+        wallPins,
+      };
+    case "wave_chill":
+      return {
+        muses: {
+          ...muses,
+          chill: setThought(
+            {
+              ...muses.chill,
+              mind: {
+                ...muses.chill.mind,
+                observed: "noise from the desk",
+                nodes: {
+                  ...muses.chill.mind.nodes,
+                  FOMO: nudge(muses.chill.mind.nodes.FOMO, -0.05),
+                  SOCIAL: nudge(muses.chill.mind.nodes.SOCIAL, 0.04),
+                },
+              },
+            },
+            "nah",
+            2600,
+            now,
+          ),
+        },
+        events: pushEvent(
+          events,
+          "SOCIAL_REACTION",
+          `${muses.scroller.name} waved $${beat.ticker} at the couch`,
+          "scroller",
+          now,
+          random,
+        ),
+        packet: { from: "scroller", to: "chill", label: beat.ticker, t: now, kind: "NOTE" },
+        wallPins,
+      };
+    case "boredom":
+      return {
+        muses: {
+          ...muses,
+          chill: setThought(
+            walkToward(
+              {
+                ...muses.chill,
+                mind: {
+                  ...muses.chill.mind,
+                  action: "IDLE",
+                  observed: "window",
+                  nodes: {
+                    ...muses.chill.mind.nodes,
+                    FOMO: nudge(muses.chill.mind.nodes.FOMO, -0.06),
+                  },
+                },
+              },
+              chillHome(now),
+              0.05,
+            ),
+            "they can have it",
+            3200,
+            now,
+          ),
+        },
+        events: pushEvent(
+          events,
+          "BOREDOM",
+          beat.ticker
+            ? `${muses.chill.name} lets $${beat.ticker} pass`
+            : `${muses.chill.name} does not care`,
+          "chill",
+          now,
+          random,
+        ),
+        packet,
+        wallPins,
+      };
+    default:
+      return assertNever(beat);
+  }
 }
 
 export function tickSnapshot(
   world: WorldSnapshot,
   pulse: Pulse,
+  now = Date.now(),
+  random = Math.random,
 ): WorldSnapshot {
-  const now = Date.now();
   const ticker = pickTicker(pulse.ticker);
   const spiked = pulse.kind === "TREND_SPIKE" || pulse.kind === "VIRAL_POST";
   let events = world.events;
-  let packet = world.packet && now - world.packet.t < 2400 ? world.packet : null;
+  let packet = world.packet && now - world.packet.t < PACKET_HOLD_MS ? world.packet : null;
+  let wallPins = world.wallPins ?? [];
   const muses = { ...world.muses };
-
-  if (spiked && Math.random() < 0.65) {
-    events = pushEvent(events, pulse.kind === "QUIET" ? "VIRAL_POST" : pulse.kind, `tape leans ${ticker}`, "scroller");
-  }
 
   for (const id of Object.keys(muses) as MuseId[]) {
     let muse = clearExpiredThought(muses[id], now);
-    if (muse.id === "chill" && (muse.activity === "WALKING" || Math.random() < 0.18)) {
+    if (muse.id === "chill" && (muse.activity === "WALKING" || random() < 0.18)) {
       muse = walkToward(muse, chillHome(now), 0.045);
     } else {
-      muse = applyActivity(muse, nextActivity(muse, spiked), ticker);
+      muse = applyActivity(muse, nextActivity(muse, spiked, random), ticker);
     }
-    if (Math.random() < 0.16) {
-      muse = setThought(muse, pick(THOUGHTS[muse.id]));
+    if (random() < 0.1) {
+      muse = setThought(muse, pick(THOUGHTS[muse.id], random), 2600, now);
     }
     muses[id] = muse;
   }
 
-  if (spiked && Math.random() < 0.55) {
-    packet = { from: "scroller", to: "trader", label: ticker, t: now };
-    events = pushEvent(
-      events,
-      "NEW_DISCOVERY",
-      `${muses.scroller.name} discovered $${ticker}`,
-      "scroller",
-    );
-    muses.trader = applyActivity(
-      {
-        ...muses.trader,
-        mind: {
-          ...muses.trader.mind,
-          observed: `volume accelerating on ${ticker}`,
-          memory: `saw ${ticker} just now`,
-          watching: ticker,
-        },
-      },
-      "REACTING",
-      ticker,
-    );
-    muses.scroller = setThought(muses.scroller, "send to trader");
+  const beat = pickStoryBeat({
+    muses,
+    events,
+    packet,
+    wallPins,
+    spiked,
+    pulseTicker: pulse.ticker,
+    now,
+    random,
+  });
+  if (!beat) {
+    return { ...world, muses, events, packet, wallPins };
   }
-
-  if (muses.builder.activity === "RESEARCHING" && Math.random() < 0.12) {
-    events = pushEvent(
-      events,
-      "THESIS_CREATED",
-      `${muses.builder.name} pinned a card on ${ticker}`,
-      "builder",
-    );
-    packet = { from: "builder", to: "trader", label: ticker, t: now };
-    muses.builder = setThought(muses.builder, "card it");
-  }
-
-  if (muses.chill.mind.nodes.BOREDOM > 0.7 && Math.random() < 0.2) {
-    events = pushEvent(events, "BOREDOM", `${muses.chill.name} does not care`, "chill");
-  }
-
-  return { ...world, muses, events, packet };
+  return { ...world, ...applyStoryBeat(beat, muses, events, packet, wallPins, now, random) };
 }
