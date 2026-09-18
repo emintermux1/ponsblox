@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { activityLine, asCaption } from "@/components/watch/copy";
 import { usePerf } from "@/components/world/perf-context";
+import { useTape } from "@/components/world/tape-context";
 import { GROK_ORB_POS, SCREEN_POS, wallSlotWorld } from "@/lib/world/layout";
+import { tapeHeadline } from "@/lib/world/tape";
 import { projectLoft, watchFrame } from "@/lib/world/perf";
 import type { MuseId, MuseState, PacketEndpoint, ScreenId, WorldSnapshot } from "@/types/world";
 import { MIND_NODES, MUSE_IDS, SCREEN_IDS, assertNever } from "@/types/world";
@@ -267,6 +269,7 @@ function WatchScreens({
   inspecting: ScreenId | null;
   onInspect: (id: ScreenId) => void;
 }) {
+  const tape = useTape();
   return (
     <>
       {SCREEN_IDS.map((id) => {
@@ -276,14 +279,16 @@ function WatchScreens({
             key={id}
             type="button"
             onClick={() => onInspect(id)}
-            className="absolute z-20 h-4 w-7 -translate-x-1/2 -translate-y-1/2 cursor-pointer bg-[#0e1216]"
+            className="absolute z-20 flex h-4 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden bg-[#0e1216] text-[5px] leading-none text-[#d7b56a]"
             style={{
               left: `${point.left}%`,
               top: `${point.top}%`,
               boxShadow: inspecting === id ? "0 0 10px rgba(74,106,130,0.7)" : undefined,
             }}
             aria-label={screenLabel(id)}
-          />
+          >
+            {tapeHeadline(tape)}
+          </button>
         );
       })}
     </>

@@ -8,6 +8,7 @@ import { FrustumGuard } from "@/components/world/frustum-guard";
 import { GrokOrb } from "@/components/world/grok-orb";
 import { MuseBody } from "@/components/world/muse-body";
 import { MuseMindField } from "@/components/world/mind";
+import { UsedBits } from "@/components/world/devices";
 import { Penthouse } from "@/components/world/penthouse";
 import { TravelPacket } from "@/components/world/packet";
 import { usePerf } from "@/components/world/perf-context";
@@ -203,6 +204,7 @@ export function LivingScene({
           world.muses.builder.activity === "THINKING"
         }
       />
+      <UsedBits />
       <FrustumGuard center={GROK_ORB_POS} radius={1.4}>
         <GrokOrb
           waking={world.grokWake.phase === "waking" || deskGrokLive(world.events)}

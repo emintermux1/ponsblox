@@ -12,7 +12,7 @@ import {
   SRGBColorSpace,
 } from "three";
 import type { ColorRepresentation, Mesh } from "three";
-import { loftPickHandlers } from "@/components/world/loft-cursor";
+import { MonitorDevice } from "@/components/world/screens";
 import { usePerf } from "@/components/world/perf-context";
 import {
   IDEA_WALL_CARDS,
@@ -558,31 +558,12 @@ function DeskScreen({
   onInspect: (id: ScreenId) => void;
 }) {
   return (
-    <group
+    <MonitorDevice
+      kind={id}
       position={position}
-      rotation={[-0.1, 0, 0]}
-      {...loftPickHandlers(() => onInspect(id))}
-    >
-      <mesh position={[0, 0, 0.04]} visible={false}>
-        <planeGeometry args={[1.08, 0.72]} />
-      </mesh>
-      <mesh castShadow>
-        <boxGeometry args={[0.92, 0.56, 0.03]} />
-        <meshStandardMaterial color="#161513" metalness={0.72} roughness={0.26} />
-      </mesh>
-      <mesh position={[0, 0, 0.018]}>
-        <planeGeometry args={[0.86, 0.5]} />
-        <meshPhysicalMaterial
-          color={active ? "#121820" : "#0e1216"}
-          emissive={active ? "#4a6a82" : "#1a2430"}
-          emissiveIntensity={active ? 0.72 : 0.38}
-          metalness={0.35}
-          roughness={0.08}
-          transparent
-          opacity={0.88}
-        />
-      </mesh>
-    </group>
+      active={active}
+      onInspect={onInspect}
+    />
   );
 }
 
