@@ -14,7 +14,7 @@ export function ThoughtChip({
   muse: MuseState;
   hush?: boolean;
 }) {
-  const { thoughtDistance, pauseExtras } = usePerf();
+  const { thoughtDistance, pauseExtras, htmlThoughts } = usePerf();
   const near = useRef(true);
   const [show, setShow] = useState(true);
   const caption = asCaption(muse.thought);
@@ -37,7 +37,7 @@ export function ThoughtChip({
     }
   });
 
-  if (hush || !caption || !show) {
+  if (hush || !htmlThoughts || !caption || !show) {
     return null;
   }
 

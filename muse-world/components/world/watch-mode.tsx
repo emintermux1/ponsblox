@@ -18,6 +18,8 @@ function loftPoint(world: WorldSnapshot, endpoint: PacketEndpoint): { left: numb
       return projectLoft(world.muses[endpoint].position);
     case "wall":
       return projectLoft(wallSlotWorld(world.packet?.slot ?? 0));
+    case "grok":
+      return projectLoft(GROK_ORB_POS);
     default:
       return assertNever(endpoint);
   }
@@ -92,10 +94,10 @@ function MuseFigure({
           <span className="absolute -bottom-0.5 left-1/2 h-1.5 w-7 -translate-x-1/2 rounded-full bg-[#e6d3a8]/55" />
         ) : null}
       </span>
-      <span className="mt-1 block cursor-pointer text-center font-serif text-[9px] tracking-[0.2em] text-[#efe6d4]/70">
+      <span className="mt-1 block min-h-11 cursor-pointer text-center text-base font-medium tracking-wide text-[#efe6d4]">
         {muse.name}
       </span>
-      <span className="block cursor-pointer text-center text-[8px] tracking-[0.18em] text-[#8d8370]">
+      <span className="block cursor-pointer text-center text-sm tracking-normal text-[#cfc3aa]">
         {activityLine(muse.activity)}
       </span>
     </motion.button>
@@ -218,9 +220,11 @@ function WatchPacket({ world, now }: { world: WorldSnapshot; now: number }) {
 
 function WatchGrok({
   waking,
+  honesty,
   onWake,
 }: {
   waking: boolean;
+  honesty: WorldSnapshot["grokWake"]["honesty"];
   onWake: () => void;
 }) {
   const point = projectLoft(GROK_ORB_POS);
@@ -228,17 +232,19 @@ function WatchGrok({
     <button
       type="button"
       onClick={onWake}
-      className="absolute z-20 -translate-x-1/2 -translate-y-1/2 cursor-pointer"
+      className="absolute z-20 -translate-x-1/2 -translate-y-1/2 cursor-pointer text-center"
       style={{ left: `${point.left}%`, top: `${point.top}%` }}
-      aria-label="Grok"
+      aria-label="GROK"
     >
       <span
         className="relative mx-auto block h-8 w-8 rounded-full bg-[#f5f5f2] shadow-[0_0_16px_rgba(245,245,242,0.28)]"
         style={{ transform: waking ? "scale(1.06)" : "scale(1)" }}
       >
-        <span className="absolute left-[22%] top-[42%] h-[3px] w-[7px] rounded-full bg-[#141414]" />
-        <span className="absolute right-[22%] top-[42%] h-[3px] w-[7px] rounded-full bg-[#141414]" />
+        <span className="absolute left-[28%] top-[30%] h-[10px] w-[3px] rounded-full bg-[#141414]" />
+        <span className="absolute right-[28%] top-[30%] h-[10px] w-[3px] rounded-full bg-[#141414]" />
       </span>
+      <span className="mt-1 block text-[9px] tracking-[0.2em] text-[#f7f7f5]">GROK</span>
+      <span className="block text-[8px] tracking-[0.16em] text-[#c9ae7a]">{honesty ?? "SIM"}</span>
     </button>
   );
 }
@@ -337,7 +343,11 @@ export function WatchMode({
         </div>
         <Furniture />
         <WatchScreens inspecting={world.inspecting} onInspect={onInspect} />
-        <WatchGrok waking={world.grokWake.phase === "waking"} onWake={onWakeGrok} />
+        <WatchGrok
+          waking={world.grokWake.phase === "waking"}
+          honesty={world.grokWake.honesty}
+          onWake={onWakeGrok}
+        />
         {MUSE_IDS.map((id) => (
           <MuseFigure
             key={id}

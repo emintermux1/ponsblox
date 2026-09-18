@@ -13,7 +13,7 @@ import { assertNever, MUSE_IDS } from "@/types/world";
 export const WORDMARK = "Muse Grok";
 export const WORLD_MARK = "musegrok.world";
 export const SITE_ORIGIN = "https://musegrok.world";
-export const PAGE_DESCRIPTION = "PIP, TAPE, SABLE, HALO and GROK in a living loft.";
+export const PAGE_DESCRIPTION = "Four muses and GROK in a living loft.";
 export const FIRST_PAINT_MS = 3000;
 export const ENTRY_CAPTION = "the penthouse is occupied";
 export const INTRO_COPY = [
