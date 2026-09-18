@@ -67,6 +67,8 @@ export function packetAccent(endpoint: PacketEndpoint): string {
       return "#c9b48a";
     case "wall":
       return "#e6d7bc";
+    case "grok":
+      return "#f7f7f5";
     default:
       return assertNever(endpoint);
   }
