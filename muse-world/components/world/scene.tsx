@@ -1,6 +1,8 @@
 "use client";
 
-import { ContactShadows } from "@react-three/drei";
+import { useLayoutEffect } from "react";
+import { ContactShadows, SoftShadows } from "@react-three/drei";
+import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
 import { MuseBody } from "@/components/world/muse-body";
 import { MuseMindField } from "@/components/world/mind";
 import { Penthouse } from "@/components/world/penthouse";
@@ -9,6 +11,13 @@ import { CameraRig } from "@/components/world/rig";
 import { ThoughtChip } from "@/components/world/thoughts";
 import type { MuseId, WorldSnapshot } from "@/types/world";
 import { MUSE_IDS } from "@/types/world";
+
+function AreaLights() {
+  useLayoutEffect(() => {
+    RectAreaLightUniformsLib.init();
+  }, []);
+  return null;
+}
 
 export function LivingScene({
   world,
@@ -32,19 +41,53 @@ export function LivingScene({
 
   return (
     <>
-      <color attach="background" args={["#0b0c10"]} />
-      <fog attach="fog" args={["#0b0c10", 14, 38]} />
-      <hemisphereLight args={["#9aa8b8", "#1a1612", 0.42]} />
+      <AreaLights />
+      <SoftShadows size={18} samples={8} focus={0.75} />
+      <color attach="background" args={["#0d1520"]} />
+      <fog attach="fog" args={["#15202c", 16, 50]} />
+      <hemisphereLight args={["#6d8498", "#1c1612", 0.36]} />
       <directionalLight
-        position={[6, 8, 4]}
-        intensity={1.15}
-        color="#f0e2c4"
+        position={[7, 9.5, -5]}
+        intensity={0.62}
+        color="#9eb4c8"
         castShadow
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-camera-near={1}
+        shadow-camera-far={32}
+        shadow-camera-left={-12}
+        shadow-camera-right={12}
+        shadow-camera-top={10}
+        shadow-camera-bottom={-8}
+        shadow-bias={-0.00025}
       />
-      <pointLight position={[-4, 2.4, 1.2]} intensity={0.35} color="#d8c49a" />
-      <pointLight position={[3.4, 1.6, -0.6]} intensity={0.4} color="#8aa0b0" />
+      <directionalLight position={[-4, 5.5, 6]} intensity={0.22} color="#e6d0ae" />
+      <rectAreaLight
+        width={16}
+        height={3.2}
+        intensity={3.4}
+        color="#7f9aaf"
+        position={[0, 2.15, -4.42]}
+        rotation={[0, Math.PI, 0]}
+      />
+      <rectAreaLight
+        width={6.2}
+        height={0.16}
+        intensity={5.2}
+        color="#f0d4ae"
+        position={[-3.2, 4.52, 0.2]}
+        rotation={[-Math.PI / 2, 0, 0]}
+      />
+      <rectAreaLight
+        width={5}
+        height={0.16}
+        intensity={3.6}
+        color="#e8cba6"
+        position={[3.3, 4.52, -0.7]}
+        rotation={[-Math.PI / 2, 0, 0]}
+      />
+      <pointLight position={[-6.55, 1.72, 3.55]} intensity={0.38} color="#e4c49a" distance={7} decay={2} />
+      <pointLight position={[3.4, 1.55, -0.5]} intensity={0.22} color="#d7c4a6" distance={6} decay={2} />
       <CameraRig
         preset={world.camera}
         selected={world.selected}
@@ -68,7 +111,7 @@ export function LivingScene({
         </group>
       ))}
       <TravelPacket packet={world.packet} positions={positions} />
-      <ContactShadows position={[0, 0.01, 0.4]} opacity={0.32} scale={22} blur={2.4} far={6} />
+      <ContactShadows position={[0, 0.012, 0.4]} opacity={0.38} scale={22} blur={2.7} far={6} />
     </>
   );
 }

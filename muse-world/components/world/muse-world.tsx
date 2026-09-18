@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { ACESFilmicToneMapping } from "three";
 import { WorldHud } from "@/components/world/hud";
 import { useLivingWorld } from "@/components/world/use-living-world";
 
@@ -19,12 +20,17 @@ export function MuseWorld() {
     useLivingWorld();
 
   return (
-    <main className="relative h-dvh w-full overflow-hidden bg-[#0b0c10]">
+    <main className="relative h-dvh w-full overflow-hidden bg-[#0d1520]">
       <Canvas
         shadows
         dpr={[1, 1.6]}
-        camera={{ position: [0.2, 3.8, 16.4], fov: 38, near: 0.1, far: 80 }}
-        gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
+        camera={{ position: [0.2, 3.8, 16.4], fov: 38, near: 0.1, far: 90 }}
+        gl={{
+          antialias: true,
+          alpha: false,
+          powerPreference: "high-performance",
+          toneMapping: ACESFilmicToneMapping,
+        }}
       >
         <LivingScene
           world={world}
