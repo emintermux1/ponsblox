@@ -13,6 +13,7 @@ import {
   applyScreenInspect,
   type WakePayload,
 } from "@/lib/world/pick";
+import { quietScreenPulse, sanitizeScreenPulse } from "@/lib/world/screen-texture";
 import { quietTape, tapeFromPulse, type TapeView } from "@/lib/world/tape";
 import type { CameraPreset, MuseId, ScreenId, WorldEvent, WorldSnapshot } from "@/types/world";
 
@@ -29,7 +30,10 @@ export function useLivingWorld() {
   const [introLine, setIntroLine] = useState<string | null>(
     prefersReducedMotion() ? null : INTRO_COPY[0],
   );
-  const [pulse, setPulse] = useState<Pulse>({ kind: "QUIET", ticker: null });
+  const [pulse, setPulse] = useState<Pulse>(() => ({
+    kind: "QUIET",
+    ...quietScreenPulse(),
+  }));
   const [tape, setTape] = useState<TapeView>(quietTape);
 
   useEffect(() => {
@@ -165,6 +169,7 @@ export function useLivingWorld() {
   return {
     world,
     tape,
+    pulse: sanitizeScreenPulse(pulse),
     introDone,
     introLine,
     setIntroDone,

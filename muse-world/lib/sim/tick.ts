@@ -1,4 +1,4 @@
-import { isPaidTicker } from "@/lib/adapters/parse";
+import { cleanTicker } from "@/lib/adapters/parse";
 import { pickStoryBeat, upsertWallPin, type StoryBeat } from "@/lib/sim/stories";
 import { chillHome, PACKET_HOLD_MS } from "@/lib/world/layout";
 import { packetNoteForBeat, sanitizePacket, sanitizeWallPins } from "@/lib/world/wall-copy";
@@ -15,6 +15,9 @@ import { assertNever } from "@/types/world";
 export type Pulse = {
   kind: WorldEventKind | "QUIET";
   ticker: string | null;
+  name?: string | null;
+  changePct?: number | null;
+  source?: string;
 };
 
 const THOUGHTS: Record<MuseId, string[]> = {
@@ -50,10 +53,7 @@ const THOUGHTS: Record<MuseId, string[]> = {
 const TICKERS = ["WIF", "BONK", "PINT", "JUP", "PENGU"];
 
 export function pickTicker(fallback: string | null): string {
-  if (fallback && !isPaidTicker(fallback)) {
-    return fallback;
-  }
-  return TICKERS[Math.floor(Math.random() * TICKERS.length)] ?? "WIF";
+  return cleanTicker(fallback) ?? TICKERS[Math.floor(Math.random() * TICKERS.length)] ?? "WIF";
 }
 
 function pick<T>(items: T[], random: () => number): T {
@@ -158,9 +158,9 @@ export function applyActivity(
   ticker: string | null,
 ): MuseState {
   const mind = { ...muse.mind, nodes: { ...muse.mind.nodes } };
-  const aboutTicker = ticker && !isPaidTicker(ticker) ? ticker : null;
+  const aboutTicker = cleanTicker(ticker);
   const about = aboutTicker ?? "the room";
-  if (isPaidTicker(mind.watching)) {
+  if (mind.watching && !cleanTicker(mind.watching)) {
     mind.watching = null;
   }
   mind.nodes.GROK = nudge(mind.nodes.GROK, -0.016);
@@ -438,13 +438,13 @@ export function tickSnapshot(
   now = Date.now(),
   random = Math.random,
 ): WorldSnapshot {
-  const skippedPaid = isPaidTicker(pulse.ticker);
-  const pulseTicker = skippedPaid ? null : pulse.ticker;
+  const pulseTicker = cleanTicker(pulse.ticker);
   const spiked =
-    !skippedPaid && (pulse.kind === "TREND_SPIKE" || pulse.kind === "VIRAL_POST");
-  const rawSubject =
-    pulseTicker ?? world.muses.trader.mind.watching ?? world.muses.scroller.mind.watching;
-  const subject = rawSubject && !isPaidTicker(rawSubject) ? rawSubject : null;
+    Boolean(pulseTicker) && (pulse.kind === "TREND_SPIKE" || pulse.kind === "VIRAL_POST");
+  const subject =
+    pulseTicker ??
+    cleanTicker(world.muses.trader.mind.watching) ??
+    cleanTicker(world.muses.scroller.mind.watching);
   const events = world.events;
   const packet = sanitizePacket(
     world.packet && now - world.packet.t < PACKET_HOLD_MS ? world.packet : null,
@@ -454,7 +454,7 @@ export function tickSnapshot(
 
   for (const id of Object.keys(muses) as MuseId[]) {
     let muse = clearExpiredThought(muses[id], now);
-    if (isPaidTicker(muse.mind.watching)) {
+    if (muse.mind.watching && !cleanTicker(muse.mind.watching)) {
       muse = { ...muse, mind: { ...muse.mind, watching: null } };
     }
     if (muse.id === "chill" && (muse.activity === "WALKING" || random() < 0.3)) {

@@ -14,6 +14,7 @@ import {
 import type { ColorRepresentation, Mesh } from "three";
 import { loftPickHandlers } from "@/components/world/loft-cursor";
 import { usePerf } from "@/components/world/perf-context";
+import { PulseGlass } from "@/components/world/screens";
 import {
   IDEA_WALL_CARDS,
   IDEA_WALL_ORIGIN,
@@ -547,18 +548,14 @@ function DeskScreen({
         <boxGeometry args={[0.92, 0.56, 0.03]} />
         <meshStandardMaterial color="#161513" metalness={0.72} roughness={0.26} />
       </mesh>
-      <mesh position={[0, 0, 0.018]}>
+      <group position={[0, 0, 0.018]}>
+        <PulseGlass kind="desk" width={0.86} height={0.5} />
+      </group>
+      <mesh position={[0, 0, 0.019]} visible={false}>
         <planeGeometry args={[0.86, 0.5]} />
-        <meshPhysicalMaterial
-          color={active ? "#121820" : "#0e1216"}
-          emissive={active ? "#4a6a82" : "#1a2430"}
-          emissiveIntensity={active ? 0.72 : 0.38}
-          metalness={0.35}
-          roughness={0.08}
-          transparent
-          opacity={0.88}
-        />
+        <meshBasicMaterial color={active ? "#4a6a82" : "#0e1216"} />
       </mesh>
+      <pointLight position={[0, 0, 0.28]} intensity={active ? 0.7 : 0.5} color="#8fb7cc" distance={1.8} decay={2} />
     </group>
   );
 }
@@ -599,6 +596,22 @@ function Desk({
       />
       <Panel args={[0.42, 0.02, 0.3]} position={[1.18, 0.8, 0.22]} color={PAPER} roughness={0.82} />
       <Panel args={[0.36, 0.015, 0.26]} position={[1.2, 0.82, 0.2]} color="#d7c6aa" roughness={0.8} />
+      <group position={[1.08, 0.8, 0.2]} rotation={[0, -0.18, 0]}>
+        <mesh position={[0, 0.01, 0]}>
+          <boxGeometry args={[0.34, 0.012, 0.24]} />
+          <meshStandardMaterial color="#2a2a28" metalness={0.7} roughness={0.32} />
+        </mesh>
+        <group position={[0, 0.12, -0.09]} rotation={[-0.55, 0, 0]}>
+          <mesh>
+            <boxGeometry args={[0.34, 0.22, 0.012]} />
+            <meshStandardMaterial color="#1a1a18" metalness={0.68} roughness={0.3} />
+          </mesh>
+          <group position={[0, 0, 0.008]}>
+            <PulseGlass kind="laptop" width={0.3} height={0.18} />
+          </group>
+        </group>
+        <pointLight position={[0, 0.16, 0.08]} intensity={0.28} color="#9ec6d8" distance={1.1} decay={2} />
+      </group>
     </group>
   );
 }

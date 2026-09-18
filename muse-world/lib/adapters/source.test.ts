@@ -66,6 +66,21 @@ describe("market fail-open", () => {
     assert.equal(lower.kind, "QUIET");
     assert.equal(lower.ticker, null);
   });
+
+  it("walks past a pad coin to the first clean gecko ticker", () => {
+    const pulse = marketPulseFromFetch({
+      status: "ok",
+      body: {
+        data: [
+          { attributes: { name: "SNAPPAD / SOL", volume_usd: { h1: "90000" } } },
+          { attributes: { name: "WIF / SOL", volume_usd: { h1: "12000" } } },
+        ],
+      },
+    });
+    assert.equal(pulse.source, "gecko");
+    assert.equal(pulse.ticker, "WIF");
+    assert.equal(honestyFromLabel(pulse.source), "real");
+  });
 });
 
 describe("grok wake without webhook", () => {

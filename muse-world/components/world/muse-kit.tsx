@@ -1,6 +1,7 @@
 "use client";
 
 import { LitScreen, type ScreenKind } from "@/components/world/lit-screen";
+import { PulseGlass } from "@/components/world/screens";
 import { usePerf } from "@/components/world/perf-context";
 import type { MuseActivity, MuseId } from "@/types/world";
 import { assertNever } from "@/types/world";
@@ -171,7 +172,11 @@ export function SilverLaptop({ kind }: { kind: ScreenKind }) {
           <meshStandardMaterial color="#b8bec6" metalness={0.64} roughness={0.28} />
         </mesh>
         <group position={[0, 0, 0.008]}>
-          <LitScreen kind={kind} width={0.36} height={0.22} />
+          {kind === "notes" || kind === "tv" ? (
+            <LitScreen kind={kind} width={0.36} height={0.22} />
+          ) : (
+            <PulseGlass kind="laptop" width={0.36} height={0.22} />
+          )}
         </group>
       </group>
     </group>
@@ -186,7 +191,7 @@ export function LitPhone() {
         <meshStandardMaterial color="#d8d4cc" metalness={0.42} roughness={0.32} />
       </mesh>
       <group position={[0, 0, 0.008]}>
-        <LitScreen kind="phone" width={0.078} height={0.142} intensity={1.55} />
+        <PulseGlass kind="phone" width={0.078} height={0.142} />
       </group>
     </group>
   );

@@ -275,27 +275,103 @@ export function makeGrokEvent(input: {
   };
 }
 
+const JUNK_TICKERS = new Set([
+  "PAID",
+  "LONGER",
+  "NVDAX3L",
+  "REDDITPAD",
+  "WIKIPAD",
+  "ROBLOXPAD",
+  "SKINPAD",
+  "GITPAD",
+  "SNAPPAD",
+  "INDEXPAD",
+  "PONS",
+  "SOL",
+  "WSOL",
+  "USDC",
+  "USDT",
+]);
+
 export function isPaidTicker(symbol: string | undefined | null): boolean {
   return Boolean(symbol && /^\$?paid$/i.test(symbol.trim()));
+}
+
+export function normalizeTicker(symbol: string | undefined | null): string | null {
+  if (!symbol) {
+    return null;
+  }
+  const token = symbol.trim().replace(/^\$/, "");
+  if (!token || token.length > 8) {
+    return null;
+  }
+  if (/[^A-Za-z0-9]/.test(token)) {
+    return null;
+  }
+  return token.toUpperCase();
+}
+
+export function isJunkTicker(symbol: string | undefined | null): boolean {
+  const token = normalizeTicker(symbol);
+  if (!token) {
+    return true;
+  }
+  if (JUNK_TICKERS.has(token) || token.endsWith("PAD")) {
+    return true;
+  }
+  return /^\d+$/.test(token);
+}
+
+export function cleanTicker(symbol: string | undefined | null): string | null {
+  const token = normalizeTicker(symbol);
+  if (!token || isJunkTicker(token)) {
+    return null;
+  }
+  return token;
 }
 
 export function tickerFromName(name: string | undefined): string | null {
   if (!name) {
     return null;
   }
-  const token = name.split("/")[0]?.trim();
-  return tickerFromSymbol(token);
+  return cleanTicker(name.split("/")[0]);
 }
 
 export function tickerFromSymbol(symbol: string | undefined | null): string | null {
-  if (!symbol) {
+  return cleanTicker(symbol);
+}
+
+export function finiteChange(value: unknown): number | null {
+  const amount = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(amount) || Math.abs(amount) > 10_000) {
     return null;
   }
-  const token = symbol.trim();
-  if (!token || token.length > 8 || isPaidTicker(token)) {
-    return null;
+  return amount;
+}
+
+export function isJunkDisplayName(name: string | null | undefined): boolean {
+  const raw = name?.split("/")[0]?.trim().replace(/^\$/, "") ?? "";
+  if (!raw) {
+    return true;
   }
-  return token.toUpperCase();
+  const upper = raw.toUpperCase();
+  if (upper === "PAID" || JUNK_TICKERS.has(upper) || upper.endsWith("PAD")) {
+    return true;
+  }
+  const compact = upper.replace(/[^A-Z0-9]/g, "");
+  return compact === "PAID" || JUNK_TICKERS.has(compact) || compact.endsWith("PAD");
+}
+
+export function pulseDisplayName(
+  name: string | null | undefined,
+  ticker: string | null,
+): string | null {
+  const clean = cleanTicker(ticker);
+  const raw = name?.split("/")[0]?.trim() ?? "";
+  if (raw && !isJunkDisplayName(raw)) {
+    return raw.length > 18 ? (clean ?? raw.slice(0, 18)) : raw;
+  }
+  return clean;
 }
 
 export function mintFromGeckoTokenId(id: string | undefined): string | null {
@@ -504,15 +580,19 @@ export function mergeMarketPulse(input: {
   if (!hit) {
     return quietMarketPulse(providers, { solUsd, slot, at });
   }
-  const ticker = hit.ticker ?? tickerFromSymbol(helius?.symbol);
+  const ticker = cleanTicker(hit.ticker) ?? cleanTicker(helius?.symbol);
+  const name = pulseDisplayName(hit.name, ticker);
   const mint = hit.mint ?? helius?.mint ?? null;
-  const changePct = hit.changePct ?? hit.priceChange24h ?? null;
+  const changePct = finiteChange(hit.changePct ?? hit.priceChange24h);
   const pool = hit.pool ?? hit.pairAddress ?? null;
+  if (!ticker && !name) {
+    return quietMarketPulse(providers, { solUsd, slot, at });
+  }
   return {
     kind: hit.volumeUsd > 40_000 ? "TREND_SPIKE" : "VIRAL_POST",
     ticker,
     mint,
-    name: hit.name ?? ticker,
+    name,
     source: hit.source,
     priceUsd: hit.priceUsd ?? null,
     volumeUsd: Number.isFinite(hit.volumeUsd) ? hit.volumeUsd : null,
@@ -577,24 +657,32 @@ function hitsOf(value: MarketHits | undefined): MarketHit[] {
 }
 
 function usableHit(hit: MarketHit | null): MarketHit | null {
-  if (!hit || isPaidTicker(hit.ticker) || isQuoteTicker(hit.ticker)) {
+  if (!hit || isQuoteTicker(hit.ticker)) {
+    return null;
+  }
+  if (hit.ticker && isJunkTicker(hit.ticker)) {
     return null;
   }
   return hit;
 }
 
 function pickLeadHit(hits: readonly MarketHit[], helius: HeliusConfirm | null): MarketHit | null {
-  if (isPaidTicker(helius?.symbol)) {
+  if (helius?.symbol && isJunkTicker(helius.symbol)) {
     return null;
   }
   const ranked = [...hits].sort((a, b) => SOURCE_RANK[a.source] - SOURCE_RANK[b.source]);
   const lead = ranked[0];
-  if (!lead || isPaidTicker(lead.ticker)) {
+  if (!lead) {
+    return null;
+  }
+  const ticker = cleanTicker(lead.ticker) ?? cleanTicker(helius?.symbol);
+  if (!ticker && isJunkDisplayName(lead.name)) {
     return null;
   }
   return {
     ...lead,
-    ticker: lead.ticker ?? tickerFromSymbol(helius?.symbol),
+    ticker,
+    name: pulseDisplayName(lead.name, ticker),
     mint: lead.mint ?? helius?.mint ?? null,
   };
 }

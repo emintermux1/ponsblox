@@ -1,4 +1,4 @@
-import { isPaidTicker } from "@/lib/adapters/parse";
+import { tickerFromName } from "@/lib/adapters/parse";
 import type { GrokSource, MuseId, WorldEvent, WorldEventKind } from "@/types/world";
 import { assertNever } from "@/types/world";
 
@@ -16,6 +16,8 @@ export type MarketOrigin =
 export type MarketPulse = {
   kind: WorldEventKind | "QUIET";
   ticker: string | null;
+  name?: string | null;
+  changePct?: number | null;
   source: MarketOrigin;
 };
 
@@ -107,17 +109,6 @@ type MarketFetchOutcome =
   | { status: "http-error" }
   | { status: "network-error" };
 
-function tickerFromName(name: string | undefined): string | null {
-  if (!name) {
-    return null;
-  }
-  const token = name.split("/")[0]?.trim();
-  if (!token || token.length > 8 || isPaidTicker(token)) {
-    return null;
-  }
-  return token.toUpperCase();
-}
-
 export function marketPulseFromFetch(outcome: MarketFetchOutcome): MarketPulse {
   switch (outcome.status) {
     case "http-error":
@@ -125,12 +116,8 @@ export function marketPulseFromFetch(outcome: MarketFetchOutcome): MarketPulse {
       return simMarketPulse();
     case "ok": {
       const body = outcome.body as { data?: GeckoPool[] };
-      const row = body.data?.[0];
+      const row = (body.data ?? []).find((item) => tickerFromName(item.attributes?.name));
       if (!row) {
-        return simMarketPulse();
-      }
-      const rawName = row.attributes?.name?.split("/")[0]?.trim();
-      if (isPaidTicker(rawName)) {
         return simMarketPulse();
       }
       const ticker = tickerFromName(row.attributes?.name);

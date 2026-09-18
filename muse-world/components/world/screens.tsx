@@ -1,13 +1,22 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from "react";
+import { useFrame } from "@react-three/fiber";
 import {
   CanvasTexture,
   SRGBColorSpace,
   Texture,
   TextureLoader,
 } from "three";
+import { usePerf } from "@/components/world/perf-context";
 import { PLATE, type PlateKind } from "@/lib/world/plates";
+import {
+  paintScreen,
+  quietScreenPulse,
+  sanitizeScreenPulse,
+  type ScreenKind as PulseScreenKind,
+  type ScreenPulse,
+} from "@/lib/world/screen-texture";
 import { assertNever } from "@/types/world";
 
 function paintPhone(ctx: CanvasRenderingContext2D, w: number, h: number) {
@@ -329,7 +338,7 @@ export function LitPhone({ scale = 1 }: { scale?: number }) {
         <meshStandardMaterial color="#1a1712" roughness={0.28} metalness={0.45} />
       </mesh>
       <group position={[0, 0, 0.008]}>
-        <ScreenPane kind="phone" width={0.092} height={0.172} intensity={1.05} />
+        <PulseGlass kind="phone" width={0.092} height={0.172} />
       </group>
     </group>
   );
@@ -354,9 +363,117 @@ export function LitLaptop({
           <meshStandardMaterial color="#b8b5ae" roughness={0.3} metalness={0.5} />
         </mesh>
         <group position={[0, 0, 0.008]}>
-          <ScreenPane kind={plate} width={0.39} height={0.23} intensity={1.1} />
+          {plate === "notes" || plate === "tv" ? (
+            <ScreenPane kind={plate} width={0.39} height={0.23} intensity={1.1} />
+          ) : (
+            <PulseGlass kind="laptop" width={0.39} height={0.23} />
+          )}
         </group>
       </group>
     </group>
+  );
+}
+
+const ScreenPulseContext = createContext<ScreenPulse>(quietScreenPulse());
+
+export function ScreenPulseProvider({
+  pulse,
+  children,
+}: {
+  pulse: ScreenPulse;
+  children: ReactNode;
+}) {
+  const value = useMemo(() => sanitizeScreenPulse(pulse), [pulse]);
+  return <ScreenPulseContext.Provider value={value}>{children}</ScreenPulseContext.Provider>;
+}
+
+export function useScreenPulse(): ScreenPulse {
+  return useContext(ScreenPulseContext);
+}
+
+function pulseSize(kind: PulseScreenKind): [number, number] {
+  switch (kind) {
+    case "phone":
+      return [256, 448];
+    case "laptop":
+      return [512, 320];
+    case "desk":
+      return [640, 400];
+    default: {
+      const _never: never = kind;
+      return _never;
+    }
+  }
+}
+
+function useLitPulse(kind: PulseScreenKind) {
+  const pulse = useScreenPulse();
+  const { pauseExtras } = usePerf();
+  const size = pulseSize(kind);
+  const canvas = useMemo(() => {
+    const node = document.createElement("canvas");
+    node.width = size[0];
+    node.height = size[1];
+    return node;
+  }, [size]);
+  const texture = useMemo(() => {
+    const tex = new CanvasTexture(canvas);
+    tex.colorSpace = SRGBColorSpace;
+    tex.needsUpdate = true;
+    return tex;
+  }, [canvas]);
+
+  const paint = (time: number) => {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      return;
+    }
+    paintScreen(ctx, canvas.width, canvas.height, pulse, time, kind);
+    texture.needsUpdate = true;
+  };
+
+  useLayoutEffect(() => {
+    paint(0);
+  }, [canvas, kind, pulse, texture]);
+
+  useLayoutEffect(() => {
+    return () => {
+      texture.dispose();
+    };
+  }, [texture]);
+
+  useFrame((state) => {
+    if (pauseExtras) {
+      return;
+    }
+    paint(state.clock.elapsedTime);
+  });
+
+  return texture;
+}
+
+export function PulseGlass({
+  kind,
+  width,
+  height,
+}: {
+  kind: PulseScreenKind;
+  width: number;
+  height: number;
+}) {
+  const texture = useLitPulse(kind);
+  return (
+    <mesh>
+      <planeGeometry args={[width, height]} />
+      <meshStandardMaterial
+        map={texture}
+        emissive="#b7d7ea"
+        emissiveMap={texture}
+        emissiveIntensity={1.45}
+        toneMapped={false}
+        roughness={0.22}
+        metalness={0.08}
+      />
+    </mesh>
   );
 }

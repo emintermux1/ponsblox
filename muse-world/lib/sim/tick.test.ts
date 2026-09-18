@@ -3,7 +3,7 @@ import { afterEach, describe, it, mock } from "node:test";
 
 import { seedWorld } from "../world/defaults";
 import { honestyFromLabel } from "../adapters/source";
-import { applyActivity, tickSnapshot } from "./tick";
+import { applyActivity, pickTicker, tickSnapshot } from "./tick";
 
 afterEach(() => {
   mock.restoreAll();
@@ -46,6 +46,28 @@ describe("client tick purity", () => {
     const next = applyActivity(muse, "WATCHING", "PAID");
     assert.equal(next.mind.watching, null);
     assert.notEqual(next.mind.watching, "PAID");
+  });
+});
+
+describe("junk tickers stay off the tape", () => {
+  it("does not watch PAID or pad coins from a junk pulse", () => {
+    for (let i = 0; i < 48; i += 1) {
+      const next = tickSnapshot(
+        seedWorld(),
+        { kind: "TREND_SPIKE", ticker: "PAID" },
+        10_000 + i,
+        () => (i % 7) / 10,
+      );
+      assert.notEqual(next.muses.trader.mind.watching, "PAID");
+      assert.notEqual(next.muses.scroller.mind.watching, "PAID");
+      if (next.packet) {
+        assert.notEqual(next.packet.label, "PAID");
+        assert.notEqual(next.packet.label, "$PAID");
+      }
+    }
+    assert.notEqual(pickTicker("PAID"), "PAID");
+    assert.notEqual(pickTicker("SNAPPAD"), "SNAPPAD");
+    assert.equal(pickTicker("WIF"), "WIF");
   });
 });
 

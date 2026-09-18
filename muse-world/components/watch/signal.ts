@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { WorldEvent } from "@/types/world";
 import { assertNever } from "@/types/world";
 import { roomNote } from "@/components/watch/copy";
+import { isLiveScreenSource } from "@/lib/world/screen-texture";
 import { isPaidTicker } from "@/lib/world/wall-copy";
 
 export type StreetSignal =
@@ -44,7 +45,7 @@ export function useStreetSignal(): StreetSignal {
         if (cancelled) {
           return;
         }
-        if (body.source === "gecko") {
+        if (typeof body.source === "string" && isLiveScreenSource(body.source)) {
           const ticker = typeof body.ticker === "string" ? body.ticker : null;
           setSignal({
             status: "gecko",

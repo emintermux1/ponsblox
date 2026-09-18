@@ -13,10 +13,13 @@ import {
   loftThoughtFromWake,
   asHttpsLogo,
   candlesFromOhlcvList,
+  cleanTicker,
   dedupeMarketHits,
+  isJunkTicker,
   mergeMarketPulse,
   mintFromGeckoTokenId,
   providerStatusFromHttp,
+  pulseDisplayName,
   quietMarketPulse,
   quietProviders,
   resolveWakeResult,
@@ -115,15 +118,39 @@ describe("market pulse", () => {
     assert.equal(tickerFromSymbol("PAID"), null);
     assert.equal(tickerFromSymbol("$PAID"), null);
     assert.equal(tickerFromName("paid / SOL"), null);
+    assert.equal(tickerFromSymbol("SNAPPAD"), null);
+    assert.equal(tickerFromSymbol("GITPAD"), null);
+    assert.equal(tickerFromSymbol("SOL"), null);
+    assert.equal(cleanTicker("PAID"), null);
+    assert.equal(isJunkTicker("PAID"), true);
+    assert.equal(isJunkTicker("WIF"), false);
+    assert.equal(pulseDisplayName("PAID", "PAID"), null);
+    assert.equal(pulseDisplayName("dogwifhat", "WIF"), "dogwifhat");
     assert.equal(
       mintFromGeckoTokenId("solana_DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"),
       "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
     );
   });
 
+  it("skips PAID, pad coins, and other junk symbols", () => {
+    assert.equal(tickerFromSymbol("PAID"), null);
+    assert.equal(tickerFromSymbol("$PAID"), null);
+    assert.equal(tickerFromName("PAID / SOL"), null);
+    assert.equal(tickerFromSymbol("SNAPPAD"), null);
+    assert.equal(isJunkTicker("INDEXPAD"), true);
+    assert.equal(isJunkTicker("USDC"), true);
+  });
+
   it("prefers gecko then birdeye/gmgn and never invents fills", () => {
     const gecko = mergeMarketPulse({
-      gecko: { source: "gecko", ticker: "WIF", mint: "mint1", volumeUsd: 50_000 },
+      gecko: {
+        source: "gecko",
+        ticker: "WIF",
+        name: "dogwifhat",
+        mint: "mint1",
+        volumeUsd: 50_000,
+        changePct: 4.2,
+      },
       birdeye: { source: "birdeye", ticker: "BONK", mint: "mint2", volumeUsd: 90_000 },
       gmgn: "skip",
       helius: "skip",
@@ -131,6 +158,8 @@ describe("market pulse", () => {
     assert.equal(gecko.source, "gecko");
     assert.equal(gecko.kind, "TREND_SPIKE");
     assert.equal(gecko.live, true);
+    assert.equal(gecko.name, "dogwifhat");
+    assert.equal(gecko.changePct, 4.2);
     assert.equal(gecko.tape.length, 2);
     assert.deepEqual(gecko.fills, []);
     assert.deepEqual(gecko.candles, []);
@@ -182,6 +211,18 @@ describe("market pulse", () => {
     });
     assert.equal(pulse.kind, "QUIET");
     assert.equal(pulse.ticker, null);
+  });
+
+  it("skips a pad-coin gecko pulse instead of putting it on the tape", () => {
+    const pulse = mergeMarketPulse({
+      gecko: { source: "gecko", ticker: "SNAPPAD", mint: "mint-pad", volumeUsd: 90_000 },
+      birdeye: "skip",
+      gmgn: "skip",
+      helius: "skip",
+    });
+    assert.equal(pulse.kind, "QUIET");
+    assert.equal(pulse.ticker, null);
+    assert.deepEqual(pulse.fills, []);
   });
 
   it("lets helius fill a missing ticker without inventing a new source", () => {
