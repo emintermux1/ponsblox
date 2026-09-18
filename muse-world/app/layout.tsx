@@ -11,12 +11,16 @@ import "./globals.css";
 const geist = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "optional",
+  fallback: ["system-ui", "sans-serif"],
 });
 
 const newsreader = Newsreader({
   variable: "--font-serif",
   subsets: ["latin"],
   style: ["normal", "italic"],
+  display: "optional",
+  fallback: ["Times New Roman", "serif"],
 });
 
 const title = WORDMARK;

@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  FIRST_PAINT_BUDGET,
+  PERF_BUDGET,
   budgetFromSignals,
   shouldWatch,
   type PerfSignals,
@@ -15,6 +17,7 @@ function signals(partial: Partial<PerfSignals>): PerfSignals {
     webgl: true,
     coarse: false,
     saveData: false,
+    pixelRatio: 2,
     ...partial,
   };
 }
@@ -34,8 +37,46 @@ test("phone with WebGL still mounts a lean 3D loft", () => {
   assert.equal(budget.mode, "webgl");
   assert.equal(budget.extraLights, false);
   assert.equal(budget.shadows, false);
+  assert.equal(budget.contactShadows, false);
   assert.ok(budget.cityCount > 0);
+  assert.ok(budget.cityCount <= PERF_BUDGET.cityDesktop);
   assert.equal(budget.frameloop, "always");
+});
+
+test("phone canvas dpr is at least min(2, devicePixelRatio)", () => {
+  const retina = budgetFromSignals(
+    signals({ width: 390, height: 844, coarse: true, pixelRatio: 3 }),
+  );
+  assert.equal(retina.dpr[0], 2);
+  assert.equal(retina.dpr[1], 2);
+  const two = budgetFromSignals(
+    signals({ width: 390, height: 844, coarse: true, pixelRatio: 2 }),
+  );
+  assert.equal(two.dpr[1], 2);
+  const one = budgetFromSignals(
+    signals({ width: 390, height: 844, coarse: true, pixelRatio: 1 }),
+  );
+  assert.equal(one.dpr[1], 1);
+});
+
+test("first paint assumes the 3D loft, not WATCH", () => {
+  assert.equal(FIRST_PAINT_BUDGET.mode, "webgl");
+  assert.notEqual(FIRST_PAINT_BUDGET.mode, "watch");
+});
+
+test("hidden loft uses demand frameloop", () => {
+  const budget = budgetFromSignals(signals({ hidden: true }));
+  assert.equal(budget.mode, "webgl");
+  assert.equal(budget.frameloop, "demand");
+});
+
+test("desktop city and lights stay under the hitch cap", () => {
+  const budget = budgetFromSignals(signals({ width: 1440 }));
+  assert.ok(budget.cityCount <= 18);
+  assert.equal(budget.extraLights, false);
+  assert.equal(budget.contactShadows, false);
+  assert.equal(budget.shadowMapSize, 512);
+  assert.equal(budget.glass, "standard");
 });
 
 test("lost WebGL falls back to watch even on desktop", () => {

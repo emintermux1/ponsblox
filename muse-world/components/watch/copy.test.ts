@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { CAST } from "@/lib/world/cast";
 import {
@@ -61,6 +64,15 @@ test("asCaption can keep the first short clause of a long line", () => {
 
 test("first entry copy is not ENTER MIND", () => {
   assert.notEqual(ENTRY_CAPTION, ENTER_MIND);
+});
+
+test("living world keeps INTRO_COPY imported so prod typecheck cannot drop it", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const src = readFileSync(join(here, "../world/use-living-world.ts"), "utf8");
+  assert.match(src, /import \{[^}]*INTRO_COPY/);
+  assert.match(src, /INTRO_COPY_AT_MS/);
+  assert.match(src, /INTRO_CLEAR_MS/);
+  assert.doesNotMatch(src, /ENTER MIND/);
 });
 
 test("mind is a quiet later word, never brass ENTER MIND", () => {

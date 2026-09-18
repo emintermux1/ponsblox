@@ -68,6 +68,7 @@ export function CameraRig({
   const dragging = useRef(false);
   const skipPreset = useRef(true);
   const finished = useRef(introDone || reducedMotion);
+  const introOnce = useRef(introDone || reducedMotion);
   const musePosRef = useRef(musePos);
   const onIntroDoneRef = useRef(onIntroDone);
   const releaseRef = useRef<(fromCamera: boolean, finishIntro: boolean) => void>(() => undefined);
@@ -114,9 +115,10 @@ export function CameraRig({
   }, [camera, introDone, onIntroDone, reducedMotion, size.height, size.width]);
 
   useEffect(() => {
-    if (introDone || reducedMotion) {
+    if (introDone || reducedMotion || introOnce.current) {
       return;
     }
+    introOnce.current = true;
     drive.current = { kind: "intro" };
     setLookFree(false);
     const shots = introShotsFor(size.width, size.height).map((shot) =>
@@ -131,13 +133,15 @@ export function CameraRig({
     );
     const failSafe = window.setTimeout(() => {
       timeline.kill();
+      writeShot(proxy.current, shots[shots.length - 1] ?? home());
+      applyProxyToCamera(camera, proxy.current);
       releaseRef.current(false, true);
-    }, compact ? INTRO_FAILSAFE_MS : INTRO_FAILSAFE_MS + 1_200);
+    }, INTRO_FAILSAFE_MS);
     return () => {
       window.clearTimeout(failSafe);
       timeline.kill();
     };
-  }, [compact, introDone, reducedMotion, size.height, size.width]);
+  }, [camera, introDone, reducedMotion]);
 
   useEffect(() => {
     if (!introDone) {

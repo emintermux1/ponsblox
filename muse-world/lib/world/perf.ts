@@ -16,6 +16,7 @@ export type PerfSignals = {
   webgl: boolean;
   coarse: boolean;
   saveData: boolean;
+  pixelRatio: number;
 };
 
 export type PerfBudget = {
@@ -42,15 +43,16 @@ export type PerfBudget = {
 
 /** Hard caps — never let the loft push past these. */
 export const PERF_BUDGET = {
+  dprCap: 2,
   dprDesktop: 1.5,
-  dprTablet: 1.15,
-  dprPhone: 1,
+  dprTablet: 1.5,
+  dprPhone: 2,
   phoneWidth: 768,
   tabletWidth: 1100,
-  cityDesktop: 36,
-  cityTablet: 14,
-  cityPhone: 8,
-  shadowDesktop: 1024 as const,
+  cityDesktop: 18,
+  cityTablet: 10,
+  cityPhone: 6,
+  shadowDesktop: 512 as const,
   shadowTablet: 512 as const,
   farDesktop: 72,
   farTablet: 46,
@@ -65,9 +67,10 @@ export const FIRST_PAINT_SIGNALS: PerfSignals = {
   height: 800,
   hidden: false,
   reducedMotion: false,
-  webgl: false,
+  webgl: true,
   coarse: false,
   saveData: false,
+  pixelRatio: 2,
 };
 
 let webglProbe: boolean | null = null;
@@ -113,6 +116,7 @@ export function readPerfSignals(): PerfSignals {
     webgl: probeWebGL(),
     coarse: window.matchMedia("(pointer: coarse)").matches,
     saveData: Boolean(connection?.saveData),
+    pixelRatio: window.devicePixelRatio || 1,
   };
 }
 
@@ -131,24 +135,29 @@ export function shouldWatch(signals: PerfSignals, webglLost: boolean): boolean {
   return webglLost || !signals.webgl;
 }
 
-function dprFor(tier: PerfTier, reducedMotion: boolean): [number, number] {
+function clampDpr(value: number): number {
+  if (!Number.isFinite(value) || value <= 0) {
+    return PERF_BUDGET.dprPhone;
+  }
+  return Math.min(PERF_BUDGET.dprCap, value);
+}
+
+function dprFor(tier: PerfTier, reducedMotion: boolean, pixelRatio: number): [number, number] {
+  const sharp = clampDpr(pixelRatio);
   switch (tier) {
     case "desktop":
-      return [1, reducedMotion ? 1.25 : PERF_BUDGET.dprDesktop];
+      return [1, reducedMotion ? 1.25 : Math.min(PERF_BUDGET.dprDesktop, sharp)];
     case "tablet":
-      return [1, reducedMotion ? 1 : PERF_BUDGET.dprTablet];
+      return [Math.min(1.25, sharp), Math.min(PERF_BUDGET.dprTablet, sharp)];
     case "phone":
-      return [1, PERF_BUDGET.dprPhone];
+      return [sharp, sharp];
     default:
       return assertNever(tier);
   }
 }
 
 function framePolicy(hidden: boolean, reducedMotion: boolean): FramePolicy {
-  if (hidden) {
-    return "never";
-  }
-  if (reducedMotion) {
+  if (hidden || reducedMotion) {
     return "demand";
   }
   return "always";
@@ -204,13 +213,13 @@ export function budgetFromSignals(
   const budget: PerfBudget = {
     tier,
     mode: watch ? "watch" : "webgl",
-    dpr: dprFor(tier, signals.reducedMotion),
+    dpr: dprFor(tier, signals.reducedMotion, signals.pixelRatio),
     antialias: !compact && !signals.reducedMotion,
     shadows: !watch && tier === "desktop" && !signals.reducedMotion,
-    shadowMapSize: compact ? PERF_BUDGET.shadowTablet : PERF_BUDGET.shadowDesktop,
-    extraLights: !watch && tier === "desktop" && !pauseExtras,
-    contactShadows: !watch && tier === "desktop" && !pauseExtras,
-    glass: !watch && tier === "desktop" && !signals.reducedMotion ? "physical" : "standard",
+    shadowMapSize: PERF_BUDGET.shadowTablet,
+    extraLights: false,
+    contactShadows: false,
+    glass: "standard",
     cityCount: cityCountFor(tier, watch),
     cityLod: tier === "desktop" ? "dense" : "sparse",
     htmlThoughts: !watch && !signals.hidden && tier === "desktop" && !signals.reducedMotion,
@@ -266,8 +275,8 @@ export function watchFrame(preset: CameraPreset): {
 }
 
 export function assertPerfCaps(budget: PerfBudget): void {
-  if (budget.dpr[1] > PERF_BUDGET.dprDesktop) {
-    throw new Error("DPR over desktop cap");
+  if (budget.dpr[1] > PERF_BUDGET.dprCap) {
+    throw new Error("DPR over cap");
   }
   if (budget.cityCount > PERF_BUDGET.cityDesktop) {
     throw new Error("city instances over cap");

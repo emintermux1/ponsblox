@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { SpectatorChrome } from "@/components/watch/chrome";
-import { FIRST_PAINT_MS } from "@/components/watch/copy";
+import { FIRST_PAINT_MS, WORDMARK } from "@/components/watch/copy";
 import type { RenderMode } from "@/lib/world/perf";
 import type { CameraPreset, MuseId, ScreenId, WorldSnapshot } from "@/types/world";
 
@@ -48,7 +48,13 @@ export function SpectatorHud({
   }, [compact]);
 
   if (!settled) {
-    return <div data-entry-veil="off" data-first-paint="watch" />;
+    return (
+      <div data-entry-veil="off" data-first-paint="wordmark" className="loft-chrome">
+        <header className="loft-chrome-top">
+          <p className="loft-wordmark">{WORDMARK}</p>
+        </header>
+      </div>
+    );
   }
 
   return (

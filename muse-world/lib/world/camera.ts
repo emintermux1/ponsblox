@@ -24,11 +24,11 @@ export const CINEMA_EASE = "power2.inOut";
 
 export const INTRO_COPY_AT_MS = [0, 3200, 7000] as const;
 export const INTRO_CLEAR_MS = 10_800;
-export const INTRO_HOLD_S = 0.28;
-export const INTRO_SETTLE_S = 0.28;
-export const INTRO_LEG_S = 3.05;
-export const INTRO_EASE_S = 1.8;
-export const INTRO_FAILSAFE_MS = 4_000;
+export const INTRO_HOLD_S = 0.12;
+export const INTRO_SETTLE_S = 0.12;
+export const INTRO_LEG_S = 1.15;
+export const INTRO_EASE_S = 1.15;
+export const INTRO_FAILSAFE_MS = 1_600;
 export const LOOK_ARRIVE_EPS = 0.08;
 
 export const HOME_SHOT: Shot = {
@@ -329,15 +329,19 @@ export function playIntro(
   onComplete: () => void,
   shots: Shot[] = INTRO_SHOTS,
 ): gsap.core.Timeline {
+  gsap.killTweensOf(proxy);
   armCinema();
   const path = shots.length > 0 ? shots : INTRO_SHOTS;
   const home = path[path.length - 1] ?? HOME_SHOT;
-  const tl = gsap.timeline({ onComplete });
+  const tl = gsap.timeline({
+    onComplete,
+    defaults: { overwrite: "auto" },
+  });
   const start = readShot(proxy);
   if (shotDistance(start, home) > 0.05) {
     tl.to(proxy, {
       ...flattenShot(home),
-      duration: introEaseDuration(start, home),
+      duration: Math.min(INTRO_EASE_S, introEaseDuration(start, home)),
       ease: CINEMA_EASE,
     });
   }

@@ -1,9 +1,7 @@
 "use client";
 
-import { useEffect, useLayoutEffect } from "react";
-import { ContactShadows } from "@react-three/drei";
+import { useEffect } from "react";
 import { useThree } from "@react-three/fiber";
-import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
 import { FrustumGuard } from "@/components/world/frustum-guard";
 import { GrokPresence } from "@/components/world/grok-orb";
 import { MuseBody } from "@/components/world/muse-body";
@@ -24,84 +22,32 @@ import type { TapeView } from "@/lib/world/tape";
 import type { MuseId, PacketEndpoint, ScreenId, WorldSnapshot } from "@/types/world";
 import { MUSE_IDS } from "@/types/world";
 
-function AreaLights() {
-  useLayoutEffect(() => {
-    RectAreaLightUniformsLib.init();
-  }, []);
-  return null;
-}
-
 function Lighting() {
-  const { extraLights, shadows, shadowMapSize, cameraFar } = usePerf();
+  const { shadows, shadowMapSize, cameraFar } = usePerf();
   return (
     <>
-      {extraLights ? <AreaLights /> : null}
       <color attach="background" args={["#15202c"]} />
-      <fog
-        attach="fog"
-        args={["#243646", extraLights ? 28 : 16, extraLights ? 70 : Math.min(50, cameraFar - 6)]}
-      />
-      <ambientLight intensity={extraLights ? 0.32 : 0.4} color="#d2c0a6" />
-      <hemisphereLight args={["#7f96aa", "#3a2c20", extraLights ? 0.58 : 0.64]} />
+      <fog attach="fog" args={["#243646", 18, Math.min(52, cameraFar - 6)]} />
+      <ambientLight intensity={0.42} color="#d2c0a6" />
+      <hemisphereLight args={["#7f96aa", "#3a2c20", 0.62]} />
       <directionalLight
         position={[7, 9.5, -5]}
-        intensity={extraLights ? 0.72 : 0.58}
+        intensity={0.58}
         color="#c5d2de"
         castShadow={shadows}
         shadow-mapSize-width={shadowMapSize}
         shadow-mapSize-height={shadowMapSize}
         shadow-camera-near={1}
-        shadow-camera-far={32}
-        shadow-camera-left={-12}
-        shadow-camera-right={12}
-        shadow-camera-top={10}
-        shadow-camera-bottom={-8}
+        shadow-camera-far={28}
+        shadow-camera-left={-10}
+        shadow-camera-right={10}
+        shadow-camera-top={8}
+        shadow-camera-bottom={-6}
         shadow-bias={-0.00025}
       />
-      <directionalLight
-        position={[-4, 6.2, 7]}
-        intensity={extraLights ? 0.85 : 0.55}
-        color="#f3d7b0"
-      />
-      {extraLights ? (
-        <>
-          <rectAreaLight
-            width={16}
-            height={3.2}
-            intensity={8}
-            color="#8eabbf"
-            position={[0, 2.15, -4.42]}
-            rotation={[0, Math.PI, 0]}
-          />
-          <rectAreaLight
-            width={6.2}
-            height={0.16}
-            intensity={10}
-            color="#f0d4ae"
-            position={[-3.2, 4.52, 0.2]}
-            rotation={[-Math.PI / 2, 0, 0]}
-          />
-          <rectAreaLight
-            width={5}
-            height={0.16}
-            intensity={7}
-            color="#e8cba6"
-            position={[3.3, 4.52, -0.7]}
-            rotation={[-Math.PI / 2, 0, 0]}
-          />
-          <pointLight position={[-3.2, 4.2, 0.4]} intensity={1.35} color="#f2d4a8" distance={11} decay={2} />
-          <pointLight position={[3.3, 4.2, -0.5]} intensity={0.95} color="#ebc9a0" distance={9} decay={2} />
-          <pointLight position={[-6.55, 1.72, 3.55]} intensity={0.85} color="#e4c49a" distance={8} decay={2} />
-          <pointLight position={[3.4, 1.7, -0.5]} intensity={0.45} color="#d7c4a6" distance={6} decay={2} />
-          <pointLight position={[0, 3.4, -3.4]} intensity={0.4} color="#9bb3c4" distance={10} decay={2} />
-        </>
-      ) : (
-        <>
-          <pointLight position={[0, 3.2, 2]} intensity={0.55} color="#e4c49a" distance={12} decay={2} />
-          <pointLight position={[7.1, 2.4, 2.5]} intensity={0.7} color="#f0d4ae" distance={8} decay={2} />
-          <pointLight position={[-2.4, 2.6, 2.2]} intensity={0.38} color="#e8cba6" distance={9} decay={2} />
-        </>
-      )}
+      <directionalLight position={[-4, 6.2, 7]} intensity={0.5} color="#f3d7b0" />
+      <pointLight position={[0, 3.2, 2]} intensity={0.5} color="#e4c49a" distance={12} decay={2} />
+      <pointLight position={[7.1, 2.4, 2.5]} intensity={0.55} color="#f0d4ae" distance={8} decay={2} />
     </>
   );
 }
@@ -180,7 +126,6 @@ export function LivingScene({
     selected && (world.camera === "MIND" || world.camera === presetForMuse(selected))
       ? world.muses[selected].position
       : null;
-  const { contactShadows } = usePerf();
   const positions: Record<PacketEndpoint, [number, number, number]> = {
     scroller: world.muses.scroller.position,
     trader: world.muses.trader.position,
@@ -242,9 +187,6 @@ export function LivingScene({
         </FrustumGuard>
       ))}
       <TravelPacket packet={world.packet} positions={positions} />
-      {contactShadows ? (
-        <ContactShadows position={[0, 0.012, 0.4]} opacity={0.38} scale={22} blur={2.7} far={6} />
-      ) : null}
     </>
   );
 }

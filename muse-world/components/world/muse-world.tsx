@@ -63,14 +63,14 @@ export function MuseWorld({
 
   return (
     <main
-      className="relative h-dvh w-full overflow-hidden bg-transparent"
+      className="relative z-[5] h-dvh w-full overflow-hidden bg-[#15202c]"
       data-loft-mode={ready ? budget.mode : "boot"}
       data-loft-tier={budget.tier}
     >
       {ready && webgl ? (
         <Canvas
           className="absolute inset-0 touch-none"
-          style={{ touchAction: "none", pointerEvents: "auto" }}
+          style={{ touchAction: "none", pointerEvents: "auto", background: "#15202c" }}
           shadows={budget.shadows ? "percentage" : false}
           dpr={budget.dpr}
           frameloop={budget.frameloop}
@@ -85,7 +85,7 @@ export function MuseWorld({
             alpha: false,
             powerPreference: budget.powerPreference,
             stencil: false,
-            preserveDrawingBuffer: true,
+            preserveDrawingBuffer: false,
             toneMapping: ACESFilmicToneMapping,
           }}
           onContextMenu={(event) => {
@@ -93,6 +93,7 @@ export function MuseWorld({
           }}
           onPointerMissed={() => undefined}
           onCreated={({ gl }) => {
+            gl.setClearColor("#15202c", 1);
             gl.domElement.style.touchAction = "none";
             gl.domElement.style.pointerEvents = "auto";
             gl.domElement.addEventListener("webglcontextlost", (event) => {

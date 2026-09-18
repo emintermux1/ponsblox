@@ -14,7 +14,7 @@ export function usePerfBudget(): {
   markWebglLost: () => void;
 } {
   const [lost, setLost] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(true);
   const [budget, setBudget] = useState<PerfBudget>(FIRST_PAINT_BUDGET);
 
   useEffect(() => {

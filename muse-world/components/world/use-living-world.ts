@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { INTRO_COPY, mostAwakeId } from "@/components/watch/copy";
+import { INTRO_COPY, WORDMARK, mostAwakeId } from "@/components/watch/copy";
 import { tickSnapshot, type Pulse } from "@/lib/sim/tick";
 import { INTRO_CLEAR_MS, INTRO_COPY_AT_MS, presetForMuse } from "@/lib/world/camera";
 import { seedWorld } from "@/lib/world/defaults";
@@ -25,11 +25,18 @@ function prefersReducedMotion(): boolean {
   );
 }
 
+function introLines(): readonly [string, string, string] {
+  if (!INTRO_COPY || INTRO_COPY.length < 3) {
+    return [WORDMARK, WORDMARK, WORDMARK];
+  }
+  return [INTRO_COPY[0] ?? WORDMARK, INTRO_COPY[1] ?? WORDMARK, INTRO_COPY[2] ?? WORDMARK];
+}
+
 export function useLivingWorld() {
   const [world, setWorld] = useState<WorldSnapshot>(seedWorld);
   const [introDone, setIntroDone] = useState(prefersReducedMotion);
   const [introLine, setIntroLine] = useState<string | null>(
-    prefersReducedMotion() ? null : INTRO_COPY[0],
+    prefersReducedMotion() ? null : introLines()[0],
   );
   const [pulse, setPulse] = useState<Pulse>(() => ({
     kind: "QUIET",
@@ -42,10 +49,13 @@ export function useLivingWorld() {
       setIntroLine(null);
       return;
     }
+    const lines = introLines();
+    const at = INTRO_COPY_AT_MS ?? ([0, 3200, 7000] as const);
+    const clearAt = INTRO_CLEAR_MS ?? 10_800;
     const timers = [
-      window.setTimeout(() => setIntroLine(INTRO_COPY[1]), INTRO_COPY_AT_MS[1]),
-      window.setTimeout(() => setIntroLine(INTRO_COPY[2]), INTRO_COPY_AT_MS[2]),
-      window.setTimeout(() => setIntroLine(null), INTRO_CLEAR_MS),
+      window.setTimeout(() => setIntroLine(lines[1]), at[1]),
+      window.setTimeout(() => setIntroLine(lines[2]), at[2]),
+      window.setTimeout(() => setIntroLine(null), clearAt),
     ];
     return () => timers.forEach((id) => window.clearTimeout(id));
   }, []);
