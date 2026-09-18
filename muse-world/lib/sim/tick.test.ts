@@ -128,12 +128,39 @@ describe("purposeful work", () => {
     world.muses.trader = {
       ...world.muses.trader,
       activity: "WALKING",
+      heading: "TRADING",
       position: [-2.4, 0.62, 3.1],
     };
     const next = tickSnapshot(world, { kind: "QUIET", ticker: null }, 20_000, () => 0.01);
     assert.equal(next.muses.trader.activity, "WALKING");
     assert.ok(next.muses.trader.position[0] > -2.4);
     assert.ok(next.muses.trader.position[0] < 3.4);
+  });
+
+  it("walks scroller to the window when watching", () => {
+    const world = seedWorld();
+    world.muses.scroller = {
+      ...world.muses.scroller,
+      activity: "WATCHING",
+      heading: "WATCHING",
+    };
+    const next = tickSnapshot(world, { kind: "QUIET", ticker: null }, 20_000, () => 0.99);
+    assert.equal(next.muses.scroller.activity, "WALKING");
+    assert.ok(next.muses.scroller.position[0] < STATIONS.scrollerSofa.position[0]);
+    assert.ok(next.muses.scroller.position[2] < STATIONS.scrollerSofa.position[2]);
+  });
+
+  it("walks trader toward Grok when thinking", () => {
+    const world = seedWorld();
+    world.muses.trader = {
+      ...world.muses.trader,
+      activity: "THINKING",
+      heading: "THINKING",
+      position: STATIONS.traderPatrol.position,
+    };
+    const next = tickSnapshot(world, { kind: "QUIET", ticker: null }, 20_000, () => 0.99);
+    assert.equal(next.muses.trader.activity, "WALKING");
+    assert.ok(next.muses.trader.position[0] > STATIONS.traderPatrol.position[0]);
   });
 
   it("keeps chill on the armchair when already there", () => {
@@ -152,6 +179,24 @@ describe("purposeful work", () => {
         next.muses.trader.activity === "TRADING" ||
         next.muses.trader.activity === "REACTING" ||
         next.muses.trader.activity === "THINKING",
+    );
+  });
+
+  it("sends a muse across the loft instead of pinning every body to a seat", () => {
+    let world = seedWorld();
+    let walked = false;
+    for (let i = 0; i < 10; i += 1) {
+      world = tickSnapshot(world, { kind: "QUIET", ticker: null }, 20_000 + i * 900, () => 0.2);
+      for (const muse of Object.values(world.muses)) {
+        if (muse.activity === "WALKING") {
+          walked = true;
+        }
+      }
+    }
+    assert.equal(walked, true);
+    assert.ok(
+      !nearXZ(world.muses.chill.position, STATIONS.chillArmchair.position, 0.2) ||
+        world.muses.chill.activity === "WALKING",
     );
   });
 

@@ -3,10 +3,13 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { activityLine, asCaption } from "@/components/watch/copy";
+import { DexScreenerFrame } from "@/components/world/dex-frame";
 import { usePerf } from "@/components/world/perf-context";
 import { useTape } from "@/components/world/tape-context";
+import { dexEmbedSrc, dexHonesty } from "@/lib/world/dex-embed";
+import { watchDexRect, type OverlayRect } from "@/lib/world/dex-overlay";
 import { GROK_ORB_POS, SCREEN_POS, wallSlotWorld } from "@/lib/world/layout";
-import { tapeHeadline } from "@/lib/world/tape";
+import { tapeHeadline, tapeStamp } from "@/lib/world/tape";
 import { projectLoft, watchFrame } from "@/lib/world/perf";
 import { screenView, type ScreenPulse } from "@/lib/world/screen-texture";
 import type { MuseId, MuseState, PacketEndpoint, ScreenId, WorldSnapshot } from "@/types/world";
@@ -45,7 +48,9 @@ function MuseFigure({
   const view = screenView(pulse);
   const seated =
     muse.activity === "CHILLING" ||
-    muse.activity === "SMOKING" ||
+    muse.activity === "TRADING" ||
+    muse.activity === "SCROLLING" ||
+    muse.activity === "RESEARCHING" ||
     muse.activity === "IDLE";
 
   return (
@@ -72,32 +77,23 @@ function MuseFigure({
       {caption ? (
         <span className="thought-caption mb-2 block text-center">{caption}</span>
       ) : null}
-      <span className="relative mx-auto block h-[78px] w-12">
+      <span className="relative mx-auto block h-[78px] w-14">
         {muse.id === "chill" ? (
           <span className="absolute bottom-1 left-1/2 h-7 w-10 -translate-x-1/2 rounded-sm bg-[#5c4a3e]" />
         ) : null}
-        <span className="absolute left-1/2 top-2 h-[46px] w-10 -translate-x-1/2 rounded-[20px] bg-[#f6f1e8] shadow-[0_0_14px_rgba(246,241,232,0.22)]" />
-        {muse.id === "trader" ? (
-          <span className="absolute left-1/2 top-[22px] h-7 w-10 -translate-x-1/2 rounded-b-[16px] bg-[#1a1d24]" />
-        ) : null}
-        <span className="absolute left-[14px] top-[18px] h-[3px] w-[7px] rounded-full bg-[#1a1d33]" />
-        <span className="absolute right-[14px] top-[18px] h-[3px] w-[7px] rounded-full bg-[#1a1d33]" />
-        <span className="absolute left-[13px] top-[26px] h-1.5 w-1.5 rounded-full bg-[#f0b4ae]/80" />
-        <span className="absolute right-[13px] top-[26px] h-1.5 w-1.5 rounded-full bg-[#f0b4ae]/80" />
+        <span className="absolute left-1/2 top-2 h-[46px] w-11 -translate-x-1/2 rounded-[22px] bg-[#f6f1e8] shadow-[0_0_14px_rgba(246,241,232,0.22)]" />
+        <span className="absolute left-[6px] top-[10px] h-3 w-2.5 rounded-full bg-[#f3eee4]" />
+        <span className="absolute right-[6px] top-[10px] h-3 w-2.5 rounded-full bg-[#f3eee4]" />
+        <span className="absolute left-1/2 top-0 h-2 w-5 -translate-x-1/2 rounded-full border border-[#f0d48a]" />
+        <span className="absolute left-[16px] top-[18px] h-[3px] w-[6px] rounded-full bg-[#1a1d33]" />
+        <span className="absolute right-[16px] top-[18px] h-[3px] w-[6px] rounded-full bg-[#1a1d33]" />
+        <span className="absolute left-[14px] top-[26px] h-1.5 w-1.5 rounded-full bg-[#f0b4ae]/80" />
+        <span className="absolute right-[14px] top-[26px] h-1.5 w-1.5 rounded-full bg-[#f0b4ae]/80" />
         {muse.id === "scroller" ? (
           <span className="absolute left-1/2 top-1 h-3 w-9 -translate-x-1/2 rounded-full border border-[#14161c]" />
         ) : null}
-        {muse.id === "trader" ? (
-          <span className="absolute left-1/2 top-0.5 h-2.5 w-7 -translate-x-1/2 rounded-t-full bg-[#14161c]" />
-        ) : null}
         {muse.id === "chill" ? (
           <span className="absolute left-1/2 top-[30px] h-1.5 w-8 -translate-x-1/2 rounded-full bg-[#3f7a4a]" />
-        ) : null}
-        {muse.id === "builder" ? (
-          <span className="absolute bottom-3 right-0 h-3 w-4 rounded-[2px] bg-[#ead9c0]" />
-        ) : null}
-        {muse.id === "scroller" || muse.id === "trader" ? (
-          <span className="absolute bottom-2 left-1/2 h-3 w-5 -translate-x-1/2 rounded-[2px] bg-[#3a3d42]" />
         ) : null}
         {selected ? (
           <span className="absolute -bottom-0.5 left-1/2 h-1.5 w-8 -translate-x-1/2 rounded-full bg-[#e6d3a8]/55" />
@@ -309,6 +305,47 @@ function screenLabel(id: ScreenId): string {
   }
 }
 
+function WatchTapeDex({
+  frame,
+}: {
+  frame: { x: number; y: number; scale: number };
+}) {
+  const tape = useTape();
+  const src = dexEmbedSrc(tape);
+  const [box, setBox] = useState<OverlayRect | null>(null);
+
+  useEffect(() => {
+    const update = () => {
+      setBox(
+        watchDexRect(projectLoft(SCREEN_POS.tape), frame, window.innerWidth, window.innerHeight),
+      );
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [frame.scale, frame.x, frame.y]);
+
+  if (!src || !box) {
+    return null;
+  }
+
+  return (
+    <div
+      className="loft-dex-screen"
+      data-dex-embed="live"
+      data-dex-mark={dexHonesty(tape.source)}
+      style={{ left: box.left, top: box.top, width: box.width, height: box.height }}
+    >
+      <DexScreenerFrame
+        src={src}
+        mark={dexHonesty(tape.source)}
+        headline={tape.ticker ?? tapeHeadline(tape)}
+        stamp={tapeStamp(tape.source)}
+      />
+    </div>
+  );
+}
+
 function WatchScreens({
   inspecting,
   onInspect,
@@ -320,16 +357,19 @@ function WatchScreens({
   return (
     <>
       {SCREEN_IDS.map((id) => {
+        if (id === "tape") {
+          return null;
+        }
         const point = projectLoft(SCREEN_POS[id]);
         return (
           <button
             key={id}
             type="button"
             onClick={() => onInspect(id)}
-            className="absolute z-20 flex h-4 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden bg-[#0e1216] text-[5px] leading-none text-[#d7b56a]"
+            className="absolute z-20 flex h-4 w-10 items-center justify-center overflow-hidden bg-[#0e1216] text-[5px] leading-none text-[#d7b56a]"
             style={{
-              left: `${point.left}%`,
-              top: `${point.top}%`,
+              left: `calc(${point.left}% - 1.25rem)`,
+              top: `calc(${point.top}% - 0.5rem)`,
               boxShadow: inspecting === id ? "0 0 10px rgba(74,106,130,0.7)" : undefined,
             }}
             aria-label={screenLabel(id)}
@@ -413,6 +453,7 @@ export function WatchMode({
         ))}
         <WatchPacket world={world} now={now} />
       </motion.div>
+      <WatchTapeDex frame={frame} />
       <WatchMind world={world} />
     </div>
   );

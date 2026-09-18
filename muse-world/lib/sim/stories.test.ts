@@ -253,6 +253,7 @@ describe("tickSnapshot stories", () => {
     world.muses.chill = {
       ...world.muses.chill,
       activity: "WALKING",
+      heading: "CHILLING",
       position: [-1.6, 0.62, 3.5],
     };
     const next = tickSnapshot(world, { kind: "QUIET", ticker: null }, 1_000, () => 0.99);

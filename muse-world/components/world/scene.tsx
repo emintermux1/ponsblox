@@ -199,6 +199,7 @@ export function LivingScene({
         preset={world.camera}
         selected={world.selected}
         musePos={musePos}
+        inspecting={world.inspecting}
         introDone={introDone}
         onIntroDone={onIntroDone}
       />

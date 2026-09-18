@@ -1,4 +1,4 @@
-import { grokPresence } from "@/lib/world/cast";
+import { grokPresence, isSimGrokText } from "@/lib/world/cast";
 import { isPaidTicker, isTickerSlopHeadline } from "@/lib/world/wall-copy";
 import type {
   CameraPreset,
@@ -199,14 +199,6 @@ function eventKindLine(kind: WorldEventKind): string {
   }
 }
 
-function isSimGrokText(text: string): boolean {
-  const lower = text.toLowerCase();
-  return (
-    lower.includes("no grok key") ||
-    lower.includes("sim context") ||
-    lower.includes("waiting on ingest")
-  );
-}
 
 export function roomNote(event: WorldEvent | undefined): string {
   if (!event) {

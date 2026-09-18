@@ -6,6 +6,7 @@ import {
   type MarketProviderId,
   type TapeCandle,
 } from "@/lib/adapters/parse";
+import { dexPairAddress } from "@/lib/world/dex-embed";
 import { assertNever } from "@/types/world";
 
 export type TapeSource = MarketProviderId | "sim";
@@ -24,6 +25,7 @@ export type TapeView = {
   ticker: string | null;
   name: string | null;
   mint: string | null;
+  pairAddress: string | null;
   source: TapeSource;
   changePct: number | null;
   priceUsd: number | null;
@@ -38,6 +40,7 @@ export function quietTape(): TapeView {
     ticker: null,
     name: null,
     mint: null,
+    pairAddress: null,
     source: "sim",
     changePct: null,
     priceUsd: null,
@@ -154,6 +157,8 @@ export function tapeFromPulse(pulse: {
   ticker?: unknown;
   name?: unknown;
   mint?: unknown;
+  pairAddress?: unknown;
+  pool?: unknown;
   source?: unknown;
   changePct?: unknown;
   priceChange24h?: unknown;
@@ -171,7 +176,8 @@ export function tapeFromPulse(pulse: {
     kind: tapeKindOf(pulse.kind),
     ticker,
     name,
-    mint: typeof pulse.mint === "string" && pulse.mint.length >= 32 ? pulse.mint : null,
+    mint: dexPairAddress(pulse.mint),
+    pairAddress: dexPairAddress(pulse.pairAddress) ?? dexPairAddress(pulse.pool),
     source,
     changePct: parseFiniteNumber(pulse.changePct) ?? parseFiniteNumber(pulse.priceChange24h),
     priceUsd: parseFiniteNumber(pulse.priceUsd),

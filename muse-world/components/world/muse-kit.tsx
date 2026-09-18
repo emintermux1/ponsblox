@@ -112,16 +112,16 @@ export function Hoodie() {
 export function Scarf() {
   return (
     <group>
-      <mesh position={[0, 0.58, 0.02]} rotation={[0.5, 0.16, 0.06]}>
-        <torusGeometry args={[0.2, 0.048, 10, 20]} />
+      <mesh position={[0, 0.5, 0.03]} rotation={[1.05, 0.08, 0.04]}>
+        <torusGeometry args={[0.16, 0.036, 10, 20]} />
         <meshStandardMaterial color={GREEN} roughness={0.82} />
       </mesh>
-      <mesh position={[0.12, 0.42, 0.16]} scale={[1.4, 0.7, 0.5]}>
-        <sphereGeometry args={[0.055, 10, 8]} />
+      <mesh position={[0.1, 0.36, 0.12]} scale={[1.3, 0.7, 0.45]}>
+        <sphereGeometry args={[0.05, 10, 8]} />
         <meshStandardMaterial color={GREEN} roughness={0.8} />
       </mesh>
-      <mesh position={[0.16, 0.32, 0.18]} scale={[1.1, 0.85, 0.45]}>
-        <sphereGeometry args={[0.046, 10, 8]} />
+      <mesh position={[0.14, 0.26, 0.14]} scale={[1.05, 0.85, 0.42]}>
+        <sphereGeometry args={[0.042, 10, 8]} />
         <meshStandardMaterial color="#4a8a54" roughness={0.8} />
       </mesh>
     </group>

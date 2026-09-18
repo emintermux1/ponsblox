@@ -53,6 +53,7 @@ export function seedMuses(): Record<MuseId, MuseState> {
       thoughtUntil: 0,
       position: STATIONS.scrollerSofa.position,
       facing: STATIONS.scrollerSofa.facing,
+      heading: null,
       mind: emptyMind("notice what is actually moving"),
     },
     trader: {
@@ -64,6 +65,7 @@ export function seedMuses(): Record<MuseId, MuseState> {
       thoughtUntil: 0,
       position: STATIONS.traderDesk.position,
       facing: STATIONS.traderDesk.facing,
+      heading: null,
       mind: emptyMind("find asymmetric setups"),
     },
     chill: {
@@ -75,6 +77,7 @@ export function seedMuses(): Record<MuseId, MuseState> {
       thoughtUntil: 0,
       position: STATIONS.chillArmchair.position,
       facing: STATIONS.chillArmchair.facing,
+      heading: null,
       mind: emptyMind("be bored on purpose"),
     },
     builder: {
@@ -86,6 +89,7 @@ export function seedMuses(): Record<MuseId, MuseState> {
       thoughtUntil: 0,
       position: STATIONS.builderWall.position,
       facing: STATIONS.builderWall.facing,
+      heading: null,
       mind: emptyMind("write a thesis worth sending"),
     },
   };

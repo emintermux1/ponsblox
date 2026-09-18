@@ -103,6 +103,15 @@ export function isNumberedMuseName(name: string): boolean {
   return /muse\s*0*\d+/i.test(name.trim());
 }
 
+export function isSimGrokText(text: string): boolean {
+  const lower = text.toLowerCase();
+  return (
+    lower.includes("no grok key") ||
+    lower.includes("sim context") ||
+    lower.includes("waiting on ingest")
+  );
+}
+
 export function endpointName(endpoint: PacketEndpoint): string {
   switch (endpoint) {
     case "scroller":
