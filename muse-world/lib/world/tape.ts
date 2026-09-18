@@ -41,9 +41,11 @@ export function paidSafeTicker(symbol: string | null | undefined): string | null
 export function asTapeSource(value: unknown): TapeSource {
   switch (value) {
     case "gecko":
+    case "dexscreener":
     case "birdeye":
     case "gmgn":
     case "helius":
+    case "solana":
       return value;
     default:
       return "sim";
@@ -123,6 +125,10 @@ export function tapeStamp(source: TapeSource): string {
       return "LIVE · gmgn";
     case "helius":
       return "LIVE · helius";
+    case "dexscreener":
+      return "LIVE · dexscreener";
+    case "solana":
+      return "LIVE · solana";
     default:
       return assertNever(source);
   }
