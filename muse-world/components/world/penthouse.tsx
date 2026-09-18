@@ -1,8 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Html } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
+import { useLayoutEffect, useMemo, useRef } from "react";
 import {
   BackSide,
   CanvasTexture,
@@ -11,19 +9,12 @@ import {
   RepeatWrapping,
   SRGBColorSpace,
 } from "three";
-import type { ColorRepresentation, Mesh } from "three";
+import type { ColorRepresentation } from "three";
+import { IdeaWall } from "@/components/world/idea-wall";
 import { loftPickHandlers } from "@/components/world/loft-cursor";
 import { usePerf } from "@/components/world/perf-context";
-import {
-  IDEA_WALL_CARDS,
-  IDEA_WALL_ORIGIN,
-  PACKET_TRAVEL_MS,
-  wallSlotLocal,
-  worldToWallLocal,
-} from "@/lib/world/layout";
-import { wallCardText } from "@/lib/world/wall-copy";
 import type { CityLod, GlassQuality } from "@/lib/world/perf";
-import type { ScreenId, SpatialPacket, WallPin } from "@/types/world";
+import type { ScreenId, SpatialPacket, WallPin, WorldSnapshot } from "@/types/world";
 import { assertNever } from "@/types/world";
 
 function physicalGlass(glass: GlassQuality): boolean {
@@ -628,107 +619,6 @@ function Desk({
   );
 }
 
-function FlyingWallCard({
-  pin,
-  from,
-  to,
-}: {
-  pin: SpatialPacket;
-  from: [number, number, number];
-  to: [number, number, number];
-}) {
-  const mesh = useRef<Mesh>(null);
-  useFrame(() => {
-    if (!mesh.current) {
-      return;
-    }
-    const u = Math.min(1, (Date.now() - pin.t) / PACKET_TRAVEL_MS);
-    mesh.current.visible = u < 1;
-    mesh.current.position.set(
-      from[0] + (to[0] - from[0]) * u,
-      from[1] + (to[1] - from[1]) * u + Math.sin(u * Math.PI) * 0.32,
-      from[2] + (to[2] - from[2]) * u,
-    );
-  });
-  return (
-    <mesh ref={mesh}>
-      <boxGeometry args={[0.62, 0.38, 0.02]} />
-      <meshStandardMaterial color={PAPER} roughness={0.78} />
-    </mesh>
-  );
-}
-
-function IdeaWall({
-  packet,
-  pins,
-  builderPos,
-}: {
-  packet: SpatialPacket | null;
-  pins: WallPin[];
-  builderPos: [number, number, number];
-}) {
-  const traveling = packet?.kind === "PIN" && packet.to === "wall" ? packet : null;
-  const travelId = traveling ? `${traveling.t}:${traveling.label}:${traveling.slot ?? 0}` : null;
-  const [landedId, setLandedId] = useState<string | null>(null);
-  const fromLocal = useMemo(() => worldToWallLocal(builderPos), [builderPos]);
-  useFrame(() => {
-    if (!traveling || !travelId) {
-      return;
-    }
-    if (Date.now() - traveling.t >= PACKET_TRAVEL_MS && landedId !== travelId) {
-      setLandedId(travelId);
-    }
-  });
-  const flyingSlot = travelId && landedId !== travelId ? (traveling?.slot ?? 0) : null;
-
-  return (
-    <group position={IDEA_WALL_ORIGIN} rotation={[0, -Math.PI / 2, 0]}>
-      <Panel args={[3.85, 2.55, 0.07]} position={[0, 0, 0]} color={WOOD} roughness={0.68} />
-      <Panel args={[3.9, 0.03, 0.08]} position={[0, 1.28, 0.02]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
-      <Panel args={[3.9, 0.03, 0.08]} position={[0, -1.28, 0.02]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
-      <mesh position={[0, 1.32, 0.08]}>
-        <boxGeometry args={[3.4, 0.018, 0.04]} />
-        <meshStandardMaterial color="#ead7b4" emissive="#d7b889" emissiveIntensity={0.85} />
-      </mesh>
-      {IDEA_WALL_CARDS.map((card) => (
-        <mesh key={card.key} position={[card.x, card.y, 0.05]}>
-          <boxGeometry args={[0.62, 0.38, 0.02]} />
-          <meshStandardMaterial color={PAPER} roughness={0.8} />
-        </mesh>
-      ))}
-      {pins
-        .filter((pin) => pin.slot !== flyingSlot)
-        .map((pin) => {
-          const [x, y, z] = wallSlotLocal(pin.slot);
-          const line = wallCardText(pin.label);
-          return (
-            <group key={pin.id} position={[x, y, z]}>
-              <mesh>
-                <boxGeometry args={[0.58, 0.34, 0.018]} />
-                <meshStandardMaterial color={PAPER} roughness={0.8} />
-              </mesh>
-              {line ? (
-                <Html center distanceFactor={8} style={{ pointerEvents: "none" }}>
-                  <span className="max-w-[5.6rem] text-center font-serif text-[8px] italic leading-3 text-[#3a3226]/75">
-                    {line}
-                  </span>
-                </Html>
-              ) : null}
-            </group>
-          );
-        })}
-      {traveling ? (
-        <FlyingWallCard
-          pin={traveling}
-          from={fromLocal}
-          to={wallSlotLocal(traveling.slot ?? 0)}
-        />
-      ) : null}
-      <Panel args={[1.8, 0.08, 0.42]} position={[0, -1.55, 0.18]} color={WOOD} roughness={0.62} />
-    </group>
-  );
-}
-
 function Structure({
   concrete,
   wood,
@@ -825,6 +715,7 @@ export function Penthouse({
   inspecting = null,
   onInspect,
   deskLive = false,
+  world,
 }: {
   packet?: SpatialPacket | null;
   wallPins?: WallPin[];
@@ -832,6 +723,7 @@ export function Penthouse({
   inspecting?: ScreenId | null;
   onInspect?: (id: ScreenId) => void;
   deskLive?: boolean;
+  world: WorldSnapshot;
 }) {
   void deskLive;
   const { cityCount, cityLod } = usePerf();
@@ -861,9 +753,13 @@ export function Penthouse({
         inspecting={inspecting}
         onInspect={onInspect ?? (() => undefined)}
       />
+<<<<<<< HEAD
       <DeskChair position={[3.28, 0, 0.12]} />
       <DeskChair position={[4.12, 0, 0.12]} />
       <IdeaWall packet={packet} pins={wallPins} builderPos={builderPos} />
+=======
+      <IdeaWall packet={packet} pins={wallPins} builderPos={builderPos} world={world} />
+>>>>>>> 98034e7 (Show living ink on Muse World idea-wall papers.)
       <City count={cityCount} />
       {dense ? <Haze /> : null}
     </group>

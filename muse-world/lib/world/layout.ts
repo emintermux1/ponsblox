@@ -37,11 +37,14 @@ export const SEAT = {
 } as const;
 
 export const IDEA_WALL_CARDS = [
-  { key: "thesis", x: -0.7, y: 0.55 },
-  { key: "flow", x: 0.15, y: 0.9 },
-  { key: "ref", x: 0.85, y: 0.4 },
-  { key: "risk", x: -0.25, y: -0.15 },
-  { key: "ask", x: 0.55, y: -0.35 },
+  { key: "thesis", x: -1.22, y: 0.74 },
+  { key: "flow", x: -0.38, y: 0.92 },
+  { key: "ref", x: 0.48, y: 0.7 },
+  { key: "pulse", x: 1.28, y: 0.86 },
+  { key: "risk", x: -1.08, y: 0.08 },
+  { key: "ask", x: -0.18, y: -0.12 },
+  { key: "grok", x: 0.68, y: 0.06 },
+  { key: "room", x: 1.22, y: -0.28 },
 ] as const;
 
 export const WALL_SLOT_COUNT = IDEA_WALL_CARDS.length;

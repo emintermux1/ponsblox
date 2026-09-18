@@ -142,6 +142,8 @@ function worldRevision(world: WorldSnapshot): string {
     world.grokWake.honesty ?? "",
     world.mindOpen ? "1" : "0",
     world.packet?.t ?? 0,
+    world.grokWake.summary ?? "",
+    ...(world.wallPins ?? []).map((pin) => `${pin.slot}:${pin.label}:${pin.at}`),
     ...MUSE_IDS.map((id) => {
       const muse = world.muses[id];
       return `${muse.position[0].toFixed(2)}:${muse.activity}:${muse.thought ?? ""}`;
@@ -202,6 +204,7 @@ export function LivingScene({
           world.muses.trader.activity === "WATCHING" ||
           world.muses.builder.activity === "THINKING"
         }
+        world={world}
       />
       <FrustumGuard center={GROK_ORB_POS} radius={1.4}>
         <GrokOrb

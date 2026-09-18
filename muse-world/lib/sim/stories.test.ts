@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { seedWorld } from "../world/defaults";
+import { WALL_SLOT_COUNT } from "../world/layout";
 import {
   cooled,
   nextWallSlot,
@@ -59,13 +60,12 @@ describe("story cooldowns", () => {
 describe("wall slots", () => {
   it("fills empty slots then the oldest", () => {
     assert.equal(nextWallSlot([]), 0);
-    const pins = [
-      { id: "a", label: "the tape leaned", slot: 0, at: 10 },
-      { id: "b", label: "let it go", slot: 1, at: 3 },
-      { id: "c", label: "same structure", slot: 2, at: 8 },
-      { id: "d", label: "thin book", slot: 3, at: 9 },
-      { id: "e", label: "later", slot: 4, at: 7 },
-    ];
+    const pins = Array.from({ length: WALL_SLOT_COUNT }, (_, slot) => ({
+      id: `p${slot}`,
+      label: wallNoteForSlot(slot),
+      slot,
+      at: slot === 1 ? 3 : 10 + slot,
+    }));
     assert.equal(nextWallSlot(pins), 1);
     const next = upsertWallPin(pins, "PENGU", 1, 20).find((pin) => pin.slot === 1);
     assert.equal(next?.label, wallNoteForSlot(1));
