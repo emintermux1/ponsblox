@@ -1,10 +1,12 @@
 "use client";
 
 import { Html } from "@react-three/drei";
+import { asCaption } from "@/components/watch/copy";
 import type { MuseState } from "@/types/world";
 
 export function ThoughtChip({ muse }: { muse: MuseState }) {
-  if (!muse.thought) {
+  const caption = asCaption(muse.thought);
+  if (!caption) {
     return null;
   }
   return (
@@ -14,9 +16,7 @@ export function ThoughtChip({ muse }: { muse: MuseState }) {
       distanceFactor={7}
       style={{ pointerEvents: "none" }}
     >
-      <span className="whitespace-nowrap font-serif text-[11px] tracking-[0.14em] text-[#efe6d4]/80">
-        {muse.thought}
-      </span>
+      <span className="thought-caption">{caption}</span>
     </Html>
   );
 }
