@@ -89,9 +89,11 @@ function Lighting() {
           <pointLight position={[0, 3.4, -3.4]} intensity={0.4} color="#9bb3c4" distance={10} decay={2} />
         </>
       ) : (
-        <pointLight position={[0, 3.2, 2]} intensity={0.55} color="#e4c49a" distance={12} decay={2} />
-        <pointLight position={[7.1, 2.4, 2.5]} intensity={0.7} color="#f0d4ae" distance={8} decay={2} />
-        <pointLight position={[-2.4, 2.6, 2.2]} intensity={0.38} color="#e8cba6" distance={9} decay={2} />
+        <>
+          <pointLight position={[0, 3.2, 2]} intensity={0.55} color="#e4c49a" distance={12} decay={2} />
+          <pointLight position={[7.1, 2.4, 2.5]} intensity={0.7} color="#f0d4ae" distance={8} decay={2} />
+          <pointLight position={[-2.4, 2.6, 2.2]} intensity={0.38} color="#e8cba6" distance={9} decay={2} />
+        </>
       )}
     </>
   );
