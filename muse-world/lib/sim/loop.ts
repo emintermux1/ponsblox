@@ -32,6 +32,7 @@ export async function runGrokTick(): Promise<void> {
     "THINKING",
     ticker,
   );
+  const previousGrok = world.muses.trader.mind.grok;
   const wake = await askGrok({
     museId: "trader",
     goal: asked.mind.goal,
@@ -43,7 +44,7 @@ export async function runGrokTick(): Promise<void> {
       ...asked,
       mind: {
         ...asked.mind,
-        grok: reply.summary,
+        grok: wake.xai ? wake.xai.summary : previousGrok,
         action: reply.bias === "pass" ? "PASS" : "WATCH",
         watching: ticker,
         nodes: {
