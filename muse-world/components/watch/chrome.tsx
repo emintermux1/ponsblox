@@ -1,6 +1,6 @@
 "use client";
 
-import { GROK_NAME, grokPresence } from "@/lib/world/cast";
+import { CAST, GROK_NAME, grokPresence } from "@/lib/world/cast";
 import { inspectCopy } from "@/lib/world/pick";
 import type { RenderMode } from "@/lib/world/perf";
 import type { CameraPreset, MuseId, ScreenId, WorldSnapshot } from "@/types/world";
@@ -102,18 +102,7 @@ function quietIntro(line: string | null): string | null {
 }
 
 function museStripName(id: MuseId): string {
-  switch (id) {
-    case "scroller":
-      return "Scroller";
-    case "trader":
-      return "Trader";
-    case "chill":
-      return "Chill";
-    case "builder":
-      return "Builder";
-    default:
-      return assertNever(id);
-  }
+  return CAST[id].name;
 }
 
 function modeLabel(mode: RenderMode): string {
