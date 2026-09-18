@@ -46,7 +46,12 @@ export function SpectatorChrome({
   const caption = compact ? null : quietIntro(introLine);
 
   return (
-    <div className="loft-chrome" data-chrome="spectator" data-entry-veil="off">
+    <div
+      className="loft-chrome"
+      data-chrome="spectator"
+      data-chrome-compact={compact ? "true" : "false"}
+      data-entry-veil="off"
+    >
       <header className="loft-chrome-top">
         <Wordmark signal={signal} mark={mark} mode={mode} caption={caption} />
         <div className="loft-chrome-tools">
