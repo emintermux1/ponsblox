@@ -1,8 +1,8 @@
 import {
   candlesFromOhlcvList,
-  isPaidTicker,
+  cleanTicker,
   parseFiniteNumber,
-  tickerFromSymbol,
+  pulseDisplayName,
   type MarketProviderId,
   type TapeCandle,
 } from "@/lib/adapters/parse";
@@ -15,6 +15,7 @@ export type TapeKind = "TREND_SPIKE" | "VIRAL_POST" | "QUIET";
 export type TapeView = {
   kind: TapeKind;
   ticker: string | null;
+  name: string | null;
   mint: string | null;
   source: TapeSource;
   changePct: number | null;
@@ -26,6 +27,7 @@ export function quietTape(): TapeView {
   return {
     kind: "QUIET",
     ticker: null,
+    name: null,
     mint: null,
     source: "sim",
     changePct: null,
@@ -35,15 +37,17 @@ export function quietTape(): TapeView {
 }
 
 export function paidSafeTicker(symbol: string | null | undefined): string | null {
-  return isPaidTicker(symbol) ? null : tickerFromSymbol(symbol);
+  return cleanTicker(symbol);
 }
 
 export function asTapeSource(value: unknown): TapeSource {
   switch (value) {
     case "gecko":
+    case "dexscreener":
     case "birdeye":
     case "gmgn":
     case "helius":
+    case "solana":
       return value;
     default:
       return "sim";
@@ -90,22 +94,26 @@ export function sanitizeCandles(value: unknown): TapeCandle[] {
 export function tapeFromPulse(pulse: {
   kind?: unknown;
   ticker?: unknown;
+  name?: unknown;
   mint?: unknown;
   source?: unknown;
   changePct?: unknown;
+  priceChange24h?: unknown;
   candles?: unknown;
 }): TapeView {
   const ticker = paidSafeTicker(typeof pulse.ticker === "string" ? pulse.ticker : null);
+  const name = pulseDisplayName(typeof pulse.name === "string" ? pulse.name : null, ticker);
   const source = asTapeSource(pulse.source);
-  if (source === "sim" || isPaidTicker(typeof pulse.ticker === "string" ? pulse.ticker : null)) {
+  if (source === "sim" || (!ticker && !name)) {
     return quietTape();
   }
   return {
     kind: tapeKindOf(pulse.kind),
     ticker,
+    name,
     mint: typeof pulse.mint === "string" && pulse.mint.length >= 32 ? pulse.mint : null,
     source,
-    changePct: parseFiniteNumber(pulse.changePct),
+    changePct: parseFiniteNumber(pulse.changePct) ?? parseFiniteNumber(pulse.priceChange24h),
     candles: sanitizeCandles(pulse.candles),
     fills: [],
   };
@@ -123,6 +131,10 @@ export function tapeStamp(source: TapeSource): string {
       return "LIVE · gmgn";
     case "helius":
       return "LIVE · helius";
+    case "dexscreener":
+      return "LIVE · dexscreener";
+    case "solana":
+      return "LIVE · solana";
     default:
       return assertNever(source);
   }
@@ -141,12 +153,13 @@ export function tapeHeadline(tape: TapeView): string {
   if (tape.source === "sim") {
     return "SIM · quiet";
   }
+  const title = tape.name ?? tape.ticker;
   const change = formatChange(tape.changePct);
-  if (tape.ticker && change) {
-    return `${tape.ticker}  ${change}`;
+  if (title && change) {
+    return `${title}  ${change}`;
   }
-  if (tape.ticker) {
-    return tape.ticker;
+  if (title) {
+    return title;
   }
   return tapeStamp(tape.source);
 }

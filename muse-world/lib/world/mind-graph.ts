@@ -2,7 +2,7 @@ import type { MindNodeId, MuseMind } from "@/types/world";
 
 export const MIND_LIFT = 1.05;
 
-export const DESK_SIGNAL: [number, number, number] = [3.42, 1.2, -1.13];
+export const DESK_SIGNAL: [number, number, number] = [3.42, 0.9, -0.52];
 
 export const MIND_ANCHORS: Record<MindNodeId, [number, number, number]> = {
   ATTENTION: [0.35, 0.55, 0.1],

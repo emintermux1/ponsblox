@@ -1,7 +1,7 @@
 "use client";
 
 import { LitScreen, type ScreenKind } from "@/components/world/lit-screen";
-import { PulseGlass } from "@/components/world/screens";
+import { PhoneDevice } from "@/components/world/screens";
 import { usePerf } from "@/components/world/perf-context";
 import type { MuseActivity, MuseId } from "@/types/world";
 import { assertNever } from "@/types/world";
@@ -172,11 +172,7 @@ export function SilverLaptop({ kind }: { kind: ScreenKind }) {
           <meshStandardMaterial color="#b8bec6" metalness={0.64} roughness={0.28} />
         </mesh>
         <group position={[0, 0, 0.008]}>
-          {kind === "notes" || kind === "tv" ? (
-            <LitScreen kind={kind} width={0.36} height={0.22} />
-          ) : (
-            <PulseGlass kind="laptop" width={0.36} height={0.22} />
-          )}
+          <LitScreen kind={kind} width={0.36} height={0.22} />
         </group>
       </group>
     </group>
@@ -184,17 +180,7 @@ export function SilverLaptop({ kind }: { kind: ScreenKind }) {
 }
 
 export function LitPhone() {
-  return (
-    <group>
-      <mesh>
-        <boxGeometry args={[0.092, 0.164, 0.012]} />
-        <meshStandardMaterial color="#d8d4cc" metalness={0.42} roughness={0.32} />
-      </mesh>
-      <group position={[0, 0, 0.008]}>
-        <PulseGlass kind="phone" width={0.078} height={0.142} />
-      </group>
-    </group>
-  );
+  return <PhoneDevice />;
 }
 
 export function Card() {
@@ -311,27 +297,15 @@ function laptopKind(id: MuseId): ScreenKind {
 }
 
 export function HeldProps({ id, activity }: { id: MuseId; activity: MuseActivity }) {
-  const laptop = showLaptop(id, activity);
   switch (id) {
     case "scroller":
       return (
-        <group>
-          <group position={[0.16, 0.34, 0.2]} rotation={[0.15, -0.35, 0.18]}>
-            <LitPhone />
-          </group>
-          {laptop ? (
-            <group position={[0.02, 0.16, 0.3]} rotation={[0.42, 0, 0]}>
-              <SilverLaptop kind={laptopKind(id)} />
-            </group>
-          ) : null}
+        <group position={[0.16, 0.34, 0.2]} rotation={[0.15, -0.35, 0.18]}>
+          <PhoneDevice />
         </group>
       );
     case "trader":
-      return laptop ? (
-        <group position={[0.02, 0.14, 0.28]} rotation={[0.44, 0, 0]}>
-          <SilverLaptop kind={laptopKind(id)} />
-        </group>
-      ) : null;
+      return activity === "WALKING" ? null : null;
     case "chill":
       return (
         <group position={[0.16, 0.3, 0.16]}>
@@ -340,15 +314,8 @@ export function HeldProps({ id, activity }: { id: MuseId; activity: MuseActivity
       );
     case "builder":
       return (
-        <group>
-          <group position={[-0.16, 0.28, 0.2]} rotation={[0.2, 0.4, 0.1]}>
-            <Card />
-          </group>
-          {laptop ? (
-            <group position={[0.04, 0.14, 0.26]} rotation={[0.4, 0.2, 0]}>
-              <SilverLaptop kind={laptopKind(id)} />
-            </group>
-          ) : null}
+        <group position={[-0.16, 0.28, 0.2]} rotation={[0.2, 0.4, 0.1]}>
+          <Card />
         </group>
       );
     default:

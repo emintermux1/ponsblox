@@ -32,8 +32,8 @@ describe("loft pick", () => {
     assert.equal(next.selected, "trader");
     assert.equal(next.inspecting, null);
     assert.equal(next.camera, "TRADER");
-    assert.equal(next.muses.trader.name, "Trader");
-    assert.equal(next.muses.trader.activity, "WATCHING");
+    assert.equal(next.muses.trader.name, world.muses.trader.name);
+    assert.equal(next.muses.trader.activity, world.muses.trader.activity);
     const shot = shotForPreset("TRADER", "trader", world.muses.trader.position);
     assert.equal(shot.target[0], world.muses.trader.position[0]);
     assert.equal(shot.target[2], world.muses.trader.position[2]);

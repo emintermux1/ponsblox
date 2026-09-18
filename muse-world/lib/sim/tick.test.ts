@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import { afterEach, describe, it, mock } from "node:test";
 
 import { seedWorld } from "../world/defaults";
+import { STATIONS, nearXZ } from "../world/layout";
 import { honestyFromLabel } from "../adapters/source";
-import { applyActivity, pickTicker, tickSnapshot } from "./tick";
+import { applyActivity, deskGrokLive, pickTicker, realTicker, tickSnapshot } from "./tick";
 
 afterEach(() => {
   mock.restoreAll();
@@ -33,12 +34,12 @@ describe("client tick purity", () => {
     });
     const muse = seedWorld().muses.trader;
     const frozen = structuredClone(muse);
-    const next = applyActivity(muse, "WATCHING", "WIF");
+    const next = applyActivity(muse, "WATCHING", "JUP");
 
     assert.equal(fetchMock.mock.callCount(), 0);
     assert.deepEqual(muse, frozen);
     assert.equal(next.activity, "WATCHING");
-    assert.equal(next.mind.watching, "WIF");
+    assert.equal(next.mind.watching, "JUP");
   });
 
   it("does not keep PAID as a watched gecko ticker", () => {
@@ -65,9 +66,31 @@ describe("junk tickers stay off the tape", () => {
         assert.notEqual(next.packet.label, "$PAID");
       }
     }
-    assert.notEqual(pickTicker("PAID"), "PAID");
-    assert.notEqual(pickTicker("SNAPPAD"), "SNAPPAD");
+    assert.equal(pickTicker("PAID"), null);
+    assert.equal(pickTicker("SNAPPAD"), null);
     assert.equal(pickTicker("WIF"), "WIF");
+  });
+});
+
+describe("real pulse only", () => {
+  it("never invents PAID as a ticker", () => {
+    assert.equal(realTicker("PAID"), null);
+    assert.equal(realTicker("paid"), null);
+    assert.equal(pickTicker(null), null);
+    assert.equal(pickTicker("PAID"), null);
+    assert.equal(pickTicker("JUP"), "JUP");
+  });
+
+  it("does not watch PAID even when applyActivity is handed it", () => {
+    const next = applyActivity(seedWorld().muses.trader, "WATCHING", "PAID");
+    assert.equal(next.mind.watching, null);
+    assert.equal(next.mind.action, "WATCH");
+  });
+
+  it("rest uses PASS instead of IDLE", () => {
+    const next = applyActivity(seedWorld().muses.chill, "CHILLING", null);
+    assert.equal(next.mind.action, "PASS");
+    assert.notEqual(next.activity, "IDLE");
   });
 });
 
@@ -78,7 +101,7 @@ describe("tick events stay SIM", () => {
     });
 
     for (let i = 0; i < 64; i += 1) {
-      const next = tickSnapshot(seedWorld(), { kind: "TREND_SPIKE", ticker: "WIF" });
+      const next = tickSnapshot(seedWorld(), { kind: "TREND_SPIKE", ticker: "JUP" });
       for (const event of next.events) {
         assert.equal(honestyFromLabel(event.source), "sim");
         assert.notEqual(event.source, "bot");
@@ -96,5 +119,78 @@ describe("tick events stay SIM", () => {
     }
 
     assert.equal(fetchMock.mock.callCount(), 0);
+  });
+});
+
+describe("purposeful work", () => {
+  it("walks a displaced trader back to the desk", () => {
+    const world = seedWorld();
+    world.muses.trader = {
+      ...world.muses.trader,
+      activity: "WALKING",
+      position: [-2.4, 0.62, 3.1],
+    };
+    const next = tickSnapshot(world, { kind: "QUIET", ticker: null }, 20_000, () => 0.01);
+    assert.equal(next.muses.trader.activity, "WALKING");
+    assert.ok(next.muses.trader.position[0] > -2.4);
+    assert.ok(next.muses.trader.position[0] < 3.4);
+  });
+
+  it("keeps chill on the armchair when already there", () => {
+    const world = seedWorld();
+    const next = tickSnapshot(world, { kind: "QUIET", ticker: null }, 1_000, () => 0.99);
+    assert.ok(nearXZ(next.muses.chill.position, STATIONS.chillArmchair.position, 0.16));
+    assert.notEqual(next.muses.chill.activity, "IDLE");
+  });
+
+  it("reacts to a real pulse ticker at the desk", () => {
+    const next = tickSnapshot(seedWorld(), { kind: "TREND_SPIKE", ticker: "JUP" }, 20_000, () => 0.05);
+    assert.equal(next.muses.trader.mind.watching, "JUP");
+    assert.notEqual(next.muses.trader.activity, "IDLE");
+    assert.ok(
+      next.muses.trader.activity === "WATCHING" ||
+        next.muses.trader.activity === "TRADING" ||
+        next.muses.trader.activity === "REACTING" ||
+        next.muses.trader.activity === "THINKING",
+    );
+  });
+
+  it("never leaves a muse IDLE after a tick", () => {
+    let world = seedWorld();
+    for (let i = 0; i < 20; i += 1) {
+      world = tickSnapshot(world, { kind: "QUIET", ticker: null }, 8_000 + i * 900, () => 0.2);
+    }
+    for (const muse of Object.values(world.muses)) {
+      assert.notEqual(muse.activity, "IDLE");
+      assert.notEqual(muse.mind.action, "IDLE");
+    }
+  });
+});
+
+describe("desk grok orb", () => {
+  it("pulses on wake and real xAI, not on tape chatter", () => {
+    const now = 50_000;
+    assert.equal(deskGrokLive([], now), false);
+    assert.equal(
+      deskGrokLive(
+        [{ id: "a", kind: "GROK_REQUESTED", museId: "trader", text: "wake", at: now - 400, source: "sim" }],
+        now,
+      ),
+      true,
+    );
+    assert.equal(
+      deskGrokLive(
+        [{ id: "b", kind: "GROK_RESPONSE", museId: "trader", text: "note", at: now - 400, source: "xai" }],
+        now,
+      ),
+      true,
+    );
+    assert.equal(
+      deskGrokLive(
+        [{ id: "c", kind: "THESIS_CREATED", museId: "builder", text: "card", at: now - 400, source: "world" }],
+        now,
+      ),
+      false,
+    );
   });
 });

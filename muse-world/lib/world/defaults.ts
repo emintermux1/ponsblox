@@ -1,5 +1,5 @@
 import { CAST } from "@/lib/world/cast";
-import { SEAT } from "@/lib/world/layout";
+import { STATIONS } from "@/lib/world/layout";
 import { emptyGrokWake } from "@/lib/world/pick";
 import type { MuseId, MuseMind, MuseState, WorldSnapshot } from "@/types/world";
 import { assertNever } from "@/types/world";
@@ -37,7 +37,7 @@ export function emptyMind(goal: string): MuseMind {
     memory: "nothing sticky",
     goal,
     grok: "idle",
-    action: "IDLE",
+    action: "WATCH",
     watching: null,
   };
 }
@@ -51,19 +51,19 @@ export function seedMuses(): Record<MuseId, MuseState> {
       activity: "SCROLLING",
       thought: null,
       thoughtUntil: 0,
-      position: SEAT.scroller.position,
-      facing: SEAT.scroller.facing,
+      position: STATIONS.scrollerSofa.position,
+      facing: STATIONS.scrollerSofa.facing,
       mind: emptyMind("notice what is actually moving"),
     },
     trader: {
       id: "trader",
       name: CAST.trader.name,
       role: CAST.trader.role,
-      activity: "WATCHING",
+      activity: "TRADING",
       thought: null,
       thoughtUntil: 0,
-      position: SEAT.trader.position,
-      facing: SEAT.trader.facing,
+      position: STATIONS.traderDesk.position,
+      facing: STATIONS.traderDesk.facing,
       mind: emptyMind("find asymmetric setups"),
     },
     chill: {
@@ -73,8 +73,8 @@ export function seedMuses(): Record<MuseId, MuseState> {
       activity: "CHILLING",
       thought: null,
       thoughtUntil: 0,
-      position: SEAT.chill.position,
-      facing: SEAT.chill.facing,
+      position: STATIONS.chillArmchair.position,
+      facing: STATIONS.chillArmchair.facing,
       mind: emptyMind("be bored on purpose"),
     },
     builder: {
@@ -84,8 +84,8 @@ export function seedMuses(): Record<MuseId, MuseState> {
       activity: "RESEARCHING",
       thought: null,
       thoughtUntil: 0,
-      position: SEAT.builder.position,
-      facing: SEAT.builder.facing,
+      position: STATIONS.builderWall.position,
+      facing: STATIONS.builderWall.facing,
       mind: emptyMind("write a thesis worth sending"),
     },
   };

@@ -6,6 +6,7 @@ import {
   asCaption,
   ENTER_MIND,
   ENTRY_CAPTION,
+  hudMark,
   INTRO_COPY,
   isAwake,
   LEAVE_MIND,
@@ -72,6 +73,12 @@ test("cast first names stay on the HUD copy side", () => {
   assert.equal(CAST.trader.name, "Trader");
   assert.equal(CAST.chill.name, "Chill");
   assert.equal(CAST.builder.name, "Builder");
+});
+
+test("hudMark collapses street honesty to REAL or SIM", () => {
+  assert.equal(hudMark("REAL"), "REAL");
+  assert.equal(hudMark("SIM"), "SIM");
+  assert.equal(hudMark("—"), "SIM");
 });
 
 test("literary activities stay awake except rest", () => {

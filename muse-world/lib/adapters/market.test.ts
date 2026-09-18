@@ -107,4 +107,97 @@ describe("market adapter fetch", () => {
     assert.deepEqual(pulse.candles, []);
     assert.equal(pulse.live, false);
   });
+
+  it("wires DexScreener plus Solana and skips a 401 GMGN key", async () => {
+    clearPaidKeys();
+    resetMarketPulseForTests();
+    process.env.GMGN_API_KEY = "gmgn-fixture-not-for-logs";
+    process.env.HELIUS_API_KEY = "helius-fixture-not-for-logs";
+    const seen: string[] = [];
+    mock.method(globalThis, "fetch", async (input: RequestInfo | URL) => {
+      const url = String(input);
+      seen.push(url.includes("helius-rpc.com") ? "helius-rpc.com" : url);
+      assert.doesNotMatch(url, /gmgn-fixture-not-for-logs/);
+      if (url.includes("openapi.gmgn.ai")) {
+        return new Response("nope", { status: 401 });
+      }
+      if (url.includes("geckoterminal.com") && url.includes("trending_pools")) {
+        return jsonOk({ data: [] });
+      }
+      if (url.includes("token-boosts") || url.includes("token-profiles")) {
+        return jsonOk([
+          { chainId: "solana", tokenAddress: "EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm" },
+        ]);
+      }
+      if (url.includes("tokens/v1/solana/")) {
+        return jsonOk([
+          {
+            chainId: "solana",
+            dexId: "raydium",
+            pairAddress: "poolwifxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            baseToken: {
+              address: "EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm",
+              symbol: "WIF",
+              name: "dogwifhat",
+            },
+            priceUsd: "1.25",
+            priceChange: { h24: 3.5 },
+            volume: { h24: 22_000 },
+            liquidity: { usd: 80_000 },
+            marketCap: 900_000,
+            info: { imageUrl: "https://cdn.dexscreener.com/wif.png" },
+          },
+        ]);
+      }
+      if (url.includes("mainnet-beta.solana.com") || url.includes("helius-rpc.com")) {
+        return jsonOk({ jsonrpc: "2.0", result: 456 });
+      }
+      if (url.includes("latest/dex/tokens/")) {
+        return jsonOk({ pairs: [{ chainId: "solana", priceUsd: "148.2", liquidity: { usd: 1 } }] });
+      }
+      return new Response("nope", { status: 500 });
+    });
+
+    const pulse = await peekMarketPulse();
+    assert.equal(pulse.source, "dexscreener");
+    assert.equal(pulse.ticker, "WIF");
+    assert.equal(pulse.name, "dogwifhat");
+    assert.equal(pulse.priceUsd, 1.25);
+    assert.equal(pulse.changePct, 3.5);
+    assert.equal(pulse.dexId, "raydium");
+    assert.equal(pulse.providers.gmgn, "skip");
+    assert.equal(pulse.providers.dexscreener, "ok");
+    assert.equal(pulse.solUsd, 148.2);
+    assert.deepEqual(pulse.fills, []);
+    assert.ok(!seen.some((url) => url.includes("gmgn-fixture") || url.includes("helius-fixture")));
+    assert.ok(seen.some((url) => url.includes("api.dexscreener.com")));
+  });
+
+  it("does not call GMGN, Birdeye, or Helius when those keys are missing", async () => {
+    clearPaidKeys();
+    resetMarketPulseForTests();
+    const seen: string[] = [];
+    mock.method(globalThis, "fetch", async (input: RequestInfo | URL) => {
+      const url = String(input);
+      seen.push(url);
+      if (url.includes("geckoterminal.com")) {
+        return jsonOk({ data: [] });
+      }
+      if (url.includes("dexscreener.com") || url.includes("mainnet-beta.solana.com")) {
+        return new Response("nope", { status: 500 });
+      }
+      return new Response("nope", { status: 500 });
+    });
+    const pulse = await peekMarketPulse();
+    assert.equal(pulse.providers.birdeye, "skip");
+    assert.equal(pulse.providers.gmgn, "skip");
+    assert.equal(pulse.providers.helius, "skip");
+    assert.ok(
+      !seen.some(
+        (url) =>
+          url.includes("birdeye.so") || url.includes("openapi.gmgn.ai") || url.includes("helius-rpc.com"),
+      ),
+    );
+    assert.deepEqual(pulse.fills, []);
+  });
 });

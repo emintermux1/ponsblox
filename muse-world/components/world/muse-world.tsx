@@ -104,7 +104,6 @@ export function MuseWorld({
           <PerfProvider value={budget}>
             <LivingScene
               world={world}
-              pulse={pulse}
               introDone={introDone}
               onIntroDone={onIntroDone}
               onSelect={onSelect}

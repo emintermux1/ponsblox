@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import type { Group, Mesh } from "three";
+import { Mesh, type Group } from "three";
 import { loftPickHandlers } from "@/components/world/loft-cursor";
 import { NameTag } from "@/components/world/name-tag";
 import { usePerf } from "@/components/world/perf-context";
@@ -55,7 +55,7 @@ export function GrokOrb({
     root.current.position.y = damp(root.current.position.y, GROK_ORB_POS[1] + bob, 4.2, delta);
     root.current.rotation.y = damp(root.current.rotation.y, spin, 3.4, delta);
     root.current.rotation.z = damp(root.current.rotation.z, Math.sin(t * 0.8) * 0.06, 3.4, delta);
-    const body = root.current.children.find((child): child is Mesh => "isMesh" in child && child.isMesh);
+    const body = root.current.children.find((child): child is Mesh => child instanceof Mesh);
     if (body && "emissiveIntensity" in body.material) {
       const pulse = waking && !pauseExtras ? 0.12 + Math.abs(Math.sin(t * 3.2)) * 0.16 : 0.03;
       body.material.emissiveIntensity = honesty === "REAL" ? 0.08 : pulse;

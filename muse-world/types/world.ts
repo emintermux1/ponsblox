@@ -118,7 +118,7 @@ export type WorldSnapshot = {
 
 export type PacketKind = "NOTE" | "PIN";
 
-export type PacketEndpoint = MuseId | "wall";
+export type PacketEndpoint = MuseId | "wall" | "grok";
 
 export type SpatialPacket = {
   from: PacketEndpoint;

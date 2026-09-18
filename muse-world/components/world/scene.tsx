@@ -8,16 +8,18 @@ import { FrustumGuard } from "@/components/world/frustum-guard";
 import { GrokOrb } from "@/components/world/grok-orb";
 import { MuseBody } from "@/components/world/muse-body";
 import { MuseMindField } from "@/components/world/mind";
+import { UsedBits } from "@/components/world/devices";
 import { Penthouse } from "@/components/world/penthouse";
 import { TravelPacket } from "@/components/world/packet";
 import { usePerf } from "@/components/world/perf-context";
 import { CameraRig } from "@/components/world/rig";
-import { ScreenPulseProvider } from "@/components/world/screens";
+import { useTape } from "@/components/world/tape-context";
 import { ThoughtChip } from "@/components/world/thoughts";
+import { deskGrokLive } from "@/lib/sim/tick";
 import { presetForMuse } from "@/lib/world/camera";
 import { GROK_ORB_POS, wallSlotWorld } from "@/lib/world/layout";
 import { MIND_LIFT } from "@/lib/world/mind-graph";
-import type { ScreenPulse } from "@/lib/world/screen-texture";
+import type { TapeView } from "@/lib/world/tape";
 import type { MuseId, PacketEndpoint, ScreenId, WorldSnapshot } from "@/types/world";
 import { MUSE_IDS } from "@/types/world";
 
@@ -134,7 +136,7 @@ function DemandInvalidator({ revision }: { revision: string }) {
   return null;
 }
 
-function worldRevision(world: WorldSnapshot, pulse: ScreenPulse): string {
+function worldRevision(world: WorldSnapshot, tape: TapeView): string {
   return [
     world.camera,
     world.selected ?? "",
@@ -143,10 +145,10 @@ function worldRevision(world: WorldSnapshot, pulse: ScreenPulse): string {
     world.grokWake.honesty ?? "",
     world.mindOpen ? "1" : "0",
     world.packet?.t ?? 0,
-    pulse.source,
-    pulse.ticker ?? "",
-    pulse.name ?? "",
-    pulse.changePct ?? "",
+    tape.source,
+    tape.ticker ?? "",
+    tape.name ?? "",
+    tape.changePct ?? "",
     ...MUSE_IDS.map((id) => {
       const muse = world.muses[id];
       return `${muse.position[0].toFixed(2)}:${muse.activity}:${muse.thought ?? ""}`;
@@ -156,7 +158,6 @@ function worldRevision(world: WorldSnapshot, pulse: ScreenPulse): string {
 
 export function LivingScene({
   world,
-  pulse,
   introDone,
   onIntroDone,
   onSelect,
@@ -164,13 +165,13 @@ export function LivingScene({
   onWakeGrok,
 }: {
   world: WorldSnapshot;
-  pulse: ScreenPulse;
   introDone: boolean;
   onIntroDone: () => void;
   onSelect: (id: MuseId) => void;
   onInspect: (id: ScreenId) => void;
   onWakeGrok: () => void;
 }) {
+  const tape = useTape();
   const selected = world.selected;
   const musePos =
     selected && (world.camera === "MIND" || world.camera === presetForMuse(selected))
@@ -183,13 +184,14 @@ export function LivingScene({
     chill: world.muses.chill.position,
     builder: world.muses.builder.position,
     wall: wallSlotWorld(world.packet?.slot ?? 0),
+    grok: GROK_ORB_POS,
   };
 
   return (
-    <ScreenPulseProvider pulse={pulse}>
+    <>
       <Lighting />
       <CanvasPointer />
-      <DemandInvalidator revision={worldRevision(world, pulse)} />
+      <DemandInvalidator revision={worldRevision(world, tape)} />
       <CameraRig
         preset={world.camera}
         selected={world.selected}
@@ -203,10 +205,16 @@ export function LivingScene({
         builderPos={world.muses.builder.position}
         inspecting={world.inspecting}
         onInspect={onInspect}
+        deskLive={
+          world.muses.trader.activity === "TRADING" ||
+          world.muses.trader.activity === "WATCHING" ||
+          world.muses.builder.activity === "THINKING"
+        }
       />
+      <UsedBits />
       <FrustumGuard center={GROK_ORB_POS} radius={1.4}>
         <GrokOrb
-          waking={world.grokWake.phase === "waking"}
+          waking={world.grokWake.phase === "waking" || deskGrokLive(world.events)}
           honesty={world.grokWake.honesty}
           onWake={onWakeGrok}
         />
@@ -234,6 +242,6 @@ export function LivingScene({
       {contactShadows ? (
         <ContactShadows position={[0, 0.012, 0.4]} opacity={0.38} scale={22} blur={2.7} far={6} />
       ) : null}
-    </ScreenPulseProvider>
+    </>
   );
 }

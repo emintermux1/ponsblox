@@ -285,4 +285,43 @@ describe("market pulse", () => {
     assert.deepEqual(candlesFromOhlcvList([[1, 2, 3]]), []);
     assert.deepEqual(candlesFromOhlcvList([[10, 1, 3, 0.5, 2]]), [{ t: 10, o: 1, h: 3, l: 0.5, c: 2 }]);
   });
+
+  it("exposes a rich dexscreener pulse the screens can draw", () => {
+    const pulse = mergeMarketPulse({
+      gecko: "error",
+      dexscreener: {
+        source: "dexscreener",
+        ticker: "WIF",
+        mint: "EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm",
+        volumeUsd: 12_000,
+        name: "dogwifhat",
+        priceUsd: 1.4,
+        priceChange24h: 8.2,
+        changePct: 8.2,
+        liquidityUsd: 90_000,
+        marketCap: 1_200_000,
+        imageUrl: "https://cdn.dexscreener.com/wif.png",
+        pairAddress: "poolwifxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        pool: "poolwifxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        dexId: "raydium",
+      },
+      birdeye: "skip",
+      gmgn: "skip",
+      helius: "skip",
+      solana: { slot: 321 },
+      solUsd: 140,
+    });
+    assert.equal(pulse.source, "dexscreener");
+    assert.equal(pulse.live, true);
+    assert.equal(pulse.name, "dogwifhat");
+    assert.equal(pulse.priceUsd, 1.4);
+    assert.equal(pulse.changePct, 8.2);
+    assert.equal(pulse.pool, "poolwifxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+    assert.equal(pulse.dexId, "raydium");
+    assert.equal(pulse.solUsd, 140);
+    assert.equal(pulse.slot, 321);
+    assert.equal(pulse.providers.solana, "ok");
+    assert.deepEqual(pulse.fills, []);
+    assert.deepEqual(pulse.candles, []);
+  });
 });

@@ -152,11 +152,10 @@ canvas {
 
 .loft-wordmark {
   margin: 0;
-  font-family: var(--font-serif), "Times New Roman", serif;
-  font-size: 1.55rem;
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
 }
 
 .loft-signal,
@@ -166,8 +165,7 @@ canvas {
 .loft-locations,
 .loft-mind-btn {
   margin: 0;
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   line-height: 1.35;
   letter-spacing: 0.01em;
 }
@@ -198,7 +196,7 @@ canvas {
 }
 
 .loft-locations {
-  display: flex;
+  display: none;
   gap: 0.75rem;
   color: color-mix(in srgb, var(--loft-paper) 42%, transparent);
 }
@@ -208,8 +206,6 @@ canvas {
 }
 
 .loft-mind-btn {
-  min-height: 2.75rem;
-  padding: 0 0.55rem;
   color: var(--loft-brass);
 }
 
@@ -269,78 +265,28 @@ canvas {
     padding-left: 1.15rem;
     padding-right: 1.15rem;
   }
+
+  .loft-locations {
+    display: flex;
+  }
 }
 
 @media (max-width: 767px) {
-  .loft-wordmark {
-    font-size: 1.45rem;
-  }
-
   .loft-intro {
     display: none;
   }
 
+  .loft-chrome-top,
+  .loft-strip {
+    max-height: none;
+  }
+
   .loft-chrome-top {
-    min-height: 2.75rem;
-    max-width: 58%;
-    padding: calc(0.4rem + env(safe-area-inset-top, 0px)) 0.75rem 0;
-  }
-
-  .loft-chrome-tools {
-    position: absolute;
-    top: calc(0.35rem + env(safe-area-inset-top, 0px));
-    right: 0.5rem;
-    left: auto;
-    max-width: 42%;
-    justify-content: flex-end;
-  }
-
-  .loft-locations {
-    position: absolute;
-    left: 0.4rem;
-    right: 0.4rem;
-    bottom: calc(3.35rem + env(safe-area-inset-bottom, 0px));
-    top: auto;
-    max-width: none;
-    justify-content: space-between;
-    gap: 0.15rem;
-  }
-
-  .loft-locations button,
-  .loft-strip button,
-  .loft-mind-btn,
-  .loft-selected-note button {
-    min-height: 2.75rem;
-    min-width: 2.75rem;
-    padding: 0 0.4rem;
-    font-size: 1rem;
-  }
-
-  .loft-signal {
-    font-size: 0.8125rem;
+    min-height: 2.15rem;
   }
 
   .loft-strip {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    justify-content: space-between;
-    gap: 0.15rem;
-    padding: 0.2rem 0.45rem calc(0.45rem + env(safe-area-inset-bottom, 0px));
-    background: linear-gradient(to top, rgba(12, 9, 7, 0.42), transparent);
-  }
-
-  .loft-selected-note {
-    position: absolute;
-    top: calc(3.15rem + env(safe-area-inset-top, 0px));
-    right: 0.7rem;
-    left: auto;
-    max-width: 11rem;
-    justify-content: flex-end;
-    padding: 0;
-    text-align: right;
-    font-size: 0.875rem;
+    min-height: 1.85rem;
   }
 
   .loft-vignette {
@@ -360,10 +306,6 @@ canvas {
     background:
       linear-gradient(rgba(12, 9, 7, 0.22), rgba(12, 9, 7, 0.22)),
       url("/og-loft.jpg") center / cover no-repeat;
-  }
-
-  .thought-caption {
-    display: none;
   }
 }
 

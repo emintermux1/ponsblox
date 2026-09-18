@@ -112,6 +112,8 @@ export function endpointName(endpoint: PacketEndpoint): string {
       return museName(endpoint);
     case "wall":
       return "wall";
+    case "grok":
+      return GROK_NAME;
     default:
       return assertNever(endpoint);
   }
