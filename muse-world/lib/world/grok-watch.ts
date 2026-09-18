@@ -2,23 +2,78 @@ import { asCaption, mostAwakeId } from "@/components/watch/copy";
 import { SIM_GROK_SUMMARY } from "@/lib/adapters/source";
 import type {
   GrokHonesty,
+  MuseActivity,
   MuseId,
+  MuseState,
   SpatialPacket,
   WorldSnapshot,
 } from "@/types/world";
-import { assertNever } from "@/types/world";
+import { assertNever, isMuseId } from "@/types/world";
 
 export const ASK_GROK = "ask Grok";
 export const SIM_GROK_STUB = SIM_GROK_SUMMARY;
 
-export function grokAttendId(world: WorldSnapshot): MuseId {
-  if (world.grokWake.museId) {
+function isDeskChatActivity(activity: MuseActivity): boolean {
+  switch (activity) {
+    case "TRADING":
+    case "RESEARCHING":
+    case "WATCHING":
+    case "THINKING":
+      return true;
+    case "IDLE":
+    case "WALKING":
+    case "SCROLLING":
+    case "TALKING":
+    case "CHILLING":
+    case "SMOKING":
+    case "REACTING":
+      return false;
+    default:
+      return assertNever(activity);
+  }
+}
+
+function deskInChat(muse: MuseState): boolean {
+  switch (muse.id) {
+    case "trader":
+    case "builder":
+      return isDeskChatActivity(muse.activity);
+    case "scroller":
+    case "chill":
+      return false;
+    default:
+      return assertNever(muse.id);
+  }
+}
+
+export function inChatMuseId(world: WorldSnapshot): MuseId | null {
+  if (world.grokWake.museId && world.grokWake.phase !== "idle") {
     return world.grokWake.museId;
   }
-  if (world.selected) {
-    return world.selected;
+  if (world.packet && (world.packet.to === "grok" || world.packet.from === "grok")) {
+    const other = world.packet.to === "grok" ? world.packet.from : world.packet.to;
+    if (isMuseId(other)) {
+      return other;
+    }
   }
-  return mostAwakeId(world);
+  const trader = deskInChat(world.muses.trader);
+  const builder = deskInChat(world.muses.builder);
+  if (trader && builder) {
+    return world.muses.trader.mind.nodes.GROK >= world.muses.builder.mind.nodes.GROK
+      ? "trader"
+      : "builder";
+  }
+  if (trader) {
+    return "trader";
+  }
+  if (builder) {
+    return "builder";
+  }
+  return null;
+}
+
+export function grokAttendId(world: WorldSnapshot): MuseId {
+  return inChatMuseId(world) ?? world.selected ?? mostAwakeId(world);
 }
 
 export function grokLookAt(world: WorldSnapshot): [number, number, number] {

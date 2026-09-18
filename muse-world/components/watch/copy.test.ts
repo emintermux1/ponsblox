@@ -21,7 +21,7 @@ test("first paint brand is Muse Grok at musegrok.world", () => {
   assert.equal(WORDMARK, "Muse Grok");
   assert.equal(WORLD_MARK, "musegrok.world");
   assert.equal(SITE_ORIGIN, "https://musegrok.world");
-  assert.match(PAGE_DESCRIPTION, /Euterpe, Urania, Thalia, Calliope/);
+  assert.match(PAGE_DESCRIPTION, /PIP|Four muses/);
   assert.match(PAGE_DESCRIPTION, /GROK/);
   assert.doesNotMatch(PAGE_DESCRIPTION, /ENTER MIND/);
   assert.equal(INTRO_COPY[0], WORDMARK);
@@ -69,10 +69,10 @@ test("mind is a quiet later word, never brass ENTER MIND", () => {
 });
 
 test("cast first names stay on the HUD copy side", () => {
-  assert.equal(CAST.scroller.name, "Euterpe");
-  assert.equal(CAST.trader.name, "Urania");
-  assert.equal(CAST.chill.name, "Thalia");
-  assert.equal(CAST.builder.name, "Calliope");
+  assert.equal(CAST.scroller.name, "Pip");
+  assert.equal(CAST.trader.name, "Tape");
+  assert.equal(CAST.chill.name, "Sable");
+  assert.equal(CAST.builder.name, "Halo");
 });
 
 test("hudMark collapses street honesty to REAL or SIM", () => {

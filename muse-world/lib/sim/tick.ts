@@ -201,6 +201,7 @@ function nextActivity(muse: MuseState, pulse: boolean, random: () => number): Mu
       if (random() < 0.7) return "WATCHING";
       return "THINKING";
     case "chill":
+      if (random() < 0.28) return "SCROLLING";
       if (random() < 0.48) return "SMOKING";
       if (random() < 0.9) return "CHILLING";
       return "WATCHING";

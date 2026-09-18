@@ -85,7 +85,7 @@ export function DeskKit() {
   return (
     <group position={[3.4, 0, -0.85]}>
       <group position={[-0.58, 0.785, 0.2]}>
-        <LaptopDevice kind="tape" />
+        <LaptopDevice kind="grok" />
       </group>
       <Mug position={[1.22, 0.82, 0.28]} color="#d7c6aa" />
       <Mug position={[-1.18, 0.82, 0.22]} color="#c9b48a" />

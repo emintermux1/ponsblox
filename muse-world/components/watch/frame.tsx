@@ -9,6 +9,7 @@ import { PerfProvider } from "@/components/world/perf-context";
 import { TapeProvider } from "@/components/world/tape-context";
 import { useLivingWorld } from "@/components/world/use-living-world";
 import { usePerfBudget } from "@/components/world/use-perf";
+import { grokChatView } from "@/lib/world/screen-feed";
 
 export function SpectatorFrame() {
   const living = useLivingWorld();
@@ -17,7 +18,10 @@ export function SpectatorFrame() {
 
   return (
     <PerfProvider value={budget}>
-      <TapeProvider tape={living.tape}>
+      <TapeProvider
+        tape={living.tape}
+        grok={grokChatView(living.world.events, living.world.grokWake, living.world.startedAt)}
+      >
       <MotionConfig reducedMotion="user">
         <SpectatorHud
           world={living.world}

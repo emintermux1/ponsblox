@@ -227,6 +227,7 @@ export function LivingScene({
           <MuseBody
             muse={world.muses[id]}
             selected={selected === id}
+            hugging={world.grokWake.museId === id && world.grokWake.phase !== "idle"}
             onSelect={() => onSelect(id)}
           />
           <MuseMindField

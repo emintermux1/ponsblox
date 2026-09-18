@@ -159,6 +159,38 @@ export function clipWallLine(text: string): string {
   return words.slice(0, Math.max(2, WALL_LINE_WORD_MAX - 1)).join(" ");
 }
 
+export function wrapWallInk(
+  text: string,
+  measure?: (line: string) => number,
+  maxWidth = 22,
+): string[] {
+  const words = text.replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+  if (words.length === 0) {
+    return [];
+  }
+  const fits = (line: string): boolean => {
+    if (measure) {
+      return measure(line) <= maxWidth;
+    }
+    return line.length <= maxWidth;
+  };
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word;
+    if (current && !fits(next)) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = next;
+    }
+  }
+  if (current) {
+    lines.push(current);
+  }
+  return lines.slice(0, 3);
+}
+
 export function wallRotateMs(slot: number): number {
   const span = WALL_ROTATE_MS_MAX - WALL_ROTATE_MS_MIN;
   return WALL_ROTATE_MS_MIN + ((((slot % 8) + 8) * 1663) % (span + 1));

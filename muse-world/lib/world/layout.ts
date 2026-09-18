@@ -112,6 +112,49 @@ export function arriveActivity(id: MuseId, desired: MuseActivity): MuseActivity 
   }
 }
 
+function peekingStories(activity: MuseActivity | undefined): boolean {
+  switch (activity) {
+    case "SCROLLING":
+    case "WATCHING":
+      return true;
+    case "IDLE":
+    case "WALKING":
+    case "THINKING":
+    case "RESEARCHING":
+    case "TALKING":
+    case "TRADING":
+    case "CHILLING":
+    case "SMOKING":
+    case "REACTING":
+    case undefined:
+      return false;
+    default:
+      return assertNever(activity);
+  }
+}
+
+export function deviceLook(id: MuseId, activity?: MuseActivity): [number, number, number] {
+  switch (id) {
+    case "scroller": {
+      const seat = STATIONS.scrollerSofa.position;
+      return [seat[0] + 0.12, seat[1] + 0.58, seat[2] + 0.3];
+    }
+    case "trader":
+      return SCREEN_POS.tape;
+    case "builder":
+      return SCREEN_POS.notes;
+    case "chill": {
+      if (peekingStories(activity)) {
+        const seat = STATIONS.chillArmchair.position;
+        return [seat[0] + 0.16, seat[1] + 0.52, seat[2] + 0.22];
+      }
+      return [-8.55, 2.12, 1.1];
+    }
+    default:
+      return assertNever(id);
+  }
+}
+
 export function packetAccent(endpoint: PacketEndpoint): string {
   switch (endpoint) {
     case "scroller":

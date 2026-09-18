@@ -6,7 +6,15 @@ import { useFrame } from "@react-three/fiber";
 import { CanvasTexture, SRGBColorSpace, type MeshStandardMaterial } from "three";
 import { loftPickHandlers } from "@/components/world/loft-cursor";
 import { usePerf } from "@/components/world/perf-context";
-import { useTape } from "@/components/world/tape-context";
+import { useGrokPane, useTape } from "@/components/world/tape-context";
+import {
+  feedCards,
+  feedCardY,
+  feedScrollOffset,
+  simSocialMark,
+  storyRings,
+  type GrokChatView,
+} from "@/lib/world/screen-feed";
 import {
   formatChange,
   formatPrice,
@@ -19,7 +27,8 @@ import type { PlateKind } from "@/lib/world/plates";
 import type { ScreenId } from "@/types/world";
 import { assertNever } from "@/types/world";
 
-export type LcdKind = "phone" | "feed" | "tape" | "notes" | "tv";
+export type LcdKind = "phone" | "feed" | "tape" | "notes" | "tv" | "grok";
+export type LaptopKind = "feed" | "tape" | "notes" | "grok";
 
 function roundRect(
   ctx: CanvasRenderingContext2D,
@@ -56,6 +65,7 @@ function lcdSize(kind: LcdKind): { w: number; h: number } {
     case "tape":
     case "notes":
     case "tv":
+    case "grok":
       return { w: 960, h: 540 };
     default:
       return assertNever(kind);
@@ -73,6 +83,8 @@ function glowFor(kind: LcdKind): string {
       return "#f0d8b4";
     case "tv":
       return "#9bb6c8";
+    case "grok":
+      return "#e8e4dc";
     default:
       return assertNever(kind);
   }
@@ -85,13 +97,13 @@ export function lcdFromPlate(kind: PlateKind): LcdKind {
     case "tape":
       return "tape";
     case "notes":
-      return "notes";
+      return "grok";
     case "tv":
       return "tv";
     case "laptop":
-      return "feed";
+      return "grok";
     case "grok":
-      return "tape";
+      return "grok";
     default:
       return assertNever(kind);
   }
@@ -202,7 +214,39 @@ function drawRows(
   });
 }
 
-function paintPhone(ctx: CanvasRenderingContext2D, w: number, h: number, tape: TapeView) {
+function paintStoriesBar(ctx: CanvasRenderingContext2D, w: number, y: number) {
+  const rings = storyRings();
+  const slot = w / rings.length;
+  rings.forEach((ring, index) => {
+    const cx = slot * index + slot * 0.5;
+    ctx.beginPath();
+    ctx.strokeStyle = ring.hue;
+    ctx.lineWidth = 5;
+    ctx.arc(cx, y, 26, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.fillStyle = "#2a241c";
+    ctx.arc(cx, y, 19, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.fillStyle = ring.hue;
+    ctx.arc(cx, y, 13, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#d8c6a6";
+    ctx.font = "600 11px ui-sans-serif, system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText(ring.handle, cx, y + 46);
+  });
+  ctx.textAlign = "left";
+}
+
+function paintPhone(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  tape: TapeView,
+  scrollY: number,
+) {
   const g = ctx.createLinearGradient(0, 0, 0, h);
   g.addColorStop(0, "#1c1814");
   g.addColorStop(1, "#0e0c0a");
@@ -212,29 +256,86 @@ function paintPhone(ctx: CanvasRenderingContext2D, w: number, h: number, tape: T
   roundRect(ctx, w / 2 - 58, 10, 116, 28, 14);
   ctx.fill();
   ctx.fillStyle = "#cfc6b4";
-  ctx.font = "600 12px ui-sans-serif, system-ui";
-  ctx.fillText(tapeStamp(tape.source), 22, 56);
-  ctx.fillStyle = "#efe6d4";
-  ctx.font = "700 34px ui-sans-serif, system-ui";
-  ctx.fillText(tapeHeadline(tape), 22, 108);
-  const change = formatChange(tape.changePct);
-  ctx.fillStyle = tape.changePct != null && tape.changePct < 0 ? "#c9ae7a" : "#7dcea0";
-  ctx.font = "600 16px ui-sans-serif, system-ui";
-  ctx.fillText(change ?? (tape.source === "sim" ? "fail-open SIM" : "watching"), 22, 138);
-  const price = formatPrice(tape.priceUsd);
-  if (price) {
+  ctx.font = "600 13px ui-sans-serif, system-ui";
+  ctx.fillText(simSocialMark(), 22, 58);
+  paintStoriesBar(ctx, w, 108);
+  const cards = feedCards(tape);
+  const top = 168;
+  const bottom = h - 58;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, top, w, bottom - top);
+  ctx.clip();
+  cards.forEach((card, index) => {
+    const y = top + feedCardY(index, scrollY, cards.length);
+    if (y > bottom || y + 220 < top) {
+      return;
+    }
+    ctx.fillStyle = card.wash;
+    roundRect(ctx, 18, y, w - 36, 214, 24);
+    ctx.fill();
+    ctx.fillStyle = "#efe6d4";
+    roundRect(ctx, 32, y + 16, 32, 32, 16);
+    ctx.fill();
     ctx.fillStyle = "#d8c6a6";
-    ctx.fillText(price, 22, 162);
-  }
-  ctx.fillStyle = "#161310";
-  roundRect(ctx, 16, 180, w - 32, 168, 18);
-  ctx.fill();
-  drawCandles(ctx, tape, 28, 196, w - 56, 88);
-  drawSpark(ctx, tape, 28, 196, w - 56, 88);
-  drawRows(ctx, tape, 16, 368, w - 32, 58, 6);
+    ctx.font = "600 15px ui-sans-serif, system-ui";
+    ctx.fillText(card.handle, 76, y + 38);
+    ctx.fillStyle = "rgba(244,234,216,0.16)";
+    roundRect(ctx, 32, y + 60, w - 64, 96, 18);
+    ctx.fill();
+    ctx.fillStyle = "#efe6d4";
+    ctx.font = "700 22px Georgia, serif";
+    ctx.fillText(card.title, 40, y + 180);
+    ctx.fillStyle = "#cfc6b4";
+    ctx.font = "15px Georgia, serif";
+    ctx.fillText(card.body, 40, y + 204);
+  });
+  ctx.restore();
+  ctx.fillStyle = "#12100c";
+  ctx.fillRect(0, h - 52, w, 52);
   ctx.fillStyle = "#8d8370";
-  ctx.font = "11px ui-sans-serif, system-ui";
-  ctx.fillText("public tape  ·  no fills", 22, h - 28);
+  ctx.font = "12px ui-sans-serif, system-ui";
+  ctx.fillText(`${simSocialMark()} · room tape · no fills`, 22, h - 20);
+}
+
+function paintGrok(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  grok: GrokChatView,
+  blink: boolean,
+) {
+  ctx.fillStyle = "#141210";
+  ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = "#1c1a16";
+  ctx.fillRect(0, 0, w, 58);
+  ctx.fillStyle = "#efe6d4";
+  ctx.font = "700 22px ui-sans-serif, system-ui";
+  ctx.fillText(grok.header, 28, 38);
+  ctx.fillStyle = grok.honesty === "REAL" ? "#7dcea0" : "#c9ae7a";
+  ctx.font = "12px ui-sans-serif, system-ui";
+  ctx.fillText(grok.honesty, w - 88, 36);
+  let y = 82;
+  grok.bubbles.forEach((bubble) => {
+    const bubbleW = Math.min(620, w - 80);
+    ctx.fillStyle = bubble.role === "grok" ? "#2a2620" : "#1a1814";
+    roundRect(ctx, 28, y, bubbleW, 72, 16);
+    ctx.fill();
+    ctx.fillStyle = bubble.mark === "REAL" ? "#7dcea0" : "#c9ae7a";
+    ctx.font = "700 12px ui-sans-serif, system-ui";
+    ctx.fillText(bubble.mark, 44, y + 24);
+    ctx.fillStyle = "#efe6d4";
+    ctx.font = "18px Georgia, serif";
+    ctx.fillText(bubble.text, 44, y + 52);
+    y += 88;
+  });
+  ctx.fillStyle = "#1c1a16";
+  roundRect(ctx, 28, h - 72, w - 56, 44, 12);
+  ctx.fill();
+  ctx.fillStyle = "#8d8370";
+  ctx.font = "14px ui-sans-serif, system-ui";
+  ctx.fillText(blink ? "▍" : " ", 44, h - 44);
+  ctx.fillText("no fills · no novels", 68, h - 44);
 }
 
 function paintFeed(ctx: CanvasRenderingContext2D, w: number, h: number, tape: TapeView) {
@@ -320,35 +421,36 @@ function paintTv(ctx: CanvasRenderingContext2D, w: number, h: number, tape: Tape
   ctx.fillText("public tape  ·  no fills", 28, h - 22);
 }
 
-function paintLcd(kind: LcdKind, tape: TapeView): HTMLCanvasElement | null {
-  if (typeof document === "undefined") {
-    return null;
-  }
-  const { w, h } = lcdSize(kind);
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    return canvas;
-  }
+function paintKind(
+  kind: LcdKind,
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  tape: TapeView,
+  grok: GrokChatView,
+  scrollY: number,
+  blink: boolean,
+) {
   ensureRoundRect(ctx);
   switch (kind) {
     case "phone":
-      paintPhone(ctx, w, h, tape);
-      return canvas;
+      paintPhone(ctx, w, h, tape, scrollY);
+      return;
     case "feed":
       paintFeed(ctx, w, h, tape);
-      return canvas;
+      return;
     case "tape":
       paintTape(ctx, w, h, tape);
-      return canvas;
+      return;
     case "notes":
       paintNotes(ctx, w, h, tape);
-      return canvas;
+      return;
     case "tv":
       paintTv(ctx, w, h, tape);
-      return canvas;
+      return;
+    case "grok":
+      paintGrok(ctx, w, h, grok, blink);
+      return;
     default:
       return assertNever(kind);
   }
@@ -360,21 +462,6 @@ function asMap(canvas: HTMLCanvasElement): CanvasTexture {
   tex.anisotropy = 8;
   tex.needsUpdate = true;
   return tex;
-}
-
-function useLiveMap(kind: LcdKind, tape: TapeView): CanvasTexture | null {
-  const map = useMemo(() => {
-    const canvas = paintLcd(kind, tape);
-    return canvas ? asMap(canvas) : null;
-  }, [kind, tape]);
-
-  useEffect(() => {
-    return () => {
-      map?.dispose();
-    };
-  }, [map]);
-
-  return map;
 }
 
 function LcdGlass({ width, height }: { width: number; height: number }) {
@@ -408,11 +495,45 @@ export function LiveLcd({
   wash?: number;
 }) {
   const tape = useTape();
-  const map = useLiveMap(kind, tape);
+  const grok = useGrokPane();
   const material = useRef<MeshStandardMaterial>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const { extraLights } = usePerf();
+  const map = useMemo(() => {
+    if (typeof document === "undefined") {
+      return null;
+    }
+    const { w, h } = lcdSize(kind);
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    canvasRef.current = canvas;
+    return asMap(canvas);
+  }, [kind]);
+
+  useEffect(() => {
+    return () => {
+      map?.dispose();
+    };
+  }, [map]);
 
   useFrame((state) => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (canvas && ctx && map) {
+      const nowMs = state.clock.elapsedTime * 1000;
+      paintKind(
+        kind,
+        ctx,
+        canvas.width,
+        canvas.height,
+        tape,
+        grok,
+        feedScrollOffset(nowMs),
+        Math.sin(state.clock.elapsedTime * 5.6) > 0,
+      );
+      map.needsUpdate = true;
+    }
     if (!material.current) {
       return;
     }
@@ -526,7 +647,7 @@ export function LaptopDevice({
   kind,
   open = 1.12,
 }: {
-  kind: "feed" | "tape" | "notes";
+  kind: LaptopKind;
   open?: number;
 }) {
   return (
@@ -615,7 +736,13 @@ export function MonitorDevice({
           <meshStandardMaterial color="#050506" roughness={0.18} metalness={0.35} />
         </mesh>
         <group position={[0, 0.01, 0.017]}>
-          <LiveLcd kind={kind} width={0.88} height={0.5} intensity={active ? 1.32 : 1.12} wash={0.82} />
+          <LiveLcd
+            kind={kind === "notes" ? "grok" : kind}
+            width={0.88}
+            height={0.5}
+            intensity={active ? 1.32 : 1.12}
+            wash={0.82}
+          />
         </group>
       </group>
     </group>
@@ -655,14 +782,15 @@ export function LitPhone({ scale = 1 }: { scale?: number }) {
   return <PhoneDevice scale={scale} />;
 }
 
-function laptopKindFromPlate(plate: PlateKind): "feed" | "tape" | "notes" {
+function laptopKindFromPlate(plate: PlateKind): LaptopKind {
   const lcd = lcdFromPlate(plate);
   switch (lcd) {
     case "feed":
     case "phone":
       return "feed";
     case "notes":
-      return "notes";
+    case "grok":
+      return "grok";
     case "tape":
     case "tv":
       return "tape";

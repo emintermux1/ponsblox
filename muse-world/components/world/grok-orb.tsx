@@ -123,13 +123,17 @@ export function GrokOrb({
     <group
       ref={root}
       position={GROK_ORB_POS}
-      userData={{ grok: "hero" }}
+      userData={{ species: "grok", grok: "hero" }}
       {...loftPickHandlers(onWake)}
     >
       <mesh visible={false}>
         <sphereGeometry args={[0.34, 12, 12]} />
       </mesh>
-      <OrbSkin radius={0.2} physical={physical} shadows={shadows} meshRef={body} />
+      <OrbSkin radius={0.235} physical={physical} shadows={shadows} meshRef={body} />
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.236, 0.016, 8, 40]} />
+        <meshStandardMaterial color="#141414" roughness={0.32} metalness={0.08} />
+      </mesh>
       <group ref={face}>
         <PillEye x={-0.055} />
         <PillEye x={0.055} />

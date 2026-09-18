@@ -8,7 +8,7 @@ import { assertNever } from "@/types/world";
 
 export const GROK_NAME = "GROK";
 export const GROK_ROLE = "tool";
-export const GROK_PORTRAIT = "/cast/grok.jpg";
+export const GROK_PORTRAIT = "/muse/grok-orb.jpg";
 
 export type CastCard = {
   name: string;
@@ -19,27 +19,27 @@ export type CastCard = {
 
 export const CAST: Record<MuseId, CastCard> = {
   scroller: {
-    name: "Euterpe",
-    role: "SCROLLER",
-    portrait: "/cast/pip.jpg",
+    name: "Pip",
+    role: "WAVE",
+    portrait: "/muse/wave.jpg",
     focus: "center 18%",
   },
   trader: {
-    name: "Urania",
-    role: "TRADER",
-    portrait: "/cast/tape.jpg",
+    name: "Tape",
+    role: "CAP",
+    portrait: "/muse/cap.jpg",
     focus: "center 22%",
   },
   chill: {
-    name: "Thalia",
-    role: "CHILL",
-    portrait: "/cast/sable.jpg",
+    name: "Sable",
+    role: "SCARF",
+    portrait: "/muse/sable.jpg",
     focus: "center 28%",
   },
   builder: {
-    name: "Calliope",
-    role: "BUILDER",
-    portrait: "/cast/halo.jpg",
+    name: "Halo",
+    role: "HALO",
+    portrait: "/muse/halo.jpg",
     focus: "center 20%",
   },
 };
@@ -129,9 +129,9 @@ export function packetLine(from: PacketEndpoint, to: PacketEndpoint, label: stri
 
 function isGrokKind(kind: WorldEventKind): boolean {
   switch (kind) {
-    case "GROK_REQUESTED":
     case "GROK_RESPONSE":
       return true;
+    case "GROK_REQUESTED":
     case "TREND_SPIKE":
     case "NEW_DISCOVERY":
     case "POSITION_OPENED":
@@ -159,9 +159,22 @@ function isRealGrokSource(source: WorldEvent["source"]): boolean {
   }
 }
 
+export function isSimGrokText(text: string): boolean {
+  const lower = text.toLowerCase();
+  return (
+    lower.includes("no grok key") ||
+    lower.includes("sim context") ||
+    lower.includes("waiting on ingest")
+  );
+}
+
 export function grokPresence(events: WorldEvent[]): GrokPresence {
   for (const event of events) {
-    if (isGrokKind(event.kind) && isRealGrokSource(event.source)) {
+    if (
+      isGrokKind(event.kind) &&
+      isRealGrokSource(event.source) &&
+      !isSimGrokText(event.text)
+    ) {
       return "LIVE";
     }
   }

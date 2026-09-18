@@ -10,6 +10,7 @@ import { GROK_ORB_POS, SCREEN_POS, wallSlotWorld } from "@/lib/world/layout";
 import { musePlushPhoto, musePlushTint } from "@/lib/world/muse-face";
 import { projectLoft, watchFrame } from "@/lib/world/perf";
 import { PLATE } from "@/lib/world/plates";
+import type { ScreenPulse } from "@/lib/world/screen-texture";
 import { screenTapeHeader, screenTapeRows } from "@/lib/world/screen-tape";
 import type { MuseId, MuseState, PacketEndpoint, ScreenId, WorldSnapshot } from "@/types/world";
 import { MIND_NODES, MUSE_IDS, SCREEN_IDS, assertNever } from "@/types/world";
@@ -266,9 +267,7 @@ function WatchGrok({
         className="relative mx-auto block h-10 w-10 overflow-hidden rounded-full bg-[#f5f5f2] shadow-[0_0_16px_rgba(245,245,242,0.28)]"
         style={{ transform: waking ? "scale(1.06)" : "scale(1)" }}
       >
-        <img src="/muse/grok-orb.jpg" alt="" className="h-full w-full object-cover" />
-        <span className="absolute left-[28%] top-[30%] h-[10px] w-[3px] rounded-full bg-[#141414]" />
-        <span className="absolute right-[28%] top-[30%] h-[10px] w-[3px] rounded-full bg-[#141414]" />
+        <img src="/muse/grok-orb.png" alt="" className="h-full w-full object-contain" />
       </span>
       <span className="mt-1 block text-[9px] tracking-[0.2em] text-[#f7f7f5]">{GROK_NAME}</span>
       <span className="block text-[8px] tracking-[0.16em] text-[#c9ae7a]">{honesty ?? "SIM"}</span>
@@ -345,11 +344,13 @@ function WatchScreens({
 
 export function WatchMode({
   world,
+  pulse: _pulse,
   onSelect,
   onInspect,
   onWakeGrok,
 }: {
   world: WorldSnapshot;
+  pulse?: ScreenPulse;
   onSelect: (id: MuseId) => void;
   onInspect: (id: ScreenId) => void;
   onWakeGrok: () => void;

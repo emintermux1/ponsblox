@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <div className="loft-root">
       <h1 className="sr-only">
-        {WORDMARK} at {new URL(SITE_ORIGIN).host}. Euterpe, Urania, Thalia, Calliope, and Grok.{" "}
+        {WORDMARK} at {new URL(SITE_ORIGIN).host}. Pip, Tape, Sable, Halo, and GROK.{" "}
         {PAGE_DESCRIPTION}
       </h1>
       <SpectatorFrame />

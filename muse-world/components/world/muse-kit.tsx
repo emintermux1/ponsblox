@@ -1,7 +1,10 @@
 "use client";
 
+import { useRef } from "react";
+import { useFrame } from "@react-three/fiber";
+import type { Group } from "three";
 import { LitScreen, type ScreenKind } from "@/components/world/lit-screen";
-import { PhoneDevice } from "@/components/world/screens";
+import { LaptopDevice, PhoneDevice } from "@/components/world/screens";
 import { usePerf } from "@/components/world/perf-context";
 import type { MuseActivity, MuseId } from "@/types/world";
 import { assertNever } from "@/types/world";
@@ -13,6 +16,10 @@ const HOOD = "#141414";
 const GREEN = "#3f7a4a";
 const SILVER = "#c8cdd3";
 const CREAM_CUP = "#d8d2c8";
+
+export function FurMaterial({ color = FUR }: { color?: string }) {
+  return <meshStandardMaterial color={color} roughness={0.9} metalness={0.02} />;
+}
 
 export function Headphones() {
   return (
@@ -241,12 +248,7 @@ export function HeadDress({ id }: { id: MuseId }) {
     case "chill":
       return null;
     case "builder":
-      return (
-        <>
-          <FloppyEars />
-          <Halo />
-        </>
-      );
+      return <Halo />;
     default:
       return assertNever(id);
   }
@@ -266,56 +268,133 @@ export function BodyDress({ id }: { id: MuseId }) {
   }
 }
 
-function showLaptop(id: MuseId, activity: MuseActivity): boolean {
-  switch (id) {
-    case "scroller":
-      return activity === "SCROLLING" || activity === "WATCHING" || activity === "IDLE";
-    case "trader":
-      return activity === "TRADING" || activity === "WATCHING" || activity === "THINKING";
-    case "builder":
-      return activity === "RESEARCHING";
-    case "chill":
+function peekPhone(activity: MuseActivity): boolean {
+  switch (activity) {
+    case "SCROLLING":
+    case "WATCHING":
+      return true;
+    case "IDLE":
+    case "WALKING":
+    case "THINKING":
+    case "RESEARCHING":
+    case "TALKING":
+    case "TRADING":
+    case "CHILLING":
+    case "SMOKING":
+    case "REACTING":
       return false;
     default:
-      return assertNever(id);
+      return assertNever(activity);
   }
 }
 
-function laptopKind(id: MuseId): ScreenKind {
-  switch (id) {
-    case "scroller":
-      return "feed";
-    case "trader":
-      return "chart";
-    case "builder":
-      return "notes";
-    case "chill":
-      return "tv";
+function deskLaptop(activity: MuseActivity): boolean {
+  switch (activity) {
+    case "TRADING":
+    case "RESEARCHING":
+    case "WATCHING":
+    case "THINKING":
+      return true;
+    case "IDLE":
+    case "WALKING":
+    case "SCROLLING":
+    case "TALKING":
+    case "CHILLING":
+    case "SMOKING":
+    case "REACTING":
+      return false;
     default:
-      return assertNever(id);
+      return assertNever(activity);
   }
+}
+
+/** Stories/Reels-like SIM social in-hand — feed y-offset lives on the CanvasTexture. */
+function ThumbScrollPhone({ scale = 1 }: { scale?: number }) {
+  const phone = useRef<Group>(null);
+  const thumb = useRef<Group>(null);
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    const stroke = (t % 1.12) / 1.12;
+    if (phone.current) {
+      phone.current.position.y = Math.sin(stroke * Math.PI) * 0.01;
+      phone.current.rotation.x = 0.07 * Math.sin(t * 5.4);
+    }
+    if (thumb.current) {
+      thumb.current.position.y = 0.032 - stroke * 0.064;
+      thumb.current.position.x = 0.016 + Math.sin(t * 2.1) * 0.004;
+    }
+  });
+
+  return (
+    <group>
+      <group ref={phone}>
+        <PhoneDevice scale={scale} />
+      </group>
+      <group ref={thumb} position={[0.018, 0.02, 0.014]}>
+        <mesh>
+          <sphereGeometry args={[0.013, 8, 8]} />
+          <meshStandardMaterial color={FUR} roughness={0.9} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+function TypingGrokLaptop({ scale = 0.52 }: { scale?: number }) {
+  const deck = useRef<Group>(null);
+
+  useFrame((state) => {
+    if (!deck.current) {
+      return;
+    }
+    const t = state.clock.elapsedTime;
+    deck.current.position.y = Math.abs(Math.sin(t * 8.2)) * 0.004;
+    deck.current.rotation.x = 0.42 + Math.sin(t * 6.4) * 0.012;
+  });
+
+  return (
+    <group ref={deck} scale={scale}>
+      <LaptopDevice kind="grok" open={1.08} />
+    </group>
+  );
 }
 
 export function HeldProps({ id, activity }: { id: MuseId; activity: MuseActivity }) {
   switch (id) {
     case "scroller":
       return (
-        <group position={[0.16, 0.34, 0.2]} rotation={[0.15, -0.35, 0.18]}>
-          <PhoneDevice />
+        <group position={[0.16, 0.34, 0.2]} rotation={[0.35, 0.2, 0.15]} scale={1.05}>
+          <ThumbScrollPhone />
         </group>
       );
     case "trader":
-      return activity === "WALKING" ? null : null;
+      return deskLaptop(activity) ? (
+        <group position={[0.02, 0.14, 0.28]}>
+          <TypingGrokLaptop scale={0.52} />
+        </group>
+      ) : null;
     case "chill":
-      return (
+      return peekPhone(activity) ? (
+        <group position={[0.16, 0.32, 0.18]} rotation={[0.3, 0.15, 0.1]} scale={0.95}>
+          <ThumbScrollPhone />
+        </group>
+      ) : (
         <group position={[0.16, 0.3, 0.16]}>
           <Mug />
         </group>
       );
     case "builder":
       return (
-        <group position={[-0.16, 0.28, 0.2]} rotation={[0.2, 0.4, 0.1]}>
-          <Card />
+        <group>
+          <group position={[-0.16, 0.28, 0.2]} rotation={[0.2, 0.4, 0.1]}>
+            <Card />
+          </group>
+          {deskLaptop(activity) ? (
+            <group position={[0.04, 0.12, 0.24]} rotation={[0, 0.12, 0]}>
+              <TypingGrokLaptop scale={0.5} />
+            </group>
+          ) : null}
         </group>
       );
     default:

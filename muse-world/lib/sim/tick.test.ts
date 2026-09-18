@@ -143,6 +143,15 @@ describe("purposeful work", () => {
     assert.notEqual(next.muses.chill.activity, "IDLE");
   });
 
+  it("lets chill peek stories on the armchair and keeps the scroller on the sofa", () => {
+    const world = seedWorld();
+    const peek = tickSnapshot(world, { kind: "QUIET", ticker: null }, 2_000, () => 0.05);
+    assert.equal(peek.muses.chill.activity, "SCROLLING");
+    assert.ok(nearXZ(peek.muses.chill.position, STATIONS.chillArmchair.position, 0.16));
+    assert.equal(peek.muses.scroller.activity, "SCROLLING");
+    assert.ok(nearXZ(peek.muses.scroller.position, STATIONS.scrollerSofa.position, 0.16));
+  });
+
   it("reacts to a real pulse ticker at the desk", () => {
     const next = tickSnapshot(seedWorld(), { kind: "TREND_SPIKE", ticker: "JUP" }, 20_000, () => 0.05);
     assert.equal(next.muses.trader.mind.watching, "JUP");

@@ -11,31 +11,31 @@ import {
   wallSlotLocal,
   worldToWallLocal,
 } from "@/lib/world/layout";
-import { wallCardText, wallCopyFromWorld, wallRotateMs } from "@/lib/world/wall-copy";
+import {
+  wallCardText,
+  wallCopyFromWorld,
+  wallNoteForSlot,
+  wallRotateMs,
+  wrapWallInk,
+} from "@/lib/world/wall-copy";
 import type { SpatialPacket, WallPin, WorldSnapshot } from "@/types/world";
 
 const WOOD = "#7a5840";
 const ALUMINUM = "#c8c5be";
-const PAPER = "#ead9c0";
-const INK = "#1a140e";
+const PAPER = "#f8f1e2";
+const INK = "#0c0805";
 const CARD_W = 512;
 const CARD_H = 320;
+const INK_PAD = 56;
 
-function wrapInk(text: string): string[] {
-  const words = text.split(/\s+/).filter(Boolean);
-  if (words.length <= 2) {
-    return [words.join(" ")];
-  }
-  if (words.length === 3) {
-    return [`${words[0]} ${words[1]}`, words[2] ?? ""];
-  }
-  return [`${words[0]} ${words[1]}`, `${words[2]} ${words[3] ?? ""}`.trim()];
+function inkFont(size: number): string {
+  return `700 italic ${size}px Georgia, "Times New Roman", serif`;
 }
 
 export function paintIdeaCard(ctx: CanvasRenderingContext2D, text: string): void {
-  ctx.fillStyle = "#f3ead8";
+  ctx.fillStyle = PAPER;
   ctx.fillRect(0, 0, CARD_W, CARD_H);
-  ctx.strokeStyle = "rgba(26, 20, 14, 0.08)";
+  ctx.strokeStyle = "rgba(12, 8, 5, 0.12)";
   ctx.lineWidth = 2;
   for (let y = 86; y < CARD_H - 28; y += 38) {
     ctx.beginPath();
@@ -43,23 +43,33 @@ export function paintIdeaCard(ctx: CanvasRenderingContext2D, text: string): void
     ctx.lineTo(CARD_W - 36, y);
     ctx.stroke();
   }
-  ctx.fillStyle = "#5a3a28";
+  ctx.fillStyle = "#4a2c1c";
   ctx.beginPath();
   ctx.arc(CARD_W / 2, 28, 9, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = "#1c100c";
+  ctx.fillStyle = "#140c08";
   ctx.beginPath();
   ctx.arc(CARD_W / 2, 28, 3.4, 0, Math.PI * 2);
   ctx.fill();
+  const probe = text.length > 28 ? 32 : 36;
+  ctx.font = inkFont(probe);
+  const spaced = ctx as CanvasRenderingContext2D & { letterSpacing?: string };
+  spaced.letterSpacing = "1px";
+  const maxWidth = CARD_W - INK_PAD * 2;
+  const lines = wrapWallInk(text, (line) => ctx.measureText(line).width, maxWidth);
+  const size = lines.length >= 3 || text.length > 32 ? 30 : lines.length === 2 ? 34 : 38;
+  ctx.font = inkFont(size);
   ctx.fillStyle = INK;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  const lines = wrapInk(text);
-  const size = text.length > 18 || lines.length > 1 ? 44 : 52;
-  ctx.font = `700 italic ${size}px Georgia, "Times New Roman", serif`;
-  const mid = CARD_H / 2 + 10;
+  const mid = CARD_H / 2 + 12;
+  const lead = size + 14;
   lines.forEach((line, index) => {
-    ctx.fillText(line, CARD_W / 2, mid + (index - (lines.length - 1) / 2) * (size + 10));
+    const spaced = line.replace(/\s+/g, " ").trim();
+    if (!spaced) {
+      return;
+    }
+    ctx.fillText(spaced, CARD_W / 2, mid + (index - (lines.length - 1) / 2) * lead, maxWidth);
   });
 }
 
@@ -127,7 +137,7 @@ function FlyingPaper({
   to: [number, number, number];
 }) {
   const mesh = useRef<Group>(null);
-  const line = wallCardText(pin.label) ?? "note";
+  const line = wallCardText(pin.label) ?? wallNoteForSlot(pin.slot ?? 0);
   useFrame(() => {
     if (!mesh.current) {
       return;

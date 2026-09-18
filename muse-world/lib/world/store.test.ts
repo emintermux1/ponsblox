@@ -42,11 +42,11 @@ describe("store purity", () => {
 
     const next = patchWorld((current) => tickSnapshot(current, { kind: "QUIET", ticker: null }));
     assert.ok(next.muses.builder);
-    assert.equal(next.muses.scroller.name, "Euterpe");
-    assert.equal(next.muses.trader.name, "Urania");
-    assert.equal(next.muses.chill.name, "Thalia");
-    assert.equal(next.muses.builder.name, "Calliope");
-    assert.equal(next.muses.scroller.role, "SCROLLER");
+    assert.equal(next.muses.scroller.name, "Pip");
+    assert.equal(next.muses.trader.name, "Tape");
+    assert.equal(next.muses.chill.name, "Sable");
+    assert.equal(next.muses.builder.name, "Halo");
+    assert.equal(next.muses.scroller.role, "WAVE");
     assert.equal(fetchMock.mock.callCount(), 0);
 
     setWorld(prior);

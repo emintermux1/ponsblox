@@ -72,7 +72,9 @@ export function SpectatorChrome({
         onSelect={onSelect}
         onGrok={onWakeGrok}
       />
-      <AskGrok world={world} onWake={onWakeGrok} />
+      {world.camera === "GROK" || world.grokWake.phase !== "idle" ? (
+        <AskGrok world={world} onWake={onWakeGrok} />
+      ) : null}
       {inspect ? (
         <p className="loft-selected-note">
           {inspect.title}
