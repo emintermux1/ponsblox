@@ -5,6 +5,7 @@ import { ContactShadows } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
 import { FrustumGuard } from "@/components/world/frustum-guard";
+import { GrokOrb } from "@/components/world/grok-orb";
 import { MuseBody } from "@/components/world/muse-body";
 import { MuseMindField } from "@/components/world/mind";
 import { Penthouse } from "@/components/world/penthouse";
@@ -12,6 +13,7 @@ import { TravelPacket } from "@/components/world/packet";
 import { usePerf } from "@/components/world/perf-context";
 import { CameraRig } from "@/components/world/rig";
 import { ThoughtChip } from "@/components/world/thoughts";
+import { grokPresence } from "@/lib/world/cast";
 import { wallSlotWorld } from "@/lib/world/layout";
 import { MIND_LIFT } from "@/lib/world/mind-graph";
 import type { MuseId, PacketEndpoint, WorldSnapshot } from "@/types/world";
@@ -182,6 +184,7 @@ export function LivingScene({
         wallPins={world.wallPins ?? []}
         builderPos={world.muses.builder.position}
       />
+      <GrokOrb honesty={grokPresence(world.events) === "LIVE" ? "REAL" : "SIM"} />
       {MUSE_IDS.map((id) => (
         <FrustumGuard key={id} center={world.muses[id].position} radius={1.6}>
           <MuseBody

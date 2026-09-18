@@ -4,6 +4,8 @@ import { Component, type ReactNode } from "react";
 
 type GateProps = {
   children: ReactNode;
+  fallback?: ReactNode;
+  onFail?: () => void;
 };
 
 type GateState = {
@@ -17,9 +19,13 @@ export class SceneGate extends Component<GateProps, GateState> {
     return { failed: true };
   }
 
+  componentDidCatch(): void {
+    this.props.onFail?.();
+  }
+
   render(): ReactNode {
     if (this.state.failed) {
-      return null;
+      return this.props.fallback ?? null;
     }
     return this.props.children;
   }

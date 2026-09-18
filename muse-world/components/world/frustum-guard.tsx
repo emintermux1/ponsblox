@@ -20,13 +20,13 @@ export function FrustumGuard({
 }) {
   const group = useRef<Group>(null);
   const camera = useThree((state) => state.camera);
-  const { pauseExtras } = usePerf();
+  const { pauseExtras, tier } = usePerf();
 
   useFrame(() => {
     if (!group.current) {
       return;
     }
-    if (pauseExtras) {
+    if (pauseExtras || tier === "phone") {
       group.current.visible = true;
       return;
     }

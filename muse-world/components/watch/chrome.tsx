@@ -7,6 +7,7 @@ import {
   grokSignalLive,
   projectMindNode,
 } from "@/lib/world/mind-graph";
+import { GROK_NAME } from "@/lib/world/cast";
 import type { RenderMode } from "@/lib/world/perf";
 import type {
   CameraPreset,
@@ -18,10 +19,11 @@ import { assertNever, MIND_NODES, MUSE_IDS } from "@/types/world";
 import {
   activityLine,
   EMPTY_SELECTION,
-  ENTER_MIND,
-  isAwake,
+  grokHonestyMark,
+  hudMark,
   LEAVE_MIND,
   locationLabel,
+  MIND_HINT,
   ROOM_PRESETS,
   WORDMARK,
   WORLD_MARK,
@@ -46,13 +48,20 @@ export function SpectatorChrome({
   const street = useStreetSignal();
   const selected = world.selected ? world.muses[world.selected] : null;
   const signal = lastSignal(street, world.events);
+  const grokMark = grokHonestyMark(world.events);
 
   return (
     <div className="loft-chrome pointer-events-none absolute inset-0 z-40 text-loft-paper">
       <div className="loft-chrome-in pointer-events-none absolute inset-0">
         <Wordmark signal={signal} mode={mode} />
         <Locations camera={world.camera} onPreset={onPreset} />
-        <Roster world={world} selectedId={world.selected} onSelect={onSelect} />
+        <Roster
+          world={world}
+          selectedId={world.selected}
+          grokMark={grokMark}
+          onSelect={onSelect}
+          onGrok={() => onPreset("TRADER")}
+        />
         <AnimatePresence mode="wait">
           {introLine ? (
             <motion.p
@@ -68,22 +77,16 @@ export function SpectatorChrome({
           ) : null}
         </AnimatePresence>
         {selected ? (
-          <div className="absolute bottom-5 right-5 sm:hidden">
-            <MindButton
-              mindOpen={world.mindOpen}
-              onEnter={onEnterMind}
-              onLeave={onEnterMind}
-            />
-          </div>
-        ) : null}
-        <div className="hidden sm:block">
           <SelectedPane
             selected={selected}
             mindOpen={world.mindOpen}
-            onEnter={onEnterMind}
-            onLeave={onEnterMind}
+            onToggle={onEnterMind}
           />
-        </div>
+        ) : (
+          <p className="absolute bottom-5 right-5 font-serif text-[13px] italic text-loft-paper/45 md:bottom-7 md:right-7">
+            {EMPTY_SELECTION}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -101,6 +104,7 @@ function modeLabel(mode: RenderMode): string {
 }
 
 function Wordmark({ signal, mode }: { signal: LastSignal; mode: RenderMode }) {
+  const mark = hudMark(signal.mark);
   return (
     <div className="absolute left-5 top-5 max-w-[16rem] md:left-7 md:top-7">
       <p className="font-serif text-[1.65rem] italic leading-none tracking-[-0.03em] md:text-[1.85rem]">
@@ -110,29 +114,20 @@ function Wordmark({ signal, mode }: { signal: LastSignal; mode: RenderMode }) {
         {WORLD_MARK}
       </p>
       <p className="mt-4 flex items-center gap-2 text-[10px] tracking-[0.16em] text-loft-paper/55">
-        <span className="inline-block h-1.5 w-1.5 rounded-full bg-loft-brass" />
-        LIVE
+        <span className={signalDotClass(mark)} />
+        {mark}
         <span className="text-loft-paper/35">{modeLabel(mode)}</span>
-      </p>
-      <p className="mt-1 flex items-center gap-2 text-[10px] tracking-[0.16em] text-loft-paper/55">
-        <span className={signalDotClass(signal.mark)} />
-        last signal · {signal.mark}
-      </p>
-      <p className="mt-1 font-serif text-[12px] italic leading-5 text-loft-paper/62">
-        {signal.line}
       </p>
     </div>
   );
 }
 
-function signalDotClass(mark: LastSignal["mark"]): string {
+function signalDotClass(mark: "REAL" | "SIM"): string {
   switch (mark) {
     case "REAL":
       return "inline-block h-1.5 w-1.5 rounded-full bg-loft-brass";
     case "SIM":
       return "inline-block h-1.5 w-1.5 rounded-full bg-loft-paper/35";
-    case "—":
-      return "inline-block h-1.5 w-1.5 rounded-full bg-loft-paper/18";
     default:
       return assertNever(mark);
   }
@@ -146,7 +141,7 @@ function Locations({
   onPreset: (preset: CameraPreset) => void;
 }) {
   return (
-    <nav className="absolute right-5 top-6 hidden gap-5 text-[11px] text-loft-paper/40 md:flex md:right-7">
+    <nav className="pointer-events-auto absolute right-5 top-6 hidden gap-5 text-[11px] text-loft-paper/40 md:flex md:right-7">
       {ROOM_PRESETS.map((preset) => (
         <button
           key={preset}
@@ -154,8 +149,8 @@ function Locations({
           onClick={() => onPreset(preset)}
           className={
             camera === preset
-              ? "pointer-events-auto text-loft-paper"
-              : "pointer-events-auto transition-colors duration-300 hover:text-loft-paper/80"
+              ? "text-loft-paper"
+              : "transition-colors duration-300 hover:text-loft-paper/80"
           }
         >
           {locationLabel(preset)}
@@ -168,40 +163,31 @@ function Locations({
 function Roster({
   world,
   selectedId,
+  grokMark,
   onSelect,
+  onGrok,
 }: {
   world: WorldSnapshot;
   selectedId: MuseId | null;
+  grokMark: "REAL" | "SIM";
   onSelect: (id: MuseId | null) => void;
+  onGrok: () => void;
 }) {
-  const awake = MUSE_IDS.filter((id) => isAwake(world.muses[id].activity));
-
   return (
-    <div className="absolute bottom-5 left-5 md:bottom-7 md:left-7">
-      <p className="text-[9px] tracking-[0.22em] text-loft-brass/75">
-        {awake.length === 0 ? "the room is still" : "awake"}
-      </p>
-      <ul className="mt-3 space-y-1.5">
+    <div className="pointer-events-auto absolute bottom-5 left-5 md:bottom-7 md:left-7">
+      <ul className="space-y-1.5">
         {MUSE_IDS.map((id) => {
           const muse = world.muses[id];
-          const present = isAwake(muse.activity);
           return (
             <li key={id}>
               <button
                 type="button"
                 onClick={() => onSelect(id)}
-                className={`pointer-events-auto flex items-baseline gap-3 text-left ${
+                className={`flex items-baseline gap-3 text-left ${
                   selectedId === id ? "text-loft-paper" : "text-loft-paper/58"
                 }`}
               >
-                <span
-                  className={`mt-[0.35em] inline-block h-1 w-1 rounded-full ${
-                    present ? "bg-loft-brass" : "bg-loft-paper/22"
-                  }`}
-                />
-                <span className="w-20 font-serif text-[14px] italic">
-                  {muse.name}
-                </span>
+                <span className="w-16 font-serif text-[14px] italic">{muse.name}</span>
                 <span className="text-[11px] text-loft-paper/45">
                   {activityLine(muse.activity)}
                 </span>
@@ -209,6 +195,16 @@ function Roster({
             </li>
           );
         })}
+        <li>
+          <button
+            type="button"
+            onClick={onGrok}
+            className="flex items-baseline gap-3 text-left text-loft-paper/58"
+          >
+            <span className="w-16 font-serif text-[14px] italic">{GROK_NAME}</span>
+            <span className="text-[11px] text-loft-paper/45">{grokMark}</span>
+          </button>
+        </li>
       </ul>
     </div>
   );
@@ -296,26 +292,14 @@ function MindStatus({ muse }: { muse: MuseState }) {
 function SelectedPane({
   selected,
   mindOpen,
-  onEnter,
-  onLeave,
+  onToggle,
 }: {
-  selected: MuseState | null;
+  selected: MuseState;
   mindOpen: boolean;
-  onEnter: () => void;
-  onLeave: () => void;
+  onToggle: () => void;
 }) {
-  if (!selected) {
-    return (
-      <div className="absolute bottom-5 right-5 w-[14.5rem] md:bottom-7 md:right-7">
-        <p className="font-serif text-[13px] italic leading-6 text-loft-paper/62">
-          {EMPTY_SELECTION}
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="absolute bottom-5 right-5 w-[15.5rem] text-right md:bottom-7 md:right-7">
+    <div className="pointer-events-auto absolute bottom-5 right-5 w-[15.5rem] text-right md:bottom-7 md:right-7">
       <p className="font-serif text-[1.35rem] italic leading-none tracking-[-0.02em]">
         {selected.name}
       </p>
@@ -323,27 +307,13 @@ function SelectedPane({
         {activityLine(selected.activity)}
       </p>
       {mindOpen ? <MindStatus muse={selected} /> : null}
-      <MindButton mindOpen={mindOpen} onEnter={onEnter} onLeave={onLeave} />
+      <button
+        type="button"
+        onClick={onToggle}
+        className="mt-4 text-[10px] tracking-[0.2em] text-loft-paper/35 transition-colors duration-300 hover:text-loft-brass"
+      >
+        {mindOpen ? LEAVE_MIND : MIND_HINT}
+      </button>
     </div>
-  );
-}
-
-function MindButton({
-  mindOpen,
-  onEnter,
-  onLeave,
-}: {
-  mindOpen: boolean;
-  onEnter: () => void;
-  onLeave: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={mindOpen ? onLeave : onEnter}
-      className="loft-entry-cta pointer-events-auto mt-6 text-[11px] text-loft-brass transition-colors duration-300 hover:text-loft-paper"
-    >
-      {mindOpen ? LEAVE_MIND : ENTER_MIND}
-    </button>
   );
 }

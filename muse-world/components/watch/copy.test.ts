@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { CAST } from "@/lib/world/cast";
 import {
   activityLine,
   asCaption,
@@ -7,6 +8,7 @@ import {
   ENTRY_CAPTION,
   INTRO_COPY,
   isAwake,
+  LEAVE_MIND,
   PAGE_DESCRIPTION,
   SITE_ORIGIN,
   watchingLine,
@@ -18,8 +20,11 @@ test("first paint brand is Muse Grok at musegrok.world", () => {
   assert.equal(WORDMARK, "Muse Grok");
   assert.equal(WORLD_MARK, "musegrok.world");
   assert.equal(SITE_ORIGIN, "https://musegrok.world");
-  assert.equal(PAGE_DESCRIPTION, "A living penthouse. Four muses. You watch.");
+  assert.match(PAGE_DESCRIPTION, /PIP|Four muses/);
+  assert.match(PAGE_DESCRIPTION, /GROK|muses/);
+  assert.doesNotMatch(PAGE_DESCRIPTION, /ENTER MIND/);
   assert.equal(INTRO_COPY[0], WORDMARK);
+  assert.notEqual(INTRO_COPY[0], "ENTER MIND");
 });
 
 test("asCaption keeps a short literary line", () => {
@@ -55,6 +60,18 @@ test("asCaption can keep the first short clause of a long line", () => {
 
 test("first entry copy is not ENTER MIND", () => {
   assert.notEqual(ENTRY_CAPTION, ENTER_MIND);
+});
+
+test("mind is a quiet later word, never brass ENTER MIND", () => {
+  assert.notEqual(ENTER_MIND.toUpperCase(), "ENTER MIND");
+  assert.notEqual(LEAVE_MIND.toUpperCase(), "LEAVE MIND");
+});
+
+test("cast first names stay on the HUD copy side", () => {
+  assert.equal(CAST.scroller.name, "PIP");
+  assert.equal(CAST.trader.name, "TAPE");
+  assert.equal(CAST.chill.name, "SABLE");
+  assert.equal(CAST.builder.name, "HALO");
 });
 
 test("literary activities stay awake except rest", () => {

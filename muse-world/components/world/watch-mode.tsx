@@ -1,10 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { activityLine, asCaption } from "@/components/watch/copy";
 import { usePerf } from "@/components/world/perf-context";
+import {
+  GROK_NAME,
+  GROK_PORTRAIT,
+  castFocus,
+  castPortrait,
+  grokPresence,
+  grokPresenceLabel,
+} from "@/lib/world/cast";
 import { wallSlotWorld } from "@/lib/world/layout";
+import { PLATE } from "@/lib/world/plates";
 import { projectLoft, watchFrame } from "@/lib/world/perf";
 import type { MuseId, MuseState, PacketEndpoint, WorldSnapshot } from "@/types/world";
 import { MIND_NODES, MUSE_IDS, assertNever } from "@/types/world";
@@ -20,21 +30,6 @@ function loftPoint(world: WorldSnapshot, endpoint: PacketEndpoint): { left: numb
       return projectLoft(wallSlotWorld(world.packet?.slot ?? 0));
     default:
       return assertNever(endpoint);
-  }
-}
-
-function museAccent(id: MuseId): string {
-  switch (id) {
-    case "scroller":
-      return "#d8c6a6";
-    case "trader":
-      return "#2a2a28";
-    case "chill":
-      return "#3f7a4a";
-    case "builder":
-      return "#c9b48a";
-    default:
-      return assertNever(id);
   }
 }
 
@@ -67,38 +62,62 @@ function MuseFigure({
           : {
               left: `${point.left}%`,
               top: `${point.top}%`,
-              y: seated ? 8 : [0, -2, 0],
+              y: seated ? 8 : [0, -3, 0],
             }
       }
       transition={
         reducedMotion
           ? { duration: 0 }
-          : { y: { duration: 3.4, repeat: Infinity, ease: "easeInOut" }, duration: 0.85 }
+          : { y: { duration: 3.2, repeat: Infinity, ease: "easeInOut" }, duration: 0.85 }
       }
     >
       {caption ? (
         <span className="thought-caption mb-2 block text-center">{caption}</span>
       ) : null}
-      <span className="relative mx-auto block h-[72px] w-8">
-        <span className="absolute left-1/2 top-0 h-4 w-4 -translate-x-1/2 rounded-full bg-[#f3efe6] shadow-[0_0_12px_rgba(243,239,230,0.2)]" />
-        <span className="absolute left-1/2 top-4 h-9 w-[18px] -translate-x-1/2 rounded-t-[6px] bg-[#eee8dc]" />
-        <span
-          className="absolute left-1/2 top-[22px] h-1.5 w-[18px] -translate-x-1/2"
-          style={{ background: museAccent(muse.id) }}
+      <span className="relative mx-auto block h-[84px] w-[84px]">
+        <Image
+          src={castPortrait(muse.id)}
+          alt={muse.name}
+          width={84}
+          height={84}
+          className="watch-portrait h-[84px] w-[84px] rounded-full object-cover"
+          style={{ objectPosition: castFocus(muse.id) }}
         />
-        <span className="absolute bottom-1 left-1/2 h-3 w-[7px] -translate-x-[9px] bg-[#e7e0d2]" />
-        <span className="absolute bottom-1 left-1/2 h-3 w-[7px] translate-x-[2px] bg-[#e7e0d2]" />
         {selected ? (
-          <span className="absolute -bottom-0.5 left-1/2 h-1.5 w-7 -translate-x-1/2 rounded-full bg-[#e6d3a8]/55" />
+          <span className="absolute -bottom-1 left-1/2 h-1.5 w-10 -translate-x-1/2 rounded-full bg-[#e6d3a8]/55" />
         ) : null}
       </span>
-      <span className="mt-1 block text-center font-serif text-[9px] tracking-[0.2em] text-[#efe6d4]/70">
+      <span className="mt-1 block text-center font-serif text-[14px] italic text-[#efe6d4]">
         {muse.name}
       </span>
-      <span className="block text-center text-[8px] tracking-[0.18em] text-[#8d8370]">
+      <span className="block text-center text-[11px] tracking-[0.14em] text-[#cfc3aa]">
         {activityLine(muse.activity)}
       </span>
     </motion.button>
+  );
+}
+
+function WatchGrok({ world }: { world: WorldSnapshot }) {
+  const point = projectLoft([3.02, 0.98, 0.18]);
+  const presence = grokPresence(world.events);
+  return (
+    <div
+      data-grok-orb="true"
+      className="absolute z-20 -translate-x-1/2 -translate-y-1/2 text-center"
+      style={{ left: `${point.left}%`, top: `${point.top}%` }}
+    >
+      <Image
+        src={GROK_PORTRAIT}
+        alt={GROK_NAME}
+        width={36}
+        height={36}
+        className="mx-auto h-9 w-9 rounded-full object-cover shadow-[0_0_16px_rgba(247,247,245,0.45)]"
+      />
+      <span className="mt-1 block text-[13px] text-[#f7f7f5]">{GROK_NAME}</span>
+      <span className="block text-[13px] text-[#d8c6a6]">
+        {grokPresenceLabel(presence)}
+      </span>
+    </div>
   );
 }
 
@@ -133,11 +152,27 @@ function CitySilhouette() {
   );
 }
 
+function LitPane({
+  src,
+  className,
+}: {
+  src: string;
+  className: string;
+}) {
+  return (
+    <span
+      className={`watch-screen ${className} bg-cover bg-center`}
+      style={{ backgroundImage: `url(${src})` }}
+    />
+  );
+}
+
 function Furniture() {
   const couch = projectLoft([-4.15, 0, 1.35]);
   const desk = projectLoft([3.4, 0, -0.85]);
   const wall = projectLoft([7.55, 0, 2.6]);
   const table = projectLoft([-2.7, 0, 2.2]);
+  const tv = projectLoft([-8.6, 1.2, 1.1]);
 
   return (
     <>
@@ -146,14 +181,15 @@ function Furniture() {
         style={{ left: `${couch.left}%`, top: `${couch.top}%` }}
       >
         <div className="absolute inset-x-2 top-1 h-2 bg-[#2f2923]" />
+        <LitPane src={PLATE.laptop} className="absolute left-3 -top-3 h-4 w-7 rounded-[2px]" />
       </div>
       <div
         className="absolute z-10 h-[8%] w-[18%] -translate-x-1/2 -translate-y-1/2 bg-[#4a2c18] shadow-[0_8px_18px_#00000040]"
         style={{ left: `${desk.left}%`, top: `${desk.top}%` }}
       >
-        <div className="absolute inset-x-3 -top-3 flex justify-between">
-          <span className="h-3 w-5 bg-[#0e1216]" />
-          <span className="h-3 w-5 bg-[#0e1216]" />
+        <div className="absolute inset-x-3 -top-4 flex justify-between">
+          <LitPane src={PLATE.tape} className="h-4 w-6" />
+          <LitPane src={PLATE.grok} className="h-4 w-6" />
         </div>
       </div>
       <div
@@ -163,6 +199,12 @@ function Furniture() {
         <span className="absolute left-1 top-3 h-4 w-3 bg-[#e6d7bc]" />
         <span className="absolute left-1 top-9 h-4 w-3 bg-[#e6d7bc]/80" />
         <span className="absolute left-1 top-16 h-4 w-3 bg-[#e6d7bc]/70" />
+      </div>
+      <div
+        className="absolute z-10 h-[12%] w-[10%] -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-[#161513]"
+        style={{ left: `${tv.left}%`, top: `${tv.top}%` }}
+      >
+        <LitPane src={PLATE.tv} className="absolute inset-[4%]" />
       </div>
       <div
         className="absolute z-10 h-2.5 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#1f1b16]"
@@ -242,7 +284,7 @@ export function WatchMode({
   }, [world.packet, reducedMotion, hidden]);
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-[#15202c]">
+    <div className="absolute inset-0 overflow-hidden bg-[#15202c]" data-watch-fallback="true">
       <CitySilhouette />
       <motion.div
         className="absolute inset-0 origin-center"
@@ -264,6 +306,7 @@ export function WatchMode({
           <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-[#15202c]/35 to-transparent" />
         </div>
         <Furniture />
+        <WatchGrok world={world} />
         {MUSE_IDS.map((id) => (
           <MuseFigure
             key={id}

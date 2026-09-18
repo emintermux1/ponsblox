@@ -46,14 +46,15 @@ export const PERF_BUDGET = {
   dprTablet: 1.15,
   dprPhone: 1,
   phoneWidth: 768,
-  watchWidth: 900,
   tabletWidth: 1100,
   cityDesktop: 36,
   cityTablet: 14,
+  cityPhone: 8,
   shadowDesktop: 1024 as const,
   shadowTablet: 512 as const,
   farDesktop: 72,
   farTablet: 46,
+  farPhone: 40,
   thoughtDesktop: 16,
   thoughtTablet: 11,
   tickMs: 900,
@@ -125,20 +126,9 @@ export function tierFromSignals(signals: PerfSignals): PerfTier {
   return "desktop";
 }
 
+/** 2D WATCH is a last resort — phones still mount the 3D loft. */
 export function shouldWatch(signals: PerfSignals, webglLost: boolean): boolean {
-  if (webglLost || !signals.webgl) {
-    return true;
-  }
-  if (signals.width < PERF_BUDGET.phoneWidth) {
-    return true;
-  }
-  if (signals.coarse && signals.width < PERF_BUDGET.watchWidth) {
-    return true;
-  }
-  if (signals.saveData && signals.coarse) {
-    return true;
-  }
-  return false;
+  return webglLost || !signals.webgl;
 }
 
 function dprFor(tier: PerfTier, reducedMotion: boolean): [number, number] {
@@ -164,13 +154,42 @@ function framePolicy(hidden: boolean, reducedMotion: boolean): FramePolicy {
   return "always";
 }
 
+function cityCountFor(tier: PerfTier, watch: boolean): number {
+  if (watch) {
+    return 0;
+  }
+  switch (tier) {
+    case "desktop":
+      return PERF_BUDGET.cityDesktop;
+    case "tablet":
+      return PERF_BUDGET.cityTablet;
+    case "phone":
+      return PERF_BUDGET.cityPhone;
+    default:
+      return assertNever(tier);
+  }
+}
+
+function cameraFarFor(tier: PerfTier): number {
+  switch (tier) {
+    case "desktop":
+      return PERF_BUDGET.farDesktop;
+    case "tablet":
+      return PERF_BUDGET.farTablet;
+    case "phone":
+      return PERF_BUDGET.farPhone;
+    default:
+      return assertNever(tier);
+  }
+}
+
 export function budgetFromSignals(
   signals: PerfSignals,
   options: { webglLost?: boolean } = {},
 ): PerfBudget {
   const tier = tierFromSignals(signals);
   const watch = shouldWatch(signals, Boolean(options.webglLost));
-  const pauseExtras = signals.hidden || signals.reducedMotion || watch;
+  const pauseExtras = signals.hidden || signals.reducedMotion;
   const compact = tier !== "desktop";
 
   switch (tier) {
@@ -192,18 +211,14 @@ export function budgetFromSignals(
     extraLights: !watch && tier === "desktop" && !pauseExtras,
     contactShadows: !watch && tier === "desktop" && !pauseExtras,
     glass: !watch && tier === "desktop" && !signals.reducedMotion ? "physical" : "standard",
-    cityCount: watch
-      ? 0
-      : tier === "desktop"
-        ? PERF_BUDGET.cityDesktop
-        : PERF_BUDGET.cityTablet,
+    cityCount: cityCountFor(tier, watch),
     cityLod: tier === "desktop" ? "dense" : "sparse",
-    htmlThoughts: !watch && !signals.hidden && (tier === "desktop" || !signals.reducedMotion),
+    htmlThoughts: !watch && !signals.hidden && tier === "desktop" && !signals.reducedMotion,
     frameloop: watch ? "never" : framePolicy(signals.hidden, signals.reducedMotion),
     pauseExtras,
     reducedMotion: signals.reducedMotion,
     hidden: signals.hidden,
-    cameraFar: compact ? PERF_BUDGET.farTablet : PERF_BUDGET.farDesktop,
+    cameraFar: cameraFarFor(tier),
     thoughtDistance: compact ? PERF_BUDGET.thoughtTablet : PERF_BUDGET.thoughtDesktop,
     powerPreference: tier === "desktop" ? "high-performance" : "low-power",
   };

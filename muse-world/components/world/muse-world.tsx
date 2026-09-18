@@ -55,7 +55,11 @@ export function MuseWorld({
   }, [budget.reducedMotion, onIntroDone]);
 
   return (
-    <main className="relative h-dvh w-full overflow-hidden bg-transparent">
+    <main
+      className="relative h-dvh w-full overflow-hidden bg-transparent"
+      data-loft-mode={ready ? budget.mode : "boot"}
+      data-loft-tier={budget.tier}
+    >
       {ready && webgl ? (
         <Canvas
           className="absolute inset-0 touch-none"
@@ -64,8 +68,8 @@ export function MuseWorld({
           dpr={budget.dpr}
           frameloop={budget.frameloop}
           camera={{
-            position: [1.1, 3.15, 11.4],
-            fov: 36,
+            position: [1.35, 3.4, 13.1],
+            fov: budget.tier === "phone" ? 52 : 36,
             near: 0.1,
             far: budget.cameraFar,
           }}

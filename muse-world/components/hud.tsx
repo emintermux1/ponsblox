@@ -8,6 +8,7 @@ export type SpectatorHudProps = {
   world: WorldSnapshot;
   introLine: string | null;
   mode: RenderMode;
+  compact?: boolean;
   onPreset: (preset: CameraPreset) => void;
   onSelect: (id: MuseId | null) => void;
   onEnterMind: () => void;
@@ -17,6 +18,7 @@ export function SpectatorHud({
   world,
   introLine,
   mode,
+  compact = false,
   onPreset,
   onSelect,
   onEnterMind,
@@ -26,6 +28,7 @@ export function SpectatorHud({
       world={world}
       introLine={introLine}
       mode={mode}
+      compact={compact}
       onPreset={onPreset}
       onSelect={onSelect}
       onEnterMind={onEnterMind}

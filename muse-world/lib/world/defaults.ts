@@ -1,3 +1,4 @@
+import { CAST } from "@/lib/world/cast";
 import type { MuseId, MuseMind, MuseState, WorldSnapshot } from "@/types/world";
 
 export function emptyMind(goal: string): MuseMind {
@@ -27,8 +28,8 @@ export function seedMuses(): Record<MuseId, MuseState> {
   return {
     scroller: {
       id: "scroller",
-      name: "MUSE 01",
-      role: "SCROLLER",
+      name: CAST.scroller.name,
+      role: CAST.scroller.role,
       activity: "SCROLLING",
       thought: null,
       thoughtUntil: 0,
@@ -38,8 +39,8 @@ export function seedMuses(): Record<MuseId, MuseState> {
     },
     trader: {
       id: "trader",
-      name: "MUSE 02",
-      role: "TRADER",
+      name: CAST.trader.name,
+      role: CAST.trader.role,
       activity: "WATCHING",
       thought: null,
       thoughtUntil: 0,
@@ -49,8 +50,8 @@ export function seedMuses(): Record<MuseId, MuseState> {
     },
     chill: {
       id: "chill",
-      name: "MUSE 03",
-      role: "CHILL",
+      name: CAST.chill.name,
+      role: CAST.chill.role,
       activity: "CHILLING",
       thought: null,
       thoughtUntil: 0,
@@ -60,8 +61,8 @@ export function seedMuses(): Record<MuseId, MuseState> {
     },
     builder: {
       id: "builder",
-      name: "MUSE 04",
-      role: "BUILDER",
+      name: CAST.builder.name,
+      role: CAST.builder.role,
       activity: "RESEARCHING",
       thought: null,
       thoughtUntil: 0,
