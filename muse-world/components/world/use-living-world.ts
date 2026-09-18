@@ -15,6 +15,7 @@ import {
 } from "@/lib/world/pick";
 import { quietScreenPulse, sanitizeScreenPulse } from "@/lib/world/screen-texture";
 import { quietTape, tapeFromPulse, type TapeView } from "@/lib/world/tape";
+import { rememberPulseName } from "@/lib/world/wall-copy";
 import type { CameraPreset, MuseId, ScreenId, WorldEvent, WorldSnapshot } from "@/types/world";
 
 function prefersReducedMotion(): boolean {
@@ -65,8 +66,9 @@ export function useLivingWorld() {
       try {
         const market = await fetch("/api/market", { cache: "no-store" });
         if (market.ok) {
-          const next = (await market.json()) as Pulse;
+          const next = (await market.json()) as Pulse & { name?: string | null };
           if (!cancelled) {
+            rememberPulseName(next.name ?? null);
             setPulse(next);
             setTape(tapeFromPulse(next));
           }
