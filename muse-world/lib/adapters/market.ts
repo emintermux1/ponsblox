@@ -355,6 +355,10 @@ function mapBirdeyeHits(body: unknown): MarketHit[] {
     const row = item as Record<string, unknown>;
     const mint = typeof row.address === "string" ? row.address : null;
     const ticker = tickerFromSymbol(typeof row.symbol === "string" ? row.symbol : null);
+    const changePct =
+      finiteUsd(row.priceChange24hPercent) ??
+      finiteUsd(row.price24hChangePercent) ??
+      finiteUsd(row.v24hChangePercent);
     const hit = skipPaidHit({
       source: "birdeye",
       ticker,
@@ -362,7 +366,10 @@ function mapBirdeyeHits(body: unknown): MarketHit[] {
       volumeUsd: finiteUsd(row.volume24hUSD) ?? finiteUsd(row.v24hUSD) ?? 0,
       name: typeof row.name === "string" ? row.name : ticker,
       priceUsd: finiteUsd(row.price),
+      priceChange24h: changePct,
+      changePct,
       liquidityUsd: finiteUsd(row.liquidity),
+      marketCap: finiteUsd(row.mc) ?? finiteUsd(row.marketCap),
       imageUrl: asHttpsLogo(
         typeof row.logoURI === "string" ? row.logoURI : typeof row.logo === "string" ? row.logo : null,
       ),
@@ -566,13 +573,19 @@ async function peekGeckoCandles(pool: string | null): Promise<TapeCandle[]> {
   return candlesFromOhlcvList(list);
 }
 
+function rowsOf(group: MarketHits): MarketHit[] {
+  if (Array.isArray(group)) {
+    return [...group];
+  }
+  if (group && typeof group === "object") {
+    return [group];
+  }
+  return [];
+}
+
 function firstMint(...groups: MarketHits[]): string | null {
   for (const group of groups) {
-    if (typeof group === "string") {
-      continue;
-    }
-    const rows = Array.isArray(group) ? group : [group];
-    for (const row of rows) {
+    for (const row of rowsOf(group)) {
       if (row.mint && looksLikeMint(row.mint)) {
         return row.mint;
       }
@@ -583,11 +596,7 @@ function firstMint(...groups: MarketHits[]): string | null {
 
 function firstPool(...groups: MarketHits[]): string | null {
   for (const group of groups) {
-    if (typeof group === "string") {
-      continue;
-    }
-    const rows = Array.isArray(group) ? group : [group];
-    for (const row of rows) {
+    for (const row of rowsOf(group)) {
       if (row.pool && looksLikeMint(row.pool)) {
         return row.pool;
       }
@@ -603,10 +612,10 @@ function collectMints(...groups: MarketHits[]): string[] {
   const mints: string[] = [];
   const seen = new Set<string>();
   for (const group of groups) {
-    if (typeof group === "string") {
+    const rows = rowsOf(group);
+    if (rows.length === 0) {
       continue;
     }
-    const rows = Array.isArray(group) ? group : [group];
     for (const row of rows) {
       if (row.mint && looksLikeMint(row.mint) && !seen.has(row.mint)) {
         seen.add(row.mint);

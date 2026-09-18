@@ -570,10 +570,13 @@ function statusOf(
 }
 
 function hitsOf(value: MarketHits | undefined): MarketHit[] {
-  if (value === undefined || typeof value === "string") {
-    return [];
+  if (Array.isArray(value)) {
+    return [...value];
   }
-  return Array.isArray(value) ? [...value] : [value as MarketHit];
+  if (value && typeof value === "object") {
+    return [value];
+  }
+  return [];
 }
 
 function usableHit(hit: MarketHit | null): MarketHit | null {
