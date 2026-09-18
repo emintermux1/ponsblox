@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { RoundedBox } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { CanvasTexture, SRGBColorSpace, type MeshStandardMaterial } from "three";
+import { DexOnLcd } from "@/components/world/dex-screen";
 import { loftPickHandlers } from "@/components/world/loft-cursor";
 import { usePerf } from "@/components/world/perf-context";
 import { useGrokPane, useTape } from "@/components/world/tape-context";
@@ -469,6 +470,21 @@ function asMap(canvas: HTMLCanvasElement): CanvasTexture {
   return tex;
 }
 
+function showDexOnLcd(kind: LcdKind): boolean {
+  switch (kind) {
+    case "tape":
+      return true;
+    case "phone":
+    case "feed":
+    case "notes":
+    case "tv":
+    case "grok":
+      return false;
+    default:
+      return assertNever(kind);
+  }
+}
+
 function LcdGlass({ width, height }: { width: number; height: number }) {
   return (
     <mesh position={[0, 0, 0.0012]}>
@@ -492,12 +508,14 @@ export function LiveLcd({
   height,
   intensity = 1.15,
   wash = 0.55,
+  embedDex = false,
 }: {
   kind: LcdKind;
   width: number;
   height: number;
   intensity?: number;
   wash?: number;
+  embedDex?: boolean;
 }) {
   const tape = useTape();
   const grok = useGrokPane();
@@ -561,6 +579,7 @@ export function LiveLcd({
           toneMapped={false}
         />
       </mesh>
+      {embedDex && showDexOnLcd(kind) ? <DexOnLcd width={width} height={height} /> : null}
       <LcdGlass width={width} height={height} />
       {extraLights ? (
         <pointLight
@@ -747,6 +766,7 @@ export function MonitorDevice({
             height={0.5}
             intensity={active ? 1.32 : 1.12}
             wash={0.82}
+            embedDex={kind === "tape"}
           />
         </group>
       </group>

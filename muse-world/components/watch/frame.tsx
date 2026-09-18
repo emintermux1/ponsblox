@@ -3,7 +3,6 @@
 import { MotionConfig } from "framer-motion";
 import { SpectatorHud } from "@/components/hud";
 import { SceneGate } from "@/components/watch/scene-gate";
-import { DexScreenerHud } from "@/components/world/dex-hud";
 import { MuseWorld } from "@/components/world/muse-world";
 import { WatchMode } from "@/components/world/watch-mode";
 import { PerfProvider } from "@/components/world/perf-context";
@@ -31,7 +30,6 @@ export function SpectatorFrame() {
           onEnterMind={living.toggleMind}
           onWakeGrok={living.wakeGrok}
         />
-        <DexScreenerHud />
         <SceneGate
           onFail={markWebglLost}
           fallback={

@@ -274,36 +274,22 @@ canvas {
   background: color-mix(in srgb, var(--loft-paper) 38%, transparent);
 }
 
-.loft-dex {
+.loft-dex-screen {
   pointer-events: auto;
   position: absolute;
-  right: 0.7rem;
-  bottom: calc(0.7rem + env(safe-area-inset-bottom, 0px));
-  z-index: 36;
+  z-index: 18;
   display: flex;
-  width: min(420px, calc(100vw - 1.4rem));
-  height: min(288px, 34vh);
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--loft-paper) 16%, transparent);
   background: #0b1117;
-  box-shadow: 0 12px 40px rgba(4, 6, 8, 0.45);
 }
 
-.loft-dex-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem 0.65rem;
-  padding: 0.35rem 0.55rem;
-  color: #d7e4dc;
-  font-size: 0.68rem;
-  letter-spacing: 0.04em;
-}
-
-.loft-dex-bar span:first-child {
+.loft-dex-screen-bar {
+  flex-shrink: 0;
+  padding: 0.2rem 0.4rem;
   color: #67f0b2;
-  font-weight: 700;
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
 }
 
 .loft-dex-frame {
@@ -312,22 +298,6 @@ canvas {
   height: 100%;
   border: 0;
   background: #0b1117;
-}
-
-.loft-dex-wait {
-  margin: 0;
-  padding: 1.1rem 0.7rem;
-  color: #6a7380;
-  font-size: 0.75rem;
-}
-
-@media (max-width: 767px) {
-  .loft-dex {
-    left: 0.55rem;
-    right: 0.55rem;
-    width: auto;
-    height: 168px;
-  }
 }
 
 @media (min-width: 768px) {

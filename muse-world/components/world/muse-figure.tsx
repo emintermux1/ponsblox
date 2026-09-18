@@ -92,7 +92,7 @@ function OfficialFace() {
   );
 }
 
-function Kit({ id }: { id: MuseId }) {
+function KitExtra({ id }: { id: MuseId }) {
   switch (id) {
     case "scroller":
       return (
@@ -105,14 +105,21 @@ function Kit({ id }: { id: MuseId }) {
     case "chill":
       return <Scarf />;
     case "builder":
-      return (
-        <group position={[0, 0.8, 0]}>
-          <Halo />
-        </group>
-      );
+      return null;
     default:
       return assertNever(id);
   }
+}
+
+function Kit({ id }: { id: MuseId }) {
+  return (
+    <group>
+      <group position={[0, 0.8, 0]}>
+        <Halo />
+      </group>
+      <KitExtra id={id} />
+    </group>
+  );
 }
 
 export function OfficialMuse({ id }: { id: MuseId }) {

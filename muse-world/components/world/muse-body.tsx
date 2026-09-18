@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group, Mesh } from "three";
 import { loftPickHandlers } from "@/components/world/loft-cursor";
-import { MusePlushCard } from "@/components/world/muse-plush";
+import { OfficialMuse } from "@/components/world/muse-figure";
 import { NameTag } from "@/components/world/name-tag";
 import { usePerf } from "@/components/world/perf-context";
 import { damp } from "@/lib/world/camera";
@@ -272,6 +272,7 @@ export function MuseBody({
   const root = useRef<Group>(null);
   const sway = useRef<Group>(null);
   const torso = useRef<Group>(null);
+  const face = useRef<Group>(null);
   const ring = useRef<Mesh>(null);
   const phase = phaseFor(muse.id);
   const { pauseExtras } = usePerf();
@@ -315,6 +316,18 @@ export function MuseBody({
     );
     dampRot(sway.current, motion.sway, 5.5, delta);
     dampScale(torso.current, motion.torso, 4.2, delta);
+    if (face.current) {
+      const yaw = Math.atan2(
+        state.camera.position.x - root.current.position.x,
+        state.camera.position.z - root.current.position.z,
+      );
+      face.current.rotation.y = damp(
+        face.current.rotation.y,
+        yaw - root.current.rotation.y,
+        4.8,
+        delta,
+      );
+    }
     if (ring.current) {
       const pulse = pauseExtras ? 1 : 1 + Math.sin(state.clock.elapsedTime * 2.1) * 0.06;
       ring.current.scale.set(pulse, pulse, 1);
@@ -339,7 +352,9 @@ export function MuseBody({
       ) : null}
       <group ref={sway}>
         <group ref={torso}>
-          <MusePlushCard id={muse.id} />
+          <group ref={face}>
+            <OfficialMuse id={muse.id} />
+          </group>
           {laptop ? (
             <group position={[0, 0.42, 0.42]}>
               <Laptop />
