@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group, Mesh } from "three";
+import { usePerf } from "@/components/world/perf-context";
 import { damp } from "@/lib/world/camera";
 import type { MuseActivity, MuseId, MuseState } from "@/types/world";
 import { assertNever } from "@/types/world";
@@ -54,8 +55,9 @@ function Fluff({
   color?: string;
   scale?: [number, number, number];
 }) {
+  const { shadows } = usePerf();
   return (
-    <mesh castShadow position={position} scale={scale}>
+    <mesh castShadow={shadows} position={position} scale={scale} frustumCulled>
       <sphereGeometry args={[radius, 16, 14]} />
       <meshStandardMaterial color={color} roughness={0.92} metalness={0.02} />
     </mesh>
@@ -431,10 +433,15 @@ export function MuseBody({
   const rightProp = useRef<Group>(null);
   const ring = useRef<Mesh>(null);
   const phase = phaseFor(muse.id);
+  const { pauseExtras } = usePerf();
 
   useFrame((state, delta) => {
     if (!root.current) return;
-    const motion = motionFor(muse.activity, state.clock.elapsedTime, phase);
+    const motion = motionFor(
+      muse.activity,
+      pauseExtras ? 0 : state.clock.elapsedTime,
+      phase,
+    );
     root.current.position.set(
       muse.position[0] + motion.offset[0],
       muse.position[1] + motion.offset[1],
@@ -451,7 +458,7 @@ export function MuseBody({
     dampRot(leftProp.current, motion.prop, 7.5, delta);
     dampRot(rightProp.current, motion.prop, 7.5, delta);
     if (ring.current) {
-      const pulse = 1 + Math.sin(state.clock.elapsedTime * 2.1) * 0.06;
+      const pulse = pauseExtras ? 1 : 1 + Math.sin(state.clock.elapsedTime * 2.1) * 0.06;
       ring.current.scale.set(pulse, pulse, 1);
     }
   });
@@ -513,7 +520,7 @@ export function MuseBody({
           </group>
         </group>
       </group>
-      <SmokePuffs active={muse.activity === "SMOKING"} />
+      <SmokePuffs active={!pauseExtras && muse.activity === "SMOKING"} />
       {selected ? (
         <mesh ref={ring} position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[0.4, 0.48, 32]} />

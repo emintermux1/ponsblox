@@ -2,16 +2,33 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { ACESFilmicToneMapping } from "three";
+import { MotionConfig } from "framer-motion";
+import { ACESFilmicToneMapping, PCFShadowMap } from "three";
 import { WorldHud } from "@/components/world/hud";
+import { PerfProvider } from "@/components/world/perf-context";
 import { useLivingWorld } from "@/components/world/use-living-world";
+import { usePerfBudget } from "@/components/world/use-perf";
+import { WatchMode } from "@/components/world/watch-mode";
 import { INTRO_CLEAR_MS, INTRO_COPY_AT_MS } from "@/lib/world/camera";
+import type { RenderMode } from "@/lib/world/perf";
+import { assertNever } from "@/types/world";
 
 const INTRO_COPY = [
   "MUSE WORLD",
   "They don't wait for prompts",
   "Watch them live.",
 ] as const;
+
+function isWebglMode(mode: RenderMode): boolean {
+  switch (mode) {
+    case "webgl":
+      return true;
+    case "watch":
+      return false;
+    default:
+      return assertNever(mode);
+  }
+}
 
 const Canvas = dynamic(
   () => import("@react-three/fiber").then((mod) => mod.Canvas),
@@ -41,35 +58,69 @@ function useIntroCopy() {
 export function MuseWorld() {
   const { world, introDone, setIntroDone, select, setCamera, toggleMind } =
     useLivingWorld();
+  const { budget, ready, markWebglLost } = usePerfBudget();
+  const webgl = isWebglMode(budget.mode);
   const introLine = useIntroCopy();
 
+  useEffect(() => {
+    if (budget.reducedMotion) {
+      setIntroDone(true);
+    }
+  }, [budget.reducedMotion, setIntroDone]);
+
   return (
-    <main className="relative h-dvh w-full overflow-hidden bg-[#0d1520]">
-      <Canvas
-        shadows
-        dpr={[1, 1.6]}
-        camera={{ position: [1.1, 3.15, 11.4], fov: 36, near: 0.1, far: 80 }}
-        gl={{
-          antialias: true,
-          alpha: false,
-          powerPreference: "high-performance",
-          toneMapping: ACESFilmicToneMapping,
-        }}
-      >
-        <LivingScene
-          world={world}
-          introDone={introDone}
-          onIntroDone={() => setIntroDone(true)}
-          onSelect={select}
-        />
-      </Canvas>
-      <WorldHud
-        world={world}
-        introLine={introLine}
-        onPreset={setCamera}
-        onSelect={select}
-        onEnterMind={toggleMind}
-      />
-    </main>
+    <PerfProvider value={budget}>
+      <MotionConfig reducedMotion="user">
+        <main className="relative h-dvh w-full overflow-hidden bg-[#0d1520]">
+          {ready && webgl ? (
+            <Canvas
+              className="absolute inset-0"
+              shadows={budget.shadows ? { type: PCFShadowMap } : false}
+              dpr={budget.dpr}
+              frameloop={budget.frameloop}
+              camera={{
+                position: [1.1, 3.15, 11.4],
+                fov: 36,
+                near: 0.1,
+                far: budget.cameraFar,
+              }}
+              gl={{
+                antialias: budget.antialias,
+                alpha: false,
+                powerPreference: budget.powerPreference,
+                stencil: false,
+                preserveDrawingBuffer: true,
+                toneMapping: ACESFilmicToneMapping,
+              }}
+              onCreated={({ gl }) => {
+                gl.shadowMap.type = PCFShadowMap;
+                gl.domElement.addEventListener("webglcontextlost", (event) => {
+                  event.preventDefault();
+                  markWebglLost();
+                });
+              }}
+            >
+              <PerfProvider value={budget}>
+                <LivingScene
+                  world={world}
+                  introDone={introDone}
+                  onIntroDone={() => setIntroDone(true)}
+                  onSelect={select}
+                />
+              </PerfProvider>
+            </Canvas>
+          ) : null}
+          {ready && !webgl ? <WatchMode world={world} onSelect={select} /> : null}
+          <WorldHud
+            world={world}
+            introLine={budget.reducedMotion ? null : introLine}
+            mode={budget.mode}
+            onPreset={setCamera}
+            onSelect={select}
+            onEnterMind={toggleMind}
+          />
+        </main>
+      </MotionConfig>
+    </PerfProvider>
   );
 }

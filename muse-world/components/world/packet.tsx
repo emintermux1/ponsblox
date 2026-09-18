@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import type { Group } from "three";
+import { usePerf } from "@/components/world/perf-context";
 import { PACKET_TRAVEL_MS, packetAccent } from "@/lib/world/layout";
 import type { PacketEndpoint, PacketKind, SpatialPacket } from "@/types/world";
 import { assertNever } from "@/types/world";
@@ -37,9 +38,13 @@ export function TravelPacket({
   positions: Record<PacketEndpoint, [number, number, number]>;
 }) {
   const group = useRef<Group>(null);
+  const { hidden } = usePerf();
   const wallPin = packet?.kind === "PIN" && packet.to === "wall";
 
   useFrame(() => {
+    if (hidden) {
+      return;
+    }
     if (!group.current) {
       return;
     }

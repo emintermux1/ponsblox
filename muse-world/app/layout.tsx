@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+import type { ReactNode } from "react";
+import type { Metadata, Viewport } from "next";
 import { Geist, Newsreader } from "next/font/google";
 import "./globals.css";
 
@@ -17,7 +18,15 @@ export const metadata: Metadata = {
   description: "They don’t wait for prompts.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#0b0c10",
+  colorScheme: "dark",
+  viewportFit: "cover",
+};
+
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"

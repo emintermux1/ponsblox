@@ -1,6 +1,9 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { Text } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
+import { usePerf } from "@/components/world/perf-context";
 import type { MuseState } from "@/types/world";
 
 export function ThoughtChip({
@@ -10,7 +13,29 @@ export function ThoughtChip({
   muse: MuseState;
   hush?: boolean;
 }) {
-  if (hush || !muse.thought) {
+  const { thoughtDistance, pauseExtras } = usePerf();
+  const near = useRef(true);
+  const [show, setShow] = useState(true);
+
+  useFrame(({ camera }) => {
+    if (pauseExtras) {
+      if (!near.current) {
+        near.current = true;
+        setShow(true);
+      }
+      return;
+    }
+    const dx = camera.position.x - muse.position[0];
+    const dy = camera.position.y - muse.position[1];
+    const dz = camera.position.z - muse.position[2];
+    const next = Math.hypot(dx, dy, dz) < thoughtDistance;
+    if (next !== near.current) {
+      near.current = next;
+      setShow(next);
+    }
+  });
+
+  if (hush || !muse.thought || !show) {
     return null;
   }
 

@@ -3,6 +3,7 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Group, Mesh, MeshBasicMaterial, Quaternion, Vector3 } from "three";
+import { usePerf } from "@/components/world/perf-context";
 import {
   DESK_SIGNAL,
   MIND_ANCHORS,
@@ -247,9 +248,11 @@ export function MuseMindField({
   visible: boolean;
 }) {
   const sway = useRef<Group>(null);
+  const { pauseExtras } = usePerf();
 
   useFrame((state) => {
     if (!sway.current) return;
+    if (pauseExtras) return;
     const t = state.clock.elapsedTime;
     sway.current.rotation.y = Math.sin(t * 0.17) * 0.11;
     sway.current.rotation.x = Math.cos(t * 0.13) * 0.05;

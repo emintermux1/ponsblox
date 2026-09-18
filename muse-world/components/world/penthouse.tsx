@@ -12,6 +12,7 @@ import {
   SRGBColorSpace,
 } from "three";
 import type { ColorRepresentation, Mesh } from "three";
+import { usePerf } from "@/components/world/perf-context";
 import {
   IDEA_WALL_CARDS,
   IDEA_WALL_ORIGIN,
@@ -19,7 +20,31 @@ import {
   wallSlotLocal,
   worldToWallLocal,
 } from "@/lib/world/layout";
+import type { CityLod, GlassQuality } from "@/lib/world/perf";
 import type { SpatialPacket, WallPin } from "@/types/world";
+import { assertNever } from "@/types/world";
+
+function physicalGlass(glass: GlassQuality): boolean {
+  switch (glass) {
+    case "physical":
+      return true;
+    case "standard":
+      return false;
+    default:
+      return assertNever(glass);
+  }
+}
+
+function showDenseProps(lod: CityLod): boolean {
+  switch (lod) {
+    case "dense":
+      return true;
+    case "sparse":
+      return false;
+    default:
+      return assertNever(lod);
+  }
+}
 
 const WOOD = "#2b2118";
 const WOOD_DEEP = "#1a1410";
@@ -132,8 +157,15 @@ function Panel({
   roughness?: number;
   map?: CanvasTexture;
 }) {
+  const { shadows } = usePerf();
   return (
-    <mesh position={position} rotation={rotation} castShadow receiveShadow>
+    <mesh
+      position={position}
+      rotation={rotation}
+      castShadow={shadows}
+      receiveShadow={shadows}
+      frustumCulled
+    >
       <boxGeometry args={args} />
       <meshStandardMaterial
         color={color}
@@ -189,70 +221,71 @@ function BlueHourSky() {
   );
 }
 
-function City() {
-  const towers = useMemo(() => {
-    const items: { x: number; z: number; h: number; w: number; d: number; tex: number }[] = [];
-    for (let i = 0; i < 42; i += 1) {
-      items.push({
-        x: ((i * 53) % 34) - 17,
-        z: -12 - ((i * 17) % 22),
-        h: 3.2 + ((i * 19) % 11),
-        w: 0.85 + ((i * 5) % 6) * 0.18,
-        d: 0.75 + ((i * 7) % 5) * 0.16,
-        tex: i % 3,
-      });
+function cityTowers(count: number) {
+  const items: { x: number; z: number; h: number; w: number; d: number }[] = [];
+  for (let i = 0; i < count; i += 1) {
+    items.push({
+      x: ((i * 53) % 34) - 17,
+      z: -12 - ((i * 17) % 22),
+      h: 3.2 + ((i * 19) % 11),
+      w: 0.85 + ((i * 5) % 6) * 0.18,
+      d: 0.75 + ((i * 7) % 5) * 0.16,
+    });
+  }
+  return items;
+}
+
+function City({ count }: { count: number }) {
+  const mesh = useRef<InstancedMesh>(null);
+  const dummy = useMemo(() => new Object3D(), []);
+  const towers = useMemo(() => cityTowers(count), [count]);
+  const facade = useMemo(() => asMap(makeFacade(11)), []);
+  const { shadows } = usePerf();
+
+  useLayoutEffect(() => {
+    const instance = mesh.current;
+    if (!instance) {
+      return;
     }
-    return items;
-  }, []);
-  const facades = useMemo(
-    () => [asMap(makeFacade(11)), asMap(makeFacade(77)), asMap(makeFacade(141))],
-    [],
-  );
+    towers.forEach((tower, index) => {
+      dummy.position.set(tower.x, tower.h / 2 - 1.15, tower.z);
+      dummy.scale.set(tower.w, tower.h, tower.d);
+      dummy.updateMatrix();
+      instance.setMatrixAt(index, dummy.matrix);
+    });
+    instance.instanceMatrix.needsUpdate = true;
+    instance.computeBoundingSphere();
+    instance.frustumCulled = true;
+  }, [dummy, towers]);
+
+  useLayoutEffect(() => {
+    return () => {
+      facade.dispose();
+    };
+  }, [facade]);
+
+  if (count <= 0) {
+    return null;
+  }
 
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.35, -24]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.35, -24]} receiveShadow={shadows}>
         <planeGeometry args={[90, 56]} />
         <meshStandardMaterial color="#0b0f14" roughness={0.96} metalness={0.04} />
       </mesh>
-      {towers.map((tower, i) => (
-        <mesh key={i} position={[tower.x, tower.h / 2 - 1.15, tower.z]} castShadow>
-          <boxGeometry args={[tower.w, tower.h, tower.d]} />
-          <meshStandardMaterial
-            color="#161a21"
-            map={facades[tower.tex]}
-            emissive="#c9b089"
-            emissiveMap={facades[tower.tex]}
-            emissiveIntensity={0.32}
-            roughness={0.52}
-            metalness={0.22}
-          />
-        </mesh>
-      ))}
-      <mesh position={[-3.2, 7.4, -26]}>
-        <boxGeometry args={[1.1, 16.2, 1.1]} />
+      <instancedMesh key={count} ref={mesh} args={[undefined, undefined, count]} frustumCulled>
+        <boxGeometry args={[1, 1, 1]} />
         <meshStandardMaterial
-          color="#141820"
-          map={facades[0]}
+          color="#161a21"
+          map={facade}
           emissive="#c9b089"
-          emissiveMap={facades[0]}
-          emissiveIntensity={0.26}
-          roughness={0.48}
-          metalness={0.28}
+          emissiveMap={facade}
+          emissiveIntensity={0.28}
+          roughness={0.52}
+          metalness={0.22}
         />
-      </mesh>
-      <mesh position={[6.8, 5.1, -21.5]}>
-        <boxGeometry args={[3.4, 10.8, 1.4]} />
-        <meshStandardMaterial
-          color="#171c24"
-          map={facades[1]}
-          emissive="#c9b089"
-          emissiveMap={facades[1]}
-          emissiveIntensity={0.22}
-          roughness={0.5}
-          metalness={0.2}
-        />
-      </mesh>
+      </instancedMesh>
     </group>
   );
 }
@@ -315,20 +348,32 @@ function WoodSlats({
 
 function WindowWall() {
   const bays = [-7.2, -3.6, 0, 3.6, 7.2];
+  const { glass } = usePerf();
+  const physical = physicalGlass(glass);
   return (
     <group position={[0, 2.28, -4.58]}>
-      <mesh>
+      <mesh frustumCulled>
         <boxGeometry args={[18.6, 4.52, 0.04]} />
-        <meshPhysicalMaterial
-          color="#6a7682"
-          metalness={0.16}
-          roughness={0.055}
-          transparent
-          opacity={0.2}
-          transmission={0.18}
-          thickness={0.28}
-          ior={1.5}
-        />
+        {physical ? (
+          <meshPhysicalMaterial
+            color="#6a7682"
+            metalness={0.16}
+            roughness={0.055}
+            transparent
+            opacity={0.2}
+            transmission={0.18}
+            thickness={0.28}
+            ior={1.5}
+          />
+        ) : (
+          <meshStandardMaterial
+            color="#8aa0b4"
+            transparent
+            opacity={0.28}
+            roughness={0.18}
+            metalness={0.08}
+          />
+        )}
       </mesh>
       <Panel args={[18.9, 0.1, 0.16]} position={[0, 2.3, 0.02]} color={ALUMINUM} metalness={0.86} roughness={0.32} />
       <Panel args={[18.9, 0.14, 0.2]} position={[0, -2.24, 0.04]} color={ALUMINUM_DARK} metalness={0.8} roughness={0.36} />
@@ -383,18 +428,24 @@ function Lounge() {
 }
 
 function CoffeeTable() {
+  const { glass, shadows } = usePerf();
+  const physical = physicalGlass(glass);
   return (
     <group position={[-2.7, 0, 2.2]}>
-      <mesh position={[0, 0.3, 0]} castShadow>
+      <mesh position={[0, 0.3, 0]} castShadow={shadows} frustumCulled>
         <boxGeometry args={[1.28, 0.018, 0.72]} />
-        <meshPhysicalMaterial
-          color="#4a5560"
-          metalness={0.2}
-          roughness={0.06}
-          transparent
-          opacity={0.32}
-          transmission={0.2}
-        />
+        {physical ? (
+          <meshPhysicalMaterial
+            color="#4a5560"
+            metalness={0.2}
+            roughness={0.06}
+            transparent
+            opacity={0.32}
+            transmission={0.2}
+          />
+        ) : (
+          <meshStandardMaterial color="#4a5560" metalness={0.2} roughness={0.18} />
+        )}
       </mesh>
       {[-0.56, 0.56].map((x) =>
         [-0.28, 0.28].map((z) => (
@@ -587,26 +638,46 @@ function Structure({
   concrete: CanvasTexture;
   wood: CanvasTexture;
 }) {
+  const { extraLights, shadows } = usePerf();
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0.4]} receiveShadow>
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0, 0, 0.4]}
+        receiveShadow={shadows}
+        frustumCulled
+      >
         <planeGeometry args={[20, 12]} />
-        <MeshReflectorMaterial
-          color={CONCRETE}
-          map={concrete}
-          metalness={0.16}
-          roughness={0.42}
-          blur={[280, 80]}
-          resolution={768}
-          mixBlur={1}
-          mixStrength={0.28}
-          mirror={0.12}
-          depthScale={0.7}
-          minDepthThreshold={0.35}
-          maxDepthThreshold={1.35}
-        />
+        {extraLights ? (
+          <MeshReflectorMaterial
+            color={CONCRETE}
+            map={concrete}
+            metalness={0.16}
+            roughness={0.42}
+            blur={[280, 80]}
+            resolution={768}
+            mixBlur={1}
+            mixStrength={0.28}
+            mirror={0.12}
+            depthScale={0.7}
+            minDepthThreshold={0.35}
+            maxDepthThreshold={1.35}
+          />
+        ) : (
+          <meshStandardMaterial
+            color={CONCRETE}
+            map={concrete}
+            metalness={0.16}
+            roughness={0.42}
+          />
+        )}
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-3.5, 0.012, 1.9]} receiveShadow>
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[-3.5, 0.012, 1.9]}
+        receiveShadow={shadows}
+        frustumCulled
+      >
         <planeGeometry args={[7.4, 5.6]} />
         <meshStandardMaterial color="#2a2622" roughness={0.92} metalness={0.02} />
       </mesh>
@@ -663,6 +734,8 @@ export function Penthouse({
   wallPins?: WallPin[];
   builderPos?: [number, number, number];
 }) {
+  const { cityCount, cityLod } = usePerf();
+  const dense = showDenseProps(cityLod);
   const concrete = useMemo(() => asMap(makeSpeckle(512, "#6c6964", 404, 9000), 3, 2), []);
   const wood = useMemo(() => asMap(makeWood(), 2, 1), []);
 
@@ -679,14 +752,14 @@ export function Penthouse({
       <Structure concrete={concrete} wood={wood} />
       <WindowWall />
       <Lounge />
-      <LoungeChair />
+      {dense ? <LoungeChair /> : null}
       <CoffeeTable />
-      <Hookah />
-      <FloorLamp />
+      {dense ? <Hookah /> : null}
+      {dense ? <FloorLamp /> : null}
       <Desk />
       <IdeaWall packet={packet} pins={wallPins} builderPos={builderPos} />
-      <City />
-      <Haze />
+      <City count={cityCount} />
+      {dense ? <Haze /> : null}
     </group>
   );
 }

@@ -7,8 +7,9 @@ import {
   grokSignalLive,
   projectMindNode,
 } from "@/lib/world/mind-graph";
+import type { RenderMode } from "@/lib/world/perf";
 import type { CameraPreset, MuseId, MuseState, WorldSnapshot } from "@/types/world";
-import { MIND_NODES } from "@/types/world";
+import { MIND_NODES, assertNever } from "@/types/world";
 
 const PRESETS: CameraPreset[] = ["ROOM", "LOUNGE", "TRADER", "BUILDER", "SCROLLER"];
 
@@ -18,6 +19,17 @@ const fade = {
   exit: { opacity: 0 },
   transition: { duration: 1.05, ease: [0.22, 1, 0.36, 1] as const },
 };
+
+function modeLabel(mode: RenderMode): string {
+  switch (mode) {
+    case "webgl":
+      return "LOFT";
+    case "watch":
+      return "WATCH";
+    default:
+      return assertNever(mode);
+  }
+}
 
 function MindConstellation({ nodes }: { nodes: MuseState["mind"]["nodes"] }) {
   const width = 220;
@@ -101,12 +113,14 @@ function MindStatus({ muse }: { muse: MuseState }) {
 export function WorldHud({
   world,
   introLine,
+  mode,
   onPreset,
   onSelect,
   onEnterMind,
 }: {
   world: WorldSnapshot;
   introLine: string | null;
+  mode: RenderMode;
   onPreset: (preset: CameraPreset) => void;
   onSelect: (id: MuseId | null) => void;
   onEnterMind: () => void;
@@ -117,11 +131,12 @@ export function WorldHud({
 
   return (
     <div className="pointer-events-none absolute inset-0 text-[#efe6d4]">
-      <div className="absolute left-6 top-6">
+      <div className="pointer-events-auto absolute left-4 top-5 sm:left-6 sm:top-6">
         <p className="font-serif text-[11px] tracking-[0.42em]">MUSE WORLD</p>
         <p className="mt-2 flex items-center gap-2 text-[10px] tracking-[0.32em] text-[#c8b892]">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#c8b892]" />
           LIVE
+          <span className="text-[#8d8370]">{modeLabel(mode)}</span>
         </p>
       </div>
 
@@ -130,7 +145,7 @@ export function WorldHud({
           <motion.div
             key="presets"
             {...fade}
-            className="pointer-events-auto absolute right-6 top-6 flex gap-4 text-[9px] tracking-[0.28em] text-[#5c564c]"
+            className="pointer-events-auto absolute right-4 top-5 flex max-w-[58vw] flex-wrap justify-end gap-x-3 gap-y-1 text-[9px] tracking-[0.28em] text-[#5c564c] sm:right-6 sm:top-6 sm:gap-4"
           >
             {PRESETS.map((preset) => (
               <button
@@ -156,7 +171,7 @@ export function WorldHud({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 1.15, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute left-1/2 top-[18%] -translate-x-1/2 text-center font-serif text-3xl tracking-[0.1em] md:text-5xl"
+            className="absolute left-1/2 top-[18%] -translate-x-1/2 px-6 text-center font-serif text-3xl tracking-[0.1em] md:text-5xl"
           >
             {introLine}
           </motion.p>
@@ -168,7 +183,7 @@ export function WorldHud({
           <motion.p
             key={latest.id}
             {...fade}
-            className="absolute bottom-6 left-6 max-w-xs text-[10px] tracking-[0.08em] text-[#8d8370]"
+            className="absolute bottom-6 left-4 max-w-xs text-[10px] tracking-[0.08em] text-[#8d8370] sm:left-6"
           >
             {latest.text}
           </motion.p>

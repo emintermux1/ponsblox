@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
+import { usePerf } from "@/components/world/perf-context";
 import {
   applyProxyToCamera,
   dampShot,
@@ -28,6 +29,7 @@ export function CameraRig({
   onIntroDone: () => void;
 }) {
   const camera = useThree((state) => state.camera);
+  const { reducedMotion, hidden } = usePerf();
   const proxy = useRef<ShotProxy>(proxyFromCamera(camera, INTRO_SHOTS[0]));
   const follow = useRef(false);
   const finished = useRef(false);
@@ -43,7 +45,13 @@ export function CameraRig({
   }, [onIntroDone]);
 
   useEffect(() => {
-    if (introDone) {
+    if (reducedMotion && !introDone) {
+      onIntroDone();
+    }
+  }, [introDone, onIntroDone, reducedMotion]);
+
+  useEffect(() => {
+    if (introDone || reducedMotion) {
       return;
     }
     const finish = () => {
@@ -60,7 +68,7 @@ export function CameraRig({
       window.clearTimeout(failSafe);
       timeline.kill();
     };
-  }, [introDone]);
+  }, [introDone, reducedMotion]);
 
   useEffect(() => {
     if (!introDone) {
@@ -79,6 +87,9 @@ export function CameraRig({
   }, [preset, selected, introDone]);
 
   useFrame((_, dt) => {
+    if (hidden) {
+      return;
+    }
     if (follow.current && preset === "MIND") {
       dampShot(proxy.current, shotForPreset("MIND", selected, musePos), dt);
     }
