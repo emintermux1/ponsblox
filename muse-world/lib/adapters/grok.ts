@@ -1,6 +1,12 @@
 import "server-only";
 
-import type { GrokSource, MuseId } from "@/types/world";
+import type { MuseId } from "@/types/world";
+import {
+  classifyGrokBias,
+  resolveWakeResult,
+  type GrokToolReply,
+  type GrokWakeResult,
+} from "@/lib/adapters/parse";
 
 export type GrokAsk = {
   museId: MuseId;
@@ -8,22 +14,11 @@ export type GrokAsk = {
   observation: string;
 };
 
-export type GrokReply = {
-  source: GrokSource;
-  summary: string;
-  bias: "buy" | "pass" | "watch";
-};
+export type { GrokReply, GrokToolReply, GrokWakeResult } from "@/lib/adapters/parse";
 
-function classify(text: string): GrokReply["bias"] {
-  const lower = text.toLowerCase();
-  if (lower.includes("pass") || lower.includes("avoid") || lower.includes("thin")) {
-    return "pass";
-  }
-  if (lower.includes("buy") || lower.includes("asymmetric") || lower.includes("early")) {
-    return "buy";
-  }
-  return "watch";
-}
+const WAKE_COOLDOWN_MS = 20_000;
+let lastWakeAt = 0;
+let lastWakeOk = false;
 
 async function wakeGrokBot(ask: GrokAsk): Promise<boolean> {
   const url = process.env.GROK_BOT_WEBHOOK_URL;
@@ -31,25 +26,37 @@ async function wakeGrokBot(ask: GrokAsk): Promise<boolean> {
   if (!url || !key) {
     return false;
   }
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${key}`,
-      "X-Automation-Key": key,
-    },
-    body: JSON.stringify({
-      museId: ask.museId,
-      goal: ask.goal,
-      observation: ask.observation,
-      note: "Muse is the brain. Reply by POSTing /api/grok/ingest.",
-    }),
-    signal: AbortSignal.timeout(8000),
-  });
-  return response.ok;
+  const now = Date.now();
+  if (now - lastWakeAt < WAKE_COOLDOWN_MS) {
+    return lastWakeOk;
+  }
+  lastWakeAt = now;
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${key}`,
+        "X-Automation-Key": key,
+      },
+      body: JSON.stringify({
+        museId: ask.museId,
+        goal: ask.goal,
+        observation: ask.observation,
+        replyTo: "/api/grok/ingest",
+        note: "Muse is the brain. HTTP 200 here means a run started, not a Grok Bot reply. Reply by POSTing /api/grok/ingest.",
+      }),
+      signal: AbortSignal.timeout(8000),
+    });
+    lastWakeOk = response.ok;
+    return lastWakeOk;
+  } catch {
+    lastWakeOk = false;
+    return false;
+  }
 }
 
-async function askXai(ask: GrokAsk): Promise<GrokReply | null> {
+async function askXai(ask: GrokAsk): Promise<GrokToolReply | null> {
   const key = process.env.XAI_API_KEY;
   if (!key) {
     return null;
@@ -68,7 +75,7 @@ async function askXai(ask: GrokAsk): Promise<GrokReply | null> {
         {
           role: "system",
           content:
-            "You are a tool called by a Muse agent. One short sentence. No chain of thought. End with WATCH, PASS, or BUY.",
+            "You are a tool called by a Muse agent. One short sentence. No chain of thought. End with WATCH, PASS, or BUY. Do not invent fills or claim you executed a trade.",
         },
         {
           role: "user",
@@ -88,25 +95,19 @@ async function askXai(ask: GrokAsk): Promise<GrokReply | null> {
   if (!summary) {
     return null;
   }
-  return { source: "xai", summary: summary.slice(0, 140), bias: classify(summary) };
+  return {
+    source: "xai",
+    summary: summary.slice(0, 140),
+    bias: classifyGrokBias(summary),
+  };
 }
 
-export async function askGrok(ask: GrokAsk): Promise<GrokReply> {
+export async function wakeGrok(ask: GrokAsk): Promise<GrokWakeResult> {
   const woken = await wakeGrokBot(ask).catch(() => false);
   const xai = await askXai(ask).catch(() => null);
-  if (xai) {
-    return xai;
-  }
-  if (woken) {
-    return {
-      source: "bot",
-      summary: "Grok Bot woken — waiting on ingest",
-      bias: "watch",
-    };
-  }
-  return {
-    source: "sim",
-    summary: "no Grok key — SIM context only",
-    bias: "watch",
-  };
+  return resolveWakeResult(woken, xai);
+}
+
+export async function askGrok(ask: GrokAsk): Promise<GrokWakeResult> {
+  return wakeGrok(ask);
 }

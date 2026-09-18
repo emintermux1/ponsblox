@@ -123,6 +123,10 @@ export const MUSE_IDS: MuseId[] = [
   "builder",
 ];
 
+export function isMuseId(value: unknown): value is MuseId {
+  return typeof value === "string" && (MUSE_IDS as readonly string[]).includes(value);
+}
+
 export function assertNever(value: never): never {
   throw new Error(`unhandled: ${String(value)}`);
 }

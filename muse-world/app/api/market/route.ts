@@ -3,6 +3,22 @@ import { peekMarketPulse } from "@/lib/adapters/market";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const pulse = await peekMarketPulse();
-  return Response.json(pulse);
+  try {
+    const pulse = await peekMarketPulse();
+    return Response.json({ ...pulse, fills: [] });
+  } catch {
+    return Response.json({
+      kind: "QUIET",
+      ticker: null,
+      mint: null,
+      source: "sim",
+      providers: {
+        gecko: "error",
+        birdeye: "skip",
+        helius: "skip",
+        gmgn: "skip",
+      },
+      fills: [],
+    });
+  }
 }

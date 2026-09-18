@@ -1,4 +1,5 @@
 import { askGrok } from "@/lib/adapters/grok";
+import { grokReplyFromWake, makeGrokEvent } from "@/lib/adapters/parse";
 import { peekMarketPulse } from "@/lib/adapters/market";
 import { applyActivity, pickTicker, setThought, tickSnapshot } from "@/lib/sim/tick";
 import { getWorld, patchWorld } from "@/lib/world/store";
@@ -31,11 +32,12 @@ export async function runGrokTick(): Promise<void> {
     "THINKING",
     ticker,
   );
-  const reply = await askGrok({
+  const wake = await askGrok({
     museId: "trader",
     goal: asked.mind.goal,
     observation: `${ticker} is in the room`,
   });
+  const reply = grokReplyFromWake(wake);
   const after = setThought(
     {
       ...asked,
@@ -46,7 +48,7 @@ export async function runGrokTick(): Promise<void> {
         watching: ticker,
         nodes: {
           ...asked.mind.nodes,
-          GROK: 0.4,
+          GROK: wake.xai ? 0.4 : 0.72,
           RISK: reply.bias === "pass" ? 0.66 : 0.44,
           CONVICTION: reply.bias === "buy" ? 0.7 : 0.38,
         },
@@ -54,18 +56,19 @@ export async function runGrokTick(): Promise<void> {
     },
     "send to grok",
   );
+  const kind = wake.xai ? ("GROK_RESPONSE" as const) : ("GROK_REQUESTED" as const);
+  const source = wake.xai ? ("xai" as const) : ("sim" as const);
   patchWorld((current) => ({
     ...current,
     muses: { ...current.muses, trader: after },
     events: [
-      {
-        id: `ev_${Date.now().toString(36)}`,
-        kind: reply.source === "sim" ? ("GROK_REQUESTED" as const) : ("GROK_RESPONSE" as const),
-        museId: "trader" as const,
-        text: `${after.name} → GROK · ${reply.summary}`,
-        at: Date.now(),
-        source: reply.source,
-      },
+      makeGrokEvent({
+        kind,
+        museId: "trader",
+        museName: after.name,
+        source,
+        summary: reply.summary,
+      }),
       ...current.events,
     ].slice(0, 24),
   }));
