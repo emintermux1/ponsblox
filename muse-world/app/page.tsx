@@ -4,7 +4,7 @@ export default function Home() {
   return (
     <div className="loft-root">
       <h1 className="sr-only">
-        Muse World. A living penthouse. Four muses. You watch.
+        Muse World. Scroller, Trader, Chill, Builder, and Grok.
       </h1>
       <SpectatorFrame />
       <div className="loft-grain" aria-hidden />
