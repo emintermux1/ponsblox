@@ -1,33 +1,15 @@
 import "server-only";
 
-import type { WorldEventKind } from "@/types/world";
+import {
+  marketPulseFromFetch,
+  simMarketPulse,
+  type MarketPulse,
+} from "@/lib/adapters/source";
 
-export type MarketPulse = {
-  kind: WorldEventKind | "QUIET";
-  ticker: string | null;
-  source: "gecko" | "sim";
-};
+export type { MarketPulse };
 
-type GeckoPool = {
-  attributes?: {
-    name?: string;
-    volume_usd?: { h1?: string };
-  };
-};
-
-let lastPulse: MarketPulse = { kind: "QUIET", ticker: null, source: "sim" };
+let lastPulse: MarketPulse = simMarketPulse();
 let lastAt = 0;
-
-function tickerFromName(name: string | undefined): string | null {
-  if (!name) {
-    return null;
-  }
-  const token = name.split("/")[0]?.trim();
-  if (!token || token.length > 8) {
-    return null;
-  }
-  return token.toUpperCase();
-}
 
 export async function peekMarketPulse(): Promise<MarketPulse> {
   const now = Date.now();
@@ -45,21 +27,14 @@ export async function peekMarketPulse(): Promise<MarketPulse> {
       },
     );
     if (!response.ok) {
-      lastPulse = { kind: "QUIET", ticker: null, source: "sim" };
+      lastPulse = marketPulseFromFetch({ status: "http-error" });
       return lastPulse;
     }
-    const body = (await response.json()) as { data?: GeckoPool[] };
-    const row = body.data?.[0];
-    const ticker = tickerFromName(row?.attributes?.name);
-    const volume = Number(row?.attributes?.volume_usd?.h1 ?? 0);
-    lastPulse = {
-      kind: volume > 40_000 ? "TREND_SPIKE" : "VIRAL_POST",
-      ticker,
-      source: "gecko",
-    };
+    const body: unknown = await response.json();
+    lastPulse = marketPulseFromFetch({ status: "ok", body });
     return lastPulse;
   } catch {
-    lastPulse = { kind: "QUIET", ticker: null, source: "sim" };
+    lastPulse = marketPulseFromFetch({ status: "network-error" });
     return lastPulse;
   }
 }

@@ -1,3 +1,8 @@
+import {
+  assertSource,
+  authorizeMuseIngest,
+  grokIngestEventSource,
+} from "@/lib/adapters/source";
 import { patchWorld } from "@/lib/world/store";
 import type { MuseId } from "@/types/world";
 
@@ -11,10 +16,11 @@ function isMuseId(value: unknown): value is MuseId {
 
 export async function POST(request: Request) {
   const secret = process.env.GROK_INGEST_SECRET;
-  const header = request.headers.get("x-muse-ingest") ?? request.headers.get("authorization");
-  if (secret && header !== secret && header !== `Bearer ${secret}`) {
+  const header = request.headers.get("x-muse-ingest");
+  if (!authorizeMuseIngest(header, secret)) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
+  assertSource("real");
   const body = (await request.json().catch(() => ({}))) as {
     museId?: unknown;
     summary?: unknown;
@@ -27,6 +33,7 @@ export async function POST(request: Request) {
   if (!summary) {
     return Response.json({ error: "summary required" }, { status: 400 });
   }
+  const source = grokIngestEventSource();
   patchWorld((world) => ({
     ...world,
     muses: {
@@ -47,7 +54,7 @@ export async function POST(request: Request) {
         museId,
         text: `${world.muses[museId].name} ← GROK · ${summary}`,
         at: Date.now(),
-        source: "bot" as const,
+        source,
       },
       ...world.events,
     ].slice(0, 24),

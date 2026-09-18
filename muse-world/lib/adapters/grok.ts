@@ -1,18 +1,13 @@
 import "server-only";
 
-import type { GrokSource, MuseId } from "@/types/world";
+import {
+  grokReplyAfterWake,
+  isGrokWebhookConfigured,
+  type GrokAsk,
+  type GrokReply,
+} from "@/lib/adapters/source";
 
-export type GrokAsk = {
-  museId: MuseId;
-  goal: string;
-  observation: string;
-};
-
-export type GrokReply = {
-  source: GrokSource;
-  summary: string;
-  bias: "buy" | "pass" | "watch";
-};
+export type { GrokAsk, GrokReply };
 
 function classify(text: string): GrokReply["bias"] {
   const lower = text.toLowerCase();
@@ -26,6 +21,9 @@ function classify(text: string): GrokReply["bias"] {
 }
 
 async function wakeGrokBot(ask: GrokAsk): Promise<boolean> {
+  if (!isGrokWebhookConfigured()) {
+    return false;
+  }
   const url = process.env.GROK_BOT_WEBHOOK_URL;
   const key = process.env.GROK_BOT_WEBHOOK_KEY;
   if (!url || !key) {
@@ -92,21 +90,8 @@ async function askXai(ask: GrokAsk): Promise<GrokReply | null> {
 }
 
 export async function askGrok(ask: GrokAsk): Promise<GrokReply> {
-  const woken = await wakeGrokBot(ask).catch(() => false);
+  const webhookConfigured = isGrokWebhookConfigured();
+  const woken = webhookConfigured ? await wakeGrokBot(ask).catch(() => false) : false;
   const xai = await askXai(ask).catch(() => null);
-  if (xai) {
-    return xai;
-  }
-  if (woken) {
-    return {
-      source: "bot",
-      summary: "Grok Bot woken — waiting on ingest",
-      bias: "watch",
-    };
-  }
-  return {
-    source: "sim",
-    summary: "no Grok key — SIM context only",
-    bias: "watch",
-  };
+  return grokReplyAfterWake({ webhookConfigured, woken, xai });
 }
