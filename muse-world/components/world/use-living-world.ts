@@ -101,8 +101,6 @@ export function useLivingWorld() {
     };
   }, []);
 
-  const worldRef = useRef(world);
-  worldRef.current = world;
   const wakingRef = useRef(false);
 
   const select = (id: MuseId | null) => {
@@ -140,12 +138,12 @@ export function useLivingWorld() {
     if (wakingRef.current) {
       return;
     }
-    const subject = worldRef.current.selected ?? mostAwakeId(worldRef.current);
+    const subject = world.selected ?? mostAwakeId(world);
+    const muse = world.muses[subject];
     wakingRef.current = true;
     setWorld((current) => applyGrokFocus(current, subject));
     void (async () => {
       try {
-        const muse = worldRef.current.muses[subject];
         const response = await fetch("/api/grok/wake", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
