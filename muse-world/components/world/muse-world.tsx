@@ -1,8 +1,16 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { WorldHud } from "@/components/world/hud";
 import { useLivingWorld } from "@/components/world/use-living-world";
+import { INTRO_CLEAR_MS, INTRO_COPY_AT_MS } from "@/lib/world/camera";
+
+const INTRO_COPY = [
+  "MUSE WORLD",
+  "They don't wait for prompts",
+  "Watch them live.",
+] as const;
 
 const Canvas = dynamic(
   () => import("@react-three/fiber").then((mod) => mod.Canvas),
@@ -14,9 +22,24 @@ const LivingScene = dynamic(
   { ssr: false },
 );
 
+function useIntroCopy() {
+  const [introLine, setIntroLine] = useState<string | null>(INTRO_COPY[0]);
+
+  useEffect(() => {
+    const timers = INTRO_COPY.map((text, index) =>
+      window.setTimeout(() => setIntroLine(text), INTRO_COPY_AT_MS[index]),
+    );
+    timers.push(window.setTimeout(() => setIntroLine(null), INTRO_CLEAR_MS));
+    return () => timers.forEach((id) => window.clearTimeout(id));
+  }, []);
+
+  return introLine;
+}
+
 export function MuseWorld() {
-  const { world, introDone, introLine, setIntroDone, select, setCamera, toggleMind } =
+  const { world, introDone, setIntroDone, select, setCamera, toggleMind } =
     useLivingWorld();
+  const introLine = useIntroCopy();
 
   return (
     <main className="relative h-dvh w-full overflow-hidden bg-[#0b0c10]">
@@ -36,6 +59,7 @@ export function MuseWorld() {
       <WorldHud
         world={world}
         introLine={introLine}
+        introDone={introDone}
         onPreset={setCamera}
         onSelect={select}
         onEnterMind={toggleMind}
