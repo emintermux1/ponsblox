@@ -54,7 +54,7 @@ export function applyMuseSelect(world: WorldSnapshot, id: MuseId | null): WorldS
     selected: id,
     inspecting: null,
     mindOpen: id ? world.mindOpen : false,
-    camera: id ? presetForMuse(id) : "ROOM",
+    camera: id ? presetForMuse(id) : world.camera,
   };
 }
 

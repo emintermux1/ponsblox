@@ -21,6 +21,14 @@ export const INTRO_COPY = [
   "They don't wait for prompts",
   "Watch them live.",
 ] as const;
+
+export function introCopyAt(index: number): string | null {
+  if (!Number.isInteger(index) || index < 0 || index >= INTRO_COPY.length) {
+    return null;
+  }
+  return INTRO_COPY[index] ?? null;
+}
+
 export const ENTER_MIND = "mind";
 export const LEAVE_MIND = "close";
 export const MIND_HINT = "mind";

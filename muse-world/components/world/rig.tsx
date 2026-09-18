@@ -14,6 +14,7 @@ import {
   HOME_SHOT,
   INTRO_FAILSAFE_MS,
   introShotsFor,
+  LOOK_CAM,
   lookLimits,
   playIntro,
   proxyFromCamera,
@@ -31,6 +32,18 @@ type Drive =
   | { kind: "intro" }
   | { kind: "ease"; to: Shot }
   | { kind: "free" };
+
+function viewportSize(): { width: number; height: number } {
+  if (typeof window === "undefined") {
+    return { width: 1280, height: 800 };
+  }
+  return { width: window.innerWidth, height: window.innerHeight };
+}
+
+function fittedHome(): Shot {
+  const { width, height } = viewportSize();
+  return fitShotToViewport(HOME_SHOT, width, height);
+}
 
 function syncLook(controls: OrbitControlsImpl | null, proxy: ShotProxy): void {
   if (!controls) {
@@ -55,15 +68,15 @@ export function CameraRig({
 }) {
   const camera = useThree((state) => state.camera);
   const gl = useThree((state) => state.gl);
-  const size = useThree((state) => state.size);
   const { reducedMotion, hidden, cameraFar, tier } = usePerf();
-  const compact = tier === "phone" || size.width < 768;
+  const compact = tier === "phone";
   const limits = lookLimits(compact);
-  const fit = (shot: Shot): Shot => fitShotToViewport(shot, size.width, size.height);
-  const home = (): Shot => fit(HOME_SHOT);
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
-  const startShot = fit(introShotsFor(size.width, size.height)[0] ?? HOME_SHOT);
-  const proxy = useRef<ShotProxy>(flattenShot(introDone || reducedMotion ? home() : startShot));
+  const startShot = (() => {
+    const { width, height } = viewportSize();
+    return fitShotToViewport(introShotsFor(width, height)[0] ?? HOME_SHOT, width, height);
+  })();
+  const proxy = useRef<ShotProxy>(flattenShot(introDone || reducedMotion ? fittedHome() : startShot));
   const drive = useRef<Drive>(introDone || reducedMotion ? { kind: "free" } : { kind: "intro" });
   const dragging = useRef(false);
   const skipPreset = useRef(true);
@@ -83,7 +96,7 @@ export function CameraRig({
 
   releaseRef.current = (fromCamera, finishIntro) => {
     if (fromCamera) {
-      proxy.current = proxyFromCamera(camera, home());
+      proxy.current = proxyFromCamera(camera, fittedHome());
     }
     applyProxyToCamera(camera, proxy.current);
     const controls = controlsRef.current;
@@ -103,7 +116,7 @@ export function CameraRig({
     if (!reducedMotion) {
       return;
     }
-    writeShot(proxy.current, home());
+    writeShot(proxy.current, fittedHome());
     applyProxyToCamera(camera, proxy.current);
     syncLook(controlsRef.current, proxy.current);
     drive.current = { kind: "free" };
@@ -111,7 +124,7 @@ export function CameraRig({
     if (!introDone) {
       onIntroDone();
     }
-  }, [camera, introDone, onIntroDone, reducedMotion, size.height, size.width]);
+  }, [camera, introDone, onIntroDone, reducedMotion]);
 
   useEffect(() => {
     if (introDone || reducedMotion) {
@@ -119,9 +132,8 @@ export function CameraRig({
     }
     drive.current = { kind: "intro" };
     setLookFree(false);
-    const shots = introShotsFor(size.width, size.height).map((shot) =>
-      fitShotToViewport(shot, size.width, size.height),
-    );
+    const { width, height } = viewportSize();
+    const shots = introShotsFor(width, height).map((shot) => fitShotToViewport(shot, width, height));
     const timeline = playIntro(
       proxy.current,
       () => {
@@ -132,12 +144,12 @@ export function CameraRig({
     const failSafe = window.setTimeout(() => {
       timeline.kill();
       releaseRef.current(false, true);
-    }, compact ? INTRO_FAILSAFE_MS : INTRO_FAILSAFE_MS + 1_200);
+    }, INTRO_FAILSAFE_MS);
     return () => {
       window.clearTimeout(failSafe);
       timeline.kill();
     };
-  }, [compact, introDone, reducedMotion, size.height, size.width]);
+  }, [introDone, reducedMotion]);
 
   useEffect(() => {
     if (!introDone) {
@@ -150,11 +162,12 @@ export function CameraRig({
       syncLook(controlsRef.current, proxy.current);
       return;
     }
-    const next = fit(shotForPreset(preset, selected, musePosRef.current));
+    const { width, height } = viewportSize();
+    const next = fitShotToViewport(shotForPreset(preset, selected, musePosRef.current), width, height);
     proxy.current = proxyFromCamera(camera, next);
-    drive.current = { kind: "ease", to: next };
+    drive.current = { kind: "ease"; to: next };
     setLookFree(true);
-  }, [camera, introDone, preset, selected, size.height, size.width]);
+  }, [camera, introDone, preset, selected]);
 
   useEffect(() => {
     const el = gl.domElement;
@@ -223,9 +236,9 @@ export function CameraRig({
         }
       }}
       makeDefault
-      enabled={lookFree && !hidden}
+      enabled={lookFree}
       enableDamping
-      dampingFactor={limits.dampingFactor}
+      dampingFactor={LOOK_CAM.dampingFactor}
       enablePan={!compact}
       enableZoom
       enableRotate
@@ -234,9 +247,9 @@ export function CameraRig({
       maxDistance={limits.maxDistance}
       minPolarAngle={limits.minPolarAngle}
       maxPolarAngle={limits.maxPolarAngle}
-      rotateSpeed={limits.rotateSpeed}
-      zoomSpeed={limits.zoomSpeed}
-      panSpeed={limits.panSpeed}
+      rotateSpeed={LOOK_CAM.rotateSpeed}
+      zoomSpeed={LOOK_CAM.zoomSpeed}
+      panSpeed={LOOK_CAM.panSpeed}
       mouseButtons={{
         LEFT: MOUSE.ROTATE,
         MIDDLE: MOUSE.DOLLY,

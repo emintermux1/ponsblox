@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group, Mesh } from "three";
+import { loftPickHandlers } from "@/components/world/loft-cursor";
 import { MusePlushCard } from "@/components/world/muse-plush";
 import { NameTag } from "@/components/world/name-tag";
 import { usePerf } from "@/components/world/perf-context";
@@ -361,10 +362,7 @@ export function MuseBody({
       position={muse.position}
       rotation={[0, muse.facing, 0]}
       userData={{ species: "muse", costume: muse.id }}
-      onClick={(event) => {
-        event.stopPropagation();
-        onSelect();
-      }}
+      {...loftPickHandlers(onSelect)}
     >
       <mesh visible={false} position={[0, 0.5, 0]}>
         <capsuleGeometry args={[0.28, 0.5, 6, 10]} />

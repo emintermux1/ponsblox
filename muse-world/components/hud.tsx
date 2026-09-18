@@ -48,11 +48,11 @@ export function SpectatorHud({
   }, [compact]);
 
   if (!settled) {
-    return <div data-entry-veil="off" data-first-paint="watch" />;
+    return <div className="pointer-events-none" data-entry-veil="off" data-first-paint="watch" />;
   }
 
   return (
-    <div data-entry-veil="off" data-first-paint="hud" className="loft-chrome-in">
+    <div className="pointer-events-none loft-chrome-in" data-entry-veil="off" data-first-paint="hud">
       <SpectatorChrome
         world={world}
         introLine={compact ? null : introLine}

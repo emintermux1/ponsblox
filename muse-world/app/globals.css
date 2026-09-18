@@ -50,6 +50,7 @@ button:focus-visible {
 canvas {
   display: block;
   touch-action: none;
+  pointer-events: auto;
 }
 
 .loft-root {

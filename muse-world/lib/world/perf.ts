@@ -16,6 +16,7 @@ export type PerfSignals = {
   webgl: boolean;
   coarse: boolean;
   saveData: boolean;
+  devicePixelRatio: number;
 };
 
 export type PerfBudget = {
@@ -43,14 +44,15 @@ export type PerfBudget = {
 /** Hard caps — never let the loft push past these. */
 export const PERF_BUDGET = {
   dprDesktop: 1.5,
+  dprMobile: 2,
   dprTablet: 1.15,
   dprPhone: 1,
   phoneWidth: 768,
   tabletWidth: 1100,
-  cityDesktop: 36,
-  cityTablet: 14,
-  cityPhone: 8,
-  shadowDesktop: 1024 as const,
+  cityDesktop: 16,
+  cityTablet: 8,
+  cityPhone: 4,
+  shadowDesktop: 512 as const,
   shadowTablet: 512 as const,
   farDesktop: 72,
   farTablet: 46,
@@ -68,6 +70,7 @@ export const FIRST_PAINT_SIGNALS: PerfSignals = {
   webgl: false,
   coarse: false,
   saveData: false,
+  devicePixelRatio: 1,
 };
 
 let webglProbe: boolean | null = null;
@@ -113,6 +116,7 @@ export function readPerfSignals(): PerfSignals {
     webgl: probeWebGL(),
     coarse: window.matchMedia("(pointer: coarse)").matches,
     saveData: Boolean(connection?.saveData),
+    devicePixelRatio: window.devicePixelRatio || 1,
   };
 }
 
@@ -131,14 +135,18 @@ export function shouldWatch(signals: PerfSignals, webglLost: boolean): boolean {
   return webglLost || !signals.webgl;
 }
 
-function dprFor(tier: PerfTier, reducedMotion: boolean): [number, number] {
+function dprFor(
+  tier: PerfTier,
+  reducedMotion: boolean,
+  devicePixelRatio: number,
+): [number, number] {
+  const device = Number.isFinite(devicePixelRatio) && devicePixelRatio > 0 ? devicePixelRatio : 1;
   switch (tier) {
     case "desktop":
-      return [1, reducedMotion ? 1.25 : PERF_BUDGET.dprDesktop];
+      return [1, Math.min(PERF_BUDGET.dprDesktop, reducedMotion ? 1.25 : device)];
     case "tablet":
-      return [1, reducedMotion ? 1 : PERF_BUDGET.dprTablet];
     case "phone":
-      return [1, PERF_BUDGET.dprPhone];
+      return [1, Math.min(PERF_BUDGET.dprMobile, device)];
     default:
       return assertNever(tier);
   }
@@ -204,13 +212,13 @@ export function budgetFromSignals(
   const budget: PerfBudget = {
     tier,
     mode: watch ? "watch" : "webgl",
-    dpr: dprFor(tier, signals.reducedMotion),
+    dpr: dprFor(tier, signals.reducedMotion, signals.devicePixelRatio),
     antialias: !compact && !signals.reducedMotion,
-    shadows: !watch && tier === "desktop" && !signals.reducedMotion,
+    shadows: false,
     shadowMapSize: compact ? PERF_BUDGET.shadowTablet : PERF_BUDGET.shadowDesktop,
-    extraLights: !watch && tier === "desktop" && !pauseExtras,
-    contactShadows: !watch && tier === "desktop" && !pauseExtras,
-    glass: !watch && tier === "desktop" && !signals.reducedMotion ? "physical" : "standard",
+    extraLights: false,
+    contactShadows: false,
+    glass: "standard",
     cityCount: cityCountFor(tier, watch),
     cityLod: tier === "desktop" ? "dense" : "sparse",
     htmlThoughts: !watch && !signals.hidden && tier === "desktop" && !signals.reducedMotion,
@@ -266,8 +274,9 @@ export function watchFrame(preset: CameraPreset): {
 }
 
 export function assertPerfCaps(budget: PerfBudget): void {
-  if (budget.dpr[1] > PERF_BUDGET.dprDesktop) {
-    throw new Error("DPR over desktop cap");
+  const dprCap = budget.tier === "desktop" ? PERF_BUDGET.dprDesktop : PERF_BUDGET.dprMobile;
+  if (budget.dpr[1] > dprCap) {
+    throw new Error("DPR over cap");
   }
   if (budget.cityCount > PERF_BUDGET.cityDesktop) {
     throw new Error("city instances over cap");

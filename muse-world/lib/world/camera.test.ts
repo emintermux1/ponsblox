@@ -12,6 +12,7 @@ import {
   INTRO_SHOTS,
   isNarrowViewport,
   LOOK_CAM,
+  LOOK_CAM_NAME,
   lookLimits,
   MOBILE_INTRO_SHOTS,
   playIntro,
@@ -44,12 +45,30 @@ test("playIntro eases into the loft then completes", () => {
   const timeline = playIntro(proxy, () => {
     done = true;
   });
+  assert.ok(timeline.getChildren().length <= 2);
   assert.ok(timeline.totalDuration() <= INTRO_EASE_S + 1);
   timeline.progress(1);
   assert.equal(done, true);
   assert.deepEqual(readShot(proxy).position, HOME_SHOT.position);
   assert.deepEqual(readShot(proxy).target, HOME_SHOT.target);
   assert.equal(shotSettled(readShot(proxy), HOME_SHOT), true);
+});
+
+test("playIntro replaces an in-flight tween instead of stacking five", () => {
+  const proxy = flattenShot(INTRO_SHOTS[0]);
+  let first = 0;
+  let second = 0;
+  const stacked = playIntro(proxy, () => {
+    first += 1;
+  });
+  const next = playIntro(proxy, () => {
+    second += 1;
+  });
+  assert.notEqual(stacked, next);
+  stacked.progress(1);
+  next.progress(1);
+  assert.equal(first, 0);
+  assert.equal(second, 1);
 });
 
 test("intro ease is a short release, not a locked cinematic", () => {
@@ -69,6 +88,8 @@ test("GROK shot looks at the desk orb, not an empty lounge hover", () => {
 });
 
 test("look-cam keeps a usable orbit range", () => {
+  assert.equal(LOOK_CAM_NAME, "LOOK_CAM");
+  assert.equal(LOOK_CAM.id, "LOOK_CAM");
   assert.ok(LOOK_CAM.minDistance < LOOK_CAM.maxDistance);
   assert.ok(LOOK_CAM.minPolarAngle < LOOK_CAM.maxPolarAngle);
   assert.ok(LOOK_CAM.dampingFactor > 0);

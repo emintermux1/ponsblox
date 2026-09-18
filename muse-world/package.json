@@ -9,7 +9,7 @@
     "lint": "eslint",
     "check": "tsc --noEmit",
     "perf": "tsc --noEmit --pretty false",
-    "test": "tsx --require ./tests/preload.cjs --import ./tests/register.mjs --test --test-concurrency=1 lib/adapters/source.test.ts lib/adapters/parse.test.ts lib/adapters/market.test.ts lib/adapters/apply.test.ts lib/sim/tick.test.ts lib/sim/stories.test.ts lib/world/art.test.ts lib/world/store.test.ts lib/world/cast.test.ts lib/world/muse-face.test.ts lib/world/perf.test.ts lib/world/camera.test.ts lib/world/wall-copy.test.ts lib/world/pick.test.ts lib/world/grok-watch.test.ts lib/world/tape.test.ts lib/world/screen-texture.test.ts tests/ingest-auth.test.ts tests/adapter-fail-open.test.ts tests/wake-apply.test.ts components/watch/copy.test.ts"
+    "test": "tsx --require ./tests/preload.cjs --import ./tests/register.mjs --test --test-concurrency=1 lib/adapters/source.test.ts lib/adapters/parse.test.ts lib/adapters/market.test.ts lib/adapters/apply.test.ts lib/sim/tick.test.ts lib/sim/stories.test.ts lib/world/art.test.ts lib/world/store.test.ts lib/world/cast.test.ts lib/world/muse-face.test.ts lib/world/perf.test.ts lib/world/camera.test.ts lib/world/wall-copy.test.ts lib/world/pick.test.ts lib/world/grok-watch.test.ts lib/world/tape.test.ts lib/world/screen-texture.test.ts tests/ingest-auth.test.ts tests/adapter-fail-open.test.ts tests/wake-apply.test.ts components/watch/copy.test.ts components/world/loft-cursor.test.ts"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.8",

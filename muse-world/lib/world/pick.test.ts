@@ -47,11 +47,13 @@ describe("loft pick", () => {
     assert.equal(next.muses.trader.activity, "TRADING");
   });
 
-  it("clearing a muse returns the room", () => {
+  it("clearing a muse does not lock the camera back to ROOM", () => {
     const selected = applyMuseSelect(seedWorld(), "scroller");
+    assert.equal(selected.camera, "SCROLLER");
     const next = applyMuseSelect(selected, null);
     assert.equal(next.selected, null);
-    assert.equal(next.camera, "ROOM");
+    assert.equal(next.mindOpen, false);
+    assert.equal(next.camera, "SCROLLER");
   });
 
   it("inspecting a lit screen is not a $PAID wall", () => {

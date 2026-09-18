@@ -50,7 +50,10 @@ export const MOBILE_INTRO_SHOTS: Shot[] = [
 
 export const NARROW_VIEWPORT = 768;
 
+export const LOOK_CAM_NAME = "LOOK_CAM";
+
 export const LOOK_CAM = {
+  id: LOOK_CAM_NAME,
   minDistance: 2.8,
   maxDistance: 22,
   minPolarAngle: 0.18,
@@ -79,6 +82,7 @@ const FOLLOW_LAMBDA = {
 } as const;
 
 let cinemaArmed = false;
+let activeIntro: gsap.core.Timeline | null = null;
 
 export function armCinema(): void {
   if (cinemaArmed) {
@@ -330,17 +334,31 @@ export function playIntro(
   shots: Shot[] = INTRO_SHOTS,
 ): gsap.core.Timeline {
   armCinema();
+  if (activeIntro) {
+    activeIntro.kill();
+    activeIntro = null;
+  }
+  gsap.killTweensOf(proxy);
   const path = shots.length > 0 ? shots : INTRO_SHOTS;
   const home = path[path.length - 1] ?? HOME_SHOT;
-  const tl = gsap.timeline({ onComplete });
+  const tl = gsap.timeline({
+    onComplete: () => {
+      if (activeIntro === tl) {
+        activeIntro = null;
+      }
+      onComplete();
+    },
+  });
   const start = readShot(proxy);
   if (shotDistance(start, home) > 0.05) {
     tl.to(proxy, {
       ...flattenShot(home),
       duration: introEaseDuration(start, home),
       ease: CINEMA_EASE,
+      overwrite: "auto",
     });
   }
   tl.to({}, { duration: INTRO_SETTLE_S });
+  activeIntro = tl;
   return tl;
 }

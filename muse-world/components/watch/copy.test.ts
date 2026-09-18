@@ -8,6 +8,7 @@ import {
   ENTRY_CAPTION,
   hudMark,
   INTRO_COPY,
+  introCopyAt,
   isAwake,
   LEAVE_MIND,
   PAGE_DESCRIPTION,
@@ -26,6 +27,10 @@ test("first paint brand is Muse Grok at musegrok.world", () => {
   assert.doesNotMatch(PAGE_DESCRIPTION, /ENTER MIND/);
   assert.equal(INTRO_COPY[0], WORDMARK);
   assert.notEqual(INTRO_COPY[0], "ENTER MIND");
+  assert.equal(introCopyAt(0), WORDMARK);
+  assert.equal(introCopyAt(1), "They don't wait for prompts");
+  assert.equal(introCopyAt(99), null);
+  assert.equal(introCopyAt(-1), null);
 });
 
 test("asCaption keeps a short literary line", () => {
