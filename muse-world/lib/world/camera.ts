@@ -28,7 +28,7 @@ export const INTRO_SETTLE_S = 0.4;
 export const INTRO_LEG_S = 3.05;
 
 export const INTRO_SHOTS: Shot[] = [
-  { position: [0.2, 3.8, 16.4], target: [0, 1.6, 0], fov: 38 },
+  { position: [1.1, 3.15, 11.4], target: [0.15, 1.25, 0.35], fov: 36 },
   { position: [-1.4, 2.4, 8.2], target: [-3.2, 1.1, 1.2], fov: 36 },
   { position: [6.8, 2.6, 6.4], target: [3.2, 1.15, -0.2], fov: 34 },
   { position: [2.4, 4.6, 9.8], target: [0.4, 1.2, 1.2], fov: 40 },

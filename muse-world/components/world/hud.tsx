@@ -70,7 +70,7 @@ export function WorldHud({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 1.15, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute left-1/2 top-[18%] -translate-x-1/2 text-center font-serif text-3xl tracking-[0.18em] md:text-5xl"
+            className="absolute left-1/2 top-[18%] -translate-x-1/2 text-center font-serif text-3xl tracking-[0.1em] md:text-5xl"
           >
             {introLine}
           </motion.p>

@@ -47,7 +47,7 @@ export function MuseWorld() {
       <Canvas
         shadows
         dpr={[1, 1.6]}
-        camera={{ position: [0.2, 3.8, 16.4], fov: 38, near: 0.1, far: 80 }}
+        camera={{ position: [1.1, 3.15, 11.4], fov: 36, near: 0.1, far: 80 }}
         gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
       >
         <LivingScene
