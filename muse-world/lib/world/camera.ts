@@ -30,7 +30,7 @@ export function shotForPreset(
       return { position: [3.8, 2.2, 6.2], target: [6.3, 1.1, 2.8], fov: 34 };
     case "MIND": {
       const [x, y, z] = musePos ?? [0, 1, 0];
-      return { position: [x + 1.35, y + 1.55, z + 2.1], target: [x, y + 1.05, z], fov: 28 };
+      return { position: [x + 1.6, y + 1.72, z + 2.55], target: [x, y + 1.08, z], fov: 32 };
     }
     case "ROOM":
       return { position: [2.4, 4.6, 9.8], target: [0.4, 1.2, 1.2], fov: 40 };

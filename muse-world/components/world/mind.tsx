@@ -2,14 +2,7 @@
 
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import {
-  Group,
-  Mesh,
-  MeshBasicMaterial,
-  MeshStandardMaterial,
-  Quaternion,
-  Vector3,
-} from "three";
+import { Group, Mesh, MeshBasicMaterial, Quaternion, Vector3 } from "three";
 import {
   DESK_SIGNAL,
   MIND_ANCHORS,
@@ -112,7 +105,7 @@ function MindLink({
 function ConstellationNode({ id, value }: { id: MindNodeId; value: number }) {
   const core = useRef<Mesh>(null);
   const halo = useRef<Mesh>(null);
-  const coreMat = useRef<MeshStandardMaterial>(null);
+  const coreMat = useRef<MeshBasicMaterial>(null);
   const haloMat = useRef<MeshBasicMaterial>(null);
   const pos = MIND_ANCHORS[id];
   const phase = useMemo(() => phaseFor(id), [id]);
@@ -120,48 +113,46 @@ function ConstellationNode({ id, value }: { id: MindNodeId; value: number }) {
 
   useFrame((state) => {
     const pulse = nodePulse(value, state.clock.elapsedTime, phase);
-    const wobble = 0.014 * Math.sin(state.clock.elapsedTime * (0.55 + value * 0.4) + phase);
+    const wobble = 0.012 * Math.sin(state.clock.elapsedTime * (0.55 + value * 0.4) + phase);
     const x = pos[0] + wobble;
     const y = pos[1] + wobble * 0.45;
     const z = pos[2];
     if (core.current) {
       core.current.position.set(x, y, z);
-      core.current.scale.setScalar((0.68 + value * 0.7) * (0.84 + pulse * 0.2));
+      core.current.scale.setScalar((0.72 + value * 0.5) * (0.88 + pulse * 0.16));
     }
     if (halo.current) {
       halo.current.position.set(x, y, z);
-      halo.current.scale.setScalar(1.45 + pulse * 0.65 + value * 0.35);
+      halo.current.scale.setScalar(1.15 + pulse * 0.35 + value * 0.2);
     }
     if (coreMat.current) {
-      coreMat.current.emissiveIntensity = 0.18 + value * 0.95 + pulse * 0.28;
-      coreMat.current.opacity = 0.72 + value * 0.22;
+      coreMat.current.opacity = 0.55 + value * 0.4 + pulse * 0.08;
     }
     if (haloMat.current) {
-      haloMat.current.opacity = 0.07 + value * 0.16 + pulse * 0.07;
+      haloMat.current.opacity = 0.04 + value * 0.08 + pulse * 0.04;
     }
   });
 
   return (
     <group>
       <mesh ref={halo} position={pos}>
-        <sphereGeometry args={[0.078, 16, 16]} />
+        <sphereGeometry args={[0.046, 12, 12]} />
         <meshBasicMaterial
           ref={haloMat}
           color={grok ? "#d7b56a" : "#efe6d4"}
           transparent
-          opacity={0.12}
+          opacity={0.08}
           depthWrite={false}
         />
       </mesh>
       <mesh ref={core} position={pos}>
-        <sphereGeometry args={[0.036, 16, 16]} />
-        <meshStandardMaterial
+        <sphereGeometry args={[0.022, 12, 12]} />
+        <meshBasicMaterial
           ref={coreMat}
-          color={grok ? "#d7b56a" : "#f0e6d2"}
-          emissive={grok ? "#b0893a" : "#7a6a4a"}
-          emissiveIntensity={0.3}
+          color={grok ? "#e4c67a" : "#f0e6d2"}
           transparent
-          opacity={0.84}
+          opacity={0.86}
+          depthWrite={false}
         />
       </mesh>
     </group>
@@ -238,14 +229,8 @@ function GrokSignal({
           }}
           visible={false}
         >
-          <octahedronGeometry args={[0.032, 0]} />
-          <meshStandardMaterial
-            color="#e8d2a0"
-            emissive="#c4a05a"
-            emissiveIntensity={1.15}
-            transparent
-            opacity={0.92}
-          />
+          <octahedronGeometry args={[0.028, 0]} />
+          <meshBasicMaterial color="#e8d2a0" transparent opacity={0.9} depthWrite={false} />
         </mesh>
       ))}
     </group>

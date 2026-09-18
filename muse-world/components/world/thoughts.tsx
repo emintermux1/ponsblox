@@ -1,6 +1,6 @@
 "use client";
 
-import { Html } from "@react-three/drei";
+import { Text } from "@react-three/drei";
 import type { MuseState } from "@/types/world";
 
 export function ThoughtChip({
@@ -15,15 +15,19 @@ export function ThoughtChip({
   }
 
   return (
-    <Html
-      position={[muse.position[0], muse.position[1] + 1.42, muse.position[2]]}
-      center
-      distanceFactor={14}
-      style={{ pointerEvents: "none" }}
+    <Text
+      position={[muse.position[0], muse.position[1] + 1.38, muse.position[2]]}
+      fontSize={0.048}
+      letterSpacing={0.08}
+      color="#efe6d4"
+      fillOpacity={0.42}
+      anchorX="center"
+      anchorY="bottom"
+      maxWidth={1.6}
+      overflowWrap="break-word"
+      textAlign="center"
     >
-      <span className="whitespace-nowrap font-serif text-[10px] tracking-[0.2em] text-[#efe6d4]/50">
-        {muse.thought}
-      </span>
-    </Html>
+      {muse.thought}
+    </Text>
   );
 }

@@ -7,8 +7,7 @@ import {
   grokSignalLive,
   projectMindNode,
 } from "@/lib/world/mind-graph";
-import { presetForMuse } from "@/lib/world/camera";
-import type { CameraPreset, MuseId, MuseState, WorldSnapshot } from "@/types/world";
+import type { CameraPreset, MuseState, WorldSnapshot } from "@/types/world";
 import { MIND_NODES } from "@/types/world";
 
 const PRESETS: CameraPreset[] = [
@@ -51,10 +50,12 @@ function MindConstellation({ nodes }: { nodes: MuseState["mind"]["nodes"] }) {
             <motion.circle
               cx={point.x}
               cy={point.y}
+              r={2.2 + value * 3.2}
+              opacity={0.4 + value * 0.35}
               fill={grok ? "#d7b56a" : "#f0e6d2"}
               animate={{
-                r: [2.5 + value * 3.6, 3.3 + value * 5.1, 2.5 + value * 3.6],
-                opacity: [0.34 + value * 0.24, 0.56 + value * 0.38, 0.34 + value * 0.24],
+                r: [2.2 + value * 3.2, 3 + value * 4.4, 2.2 + value * 3.2],
+                opacity: [0.34 + value * 0.24, 0.58 + value * 0.34, 0.34 + value * 0.24],
               }}
               transition={{
                 duration: Math.max(0.7, 1.85 - value * 0.85),
@@ -62,17 +63,19 @@ function MindConstellation({ nodes }: { nodes: MuseState["mind"]["nodes"] }) {
                 ease: "easeInOut",
               }}
             />
-            <text
-              x={labelLeft ? point.x - 6 : point.x + 6}
-              y={point.y + 3}
-              textAnchor={labelLeft ? "end" : "start"}
-              fill={grok ? "#d7b56a" : "#cfc4ad"}
-              fontSize="7"
-              letterSpacing="0.14em"
-              opacity={0.5 + value * 0.4}
-            >
-              {MIND_SHORT[id]}
-            </text>
+            {id === "GROK" || id === "ACTION" ? (
+              <text
+                x={labelLeft ? point.x - 6 : point.x + 6}
+                y={point.y + 3}
+                textAnchor={labelLeft ? "end" : "start"}
+                fill={grok ? "#d7b56a" : "#cfc4ad"}
+                fontSize="7"
+                letterSpacing="0.14em"
+                opacity={0.7}
+              >
+                {MIND_SHORT[id]}
+              </text>
+            ) : null}
           </g>
         );
       })}
@@ -93,6 +96,9 @@ function GlanceReadout({ muse }: { muse: MuseState }) {
       {muse.mind.watching ? (
         <p className="mt-2 text-[11px] text-[#d8c7a0]">WATCHING ${muse.mind.watching}</p>
       ) : null}
+      {muse.thought ? (
+        <p className="mt-2 font-serif text-[12px] tracking-[0.14em] text-[#efe6d4]/55">{muse.thought}</p>
+      ) : null}
     </>
   );
 }
@@ -100,10 +106,17 @@ function GlanceReadout({ muse }: { muse: MuseState }) {
 function MindReadout({ muse }: { muse: MuseState }) {
   const live = grokSignalLive(muse.mind);
   return (
-    <>
+    <div data-mind-panel="constellation">
       <p className="mt-3 text-[10px] tracking-[0.28em] text-[#8d8370]">CONSTELLATION</p>
       <MindConstellation nodes={muse.mind.nodes} />
-      <div className="mt-1 flex justify-between text-[10px] tracking-[0.18em] text-[#cfc4ad]">
+      <div className="mt-1 grid grid-cols-5 gap-x-1 gap-y-1 text-[9px] tabular-nums tracking-[0.06em] text-[#cfc4ad]">
+        {MIND_NODES.map((id) => (
+          <p key={id} className={id === "GROK" ? "text-[#d7b56a]" : undefined}>
+            {MIND_SHORT[id]} {Math.round(muse.mind.nodes[id] * 100)}
+          </p>
+        ))}
+      </div>
+      <div className="mt-2 flex justify-between text-[10px] tracking-[0.18em] text-[#cfc4ad]">
         <p>ACT {muse.mind.action}</p>
         <p className={live ? "text-[#d7b56a]" : "text-[#8d8370]"}>GROK {live ? "LIVE" : "IDLE"}</p>
       </div>
@@ -113,21 +126,17 @@ function MindReadout({ muse }: { muse: MuseState }) {
       {muse.thought ? (
         <p className="mt-2 font-serif text-[12px] tracking-[0.14em] text-[#efe6d4]/55">{muse.thought}</p>
       ) : null}
-    </>
+    </div>
   );
 }
 
 function SelectedCard({
   muse,
   mindOpen,
-  onPreset,
-  onSelect,
   onEnterMind,
 }: {
   muse: MuseState;
   mindOpen: boolean;
-  onPreset: (preset: CameraPreset) => void;
-  onSelect: (id: MuseId | null) => void;
   onEnterMind: () => void;
 }) {
   return (
@@ -135,15 +144,7 @@ function SelectedCard({
       <p className="font-serif text-lg tracking-[0.16em]">{muse.name}</p>
       <p className="text-[10px] tracking-[0.28em] text-[#b7a47a]">{muse.role}</p>
       {mindOpen ? <MindReadout muse={muse} /> : <GlanceReadout muse={muse} />}
-      <button
-        type="button"
-        onClick={() => {
-          onSelect(muse.id);
-          onPreset(mindOpen ? presetForMuse(muse.id) : "MIND");
-          onEnterMind();
-        }}
-        className="mt-4 text-[10px] tracking-[0.28em]"
-      >
+      <button type="button" onClick={onEnterMind} className="mt-4 text-[10px] tracking-[0.28em]">
         {mindOpen ? "LEAVE MIND" : "ENTER MIND"}
       </button>
     </div>
@@ -154,13 +155,11 @@ export function WorldHud({
   world,
   introLine,
   onPreset,
-  onSelect,
   onEnterMind,
 }: {
   world: WorldSnapshot;
   introLine: string | null;
   onPreset: (preset: CameraPreset) => void;
-  onSelect: (id: MuseId | null) => void;
   onEnterMind: () => void;
 }) {
   const selected = world.selected ? world.muses[world.selected] : null;
@@ -207,13 +206,7 @@ export function WorldHud({
         ))}
       </div>
       {selected ? (
-        <SelectedCard
-          muse={selected}
-          mindOpen={world.mindOpen}
-          onPreset={onPreset}
-          onSelect={onSelect}
-          onEnterMind={onEnterMind}
-        />
+        <SelectedCard muse={selected} mindOpen={world.mindOpen} onEnterMind={onEnterMind} />
       ) : null}
     </div>
   );
