@@ -72,6 +72,22 @@ function lcdSize(kind: LcdKind): { w: number; h: number } {
   }
 }
 
+function lcdLead(tape: TapeView): string {
+  switch (tape.source) {
+    case "sim":
+      return tapeHeadline(tape);
+    case "gecko":
+    case "dexscreener":
+    case "birdeye":
+    case "helius":
+    case "gmgn":
+    case "solana":
+      return tape.ticker ?? tape.name ?? tapeStamp(tape.source);
+    default:
+      return assertNever(tape.source);
+  }
+}
+
 function glowFor(kind: LcdKind): string {
   switch (kind) {
     case "phone":
@@ -346,7 +362,7 @@ function paintFeed(ctx: CanvasRenderingContext2D, w: number, h: number, tape: Ta
   ctx.fill();
   ctx.fillStyle = "#1a1712";
   ctx.font = "700 18px ui-sans-serif, system-ui";
-  ctx.fillText(tapeHeadline(tape), 40, 46);
+  ctx.fillText(lcdLead(tape), 40, 46);
   ctx.fillStyle = "#8d8370";
   ctx.font = "12px ui-sans-serif, system-ui";
   ctx.fillText(tapeStamp(tape.source), 320, 46);
@@ -366,7 +382,7 @@ function paintTape(ctx: CanvasRenderingContext2D, w: number, h: number, tape: Ta
   ctx.fillRect(0, 0, w, h);
   ctx.fillStyle = "#d7b56a";
   ctx.font = "700 26px ui-sans-serif, system-ui";
-  ctx.fillText(tapeHeadline(tape), 28, 42);
+  ctx.fillText(lcdLead(tape), 28, 42);
   ctx.fillStyle = "#8d8370";
   ctx.font = "13px ui-sans-serif, system-ui";
   ctx.fillText(`${tapeStamp(tape.source)}  ·  no fills`, 28, 66);
@@ -387,7 +403,7 @@ function paintNotes(ctx: CanvasRenderingContext2D, w: number, h: number, tape: T
   ctx.fillRect(18, 16, w - 36, h - 32);
   ctx.fillStyle = "#3a3226";
   ctx.font = "italic 26px Georgia, serif";
-  ctx.fillText(tapeHeadline(tape), 40, 58);
+  ctx.fillText(lcdLead(tape), 40, 58);
   ctx.fillStyle = "#8d8370";
   ctx.font = "12px ui-sans-serif, system-ui";
   ctx.fillText(`${tapeStamp(tape.source)}  ·  desk research  ·  no fills`, 40, 82);
@@ -407,7 +423,7 @@ function paintTv(ctx: CanvasRenderingContext2D, w: number, h: number, tape: Tape
   ctx.fillRect(0, 0, w, 52);
   ctx.fillStyle = "#d7b56a";
   ctx.font = "700 22px ui-sans-serif, system-ui";
-  ctx.fillText(tapeHeadline(tape), 28, 34);
+  ctx.fillText(lcdLead(tape), 28, 34);
   ctx.fillStyle = "#8ea6b8";
   ctx.font = "12px ui-sans-serif, system-ui";
   ctx.fillText(tapeStamp(tape.source), w - 200, 34);

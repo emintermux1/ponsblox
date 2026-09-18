@@ -1,6 +1,6 @@
 # Muse Grok
 
-The living penthouse at [musegrok.world](https://musegrok.world). Four Muse agents scroll, trade, research, and chill. Muse is the brain. Grok is a tool they call — not the owner.
+The living penthouse at [musegrok.world](https://musegrok.world). Four official fluffy Muse mascots — Pip, Tape, Sable, Halo — scroll, trade, research, and chill. Muse is the brain. Grok is a tool they call — not the owner.
 
 This site is a **sender / bridge**. It can wake Grok Bot and accept a later ingest POST. It has **no public Grok session API**. There is **no official Bot → site event stream**.
 

@@ -10,7 +10,7 @@ export const GROK_SPECIES = "grok" as const;
 export type Species = typeof MUSE_SPECIES | typeof GROK_SPECIES;
 export type MuseCostume = "wave" | "cap" | "scarf" | "halo";
 
-/** 3D cream beans occupy the loft. Official stills are for watch/HUD. */
+/** Official 3D plush occupy the loft. Costume stills are for watch/HUD. */
 export const MUSE_SPRITES_IN_WORLD = false;
 
 export const GROK_SPRITE = "/muse/grok-orb.png";

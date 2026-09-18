@@ -9,7 +9,8 @@ import { usePerf } from "@/components/world/perf-context";
 import { GROK_NAME } from "@/lib/world/cast";
 import { damp } from "@/lib/world/camera";
 import { GROK_ORB_POS } from "@/lib/world/layout";
-import type { GrokHonesty } from "@/types/world";
+import { grokOf } from "@/lib/sim/grok-patrol";
+import type { GrokAgent, GrokHonesty, WorldSnapshot } from "@/types/world";
 import { assertNever } from "@/types/world";
 
 export const GROK_DESK = GROK_ORB_POS;
@@ -93,11 +94,13 @@ export function GrokOrb({
   waking,
   honesty,
   lookAt,
+  position = GROK_ORB_POS,
   onWake,
 }: {
   waking: boolean;
   honesty: GrokHonesty | null;
   lookAt: [number, number, number];
+  position?: [number, number, number];
   onWake: () => void;
 }) {
   const root = useRef<Group>(null);
@@ -112,7 +115,9 @@ export function GrokOrb({
     }
     const t = pauseExtras ? 0 : state.clock.elapsedTime;
     const bob = pauseExtras ? 0 : 0.028 * Math.sin(t * 1.15);
-    root.current.position.y = damp(root.current.position.y, GROK_ORB_POS[1] + bob, 4.2, delta);
+    root.current.position.x = damp(root.current.position.x, position[0], 4.2, delta);
+    root.current.position.y = damp(root.current.position.y, position[1] + bob, 4.2, delta);
+    root.current.position.z = damp(root.current.position.z, position[2], 4.2, delta);
     lookGroupAt(face.current, lookAt);
     if (!pauseExtras) {
       pulseEmissive(body.current, waking, honesty, t);
@@ -122,7 +127,7 @@ export function GrokOrb({
   return (
     <group
       ref={root}
-      position={GROK_ORB_POS}
+      position={position}
       userData={{ species: "grok", grok: "hero" }}
       {...loftPickHandlers(onWake)}
     >
@@ -188,20 +193,29 @@ function GrokWatcher({
 }
 
 export function GrokPresence({
+  world,
   waking,
   honesty,
   lookAt,
   onWake,
 }: {
+  world: WorldSnapshot;
   waking: boolean;
   honesty: GrokHonesty | null;
   lookAt: [number, number, number];
   onWake: () => void;
 }) {
+  const grok: GrokAgent = grokOf(world);
   return (
     <group>
-      <GrokOrb waking={waking} honesty={honesty} lookAt={lookAt} onWake={onWake} />
-      <GrokWatcher index={0} lookAt={lookAt} onWake={onWake} />
+      <GrokOrb
+        waking={waking}
+        honesty={honesty}
+        lookAt={grok.lookAt}
+        position={grok.position}
+        onWake={onWake}
+      />
+      <GrokWatcher index={0} lookAt={grok.position} onWake={onWake} />
       <GrokWatcher index={1} lookAt={lookAt} onWake={onWake} />
     </group>
   );

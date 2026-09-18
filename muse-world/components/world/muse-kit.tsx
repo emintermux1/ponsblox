@@ -1,8 +1,15 @@
 "use client";
 
-import { useRef } from "react";
+import { useLayoutEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import type { Group } from "three";
+import {
+  CanvasTexture,
+  InstancedMesh,
+  Object3D,
+  RepeatWrapping,
+  SRGBColorSpace,
+  type Group,
+} from "three";
 import { LitScreen, type ScreenKind } from "@/components/world/lit-screen";
 import { LaptopDevice, PhoneDevice } from "@/components/world/screens";
 import { usePerf } from "@/components/world/perf-context";
@@ -11,14 +18,74 @@ import { assertNever } from "@/types/world";
 
 const FUR = "#f3eee4";
 const FUR_LIGHT = "#fbf7ef";
+const FACE = "#fbf6ee";
+const EAR_IN = "#f0d4c8";
 const NAVY = "#0c1a33";
 const HOOD = "#141414";
 const GREEN = "#3f7a4a";
 const SILVER = "#c8cdd3";
 const CREAM_CUP = "#d8d2c8";
 
+let furMap: CanvasTexture | null = null;
+
+function makeFurMap(): CanvasTexture {
+  const size = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    throw new Error("fur canvas");
+  }
+  ctx.fillStyle = FUR;
+  ctx.fillRect(0, 0, size, size);
+  for (let i = 0; i < 3200; i += 1) {
+    const x = Math.random() * size;
+    const y = Math.random() * size;
+    const len = 3 + Math.random() * 11;
+    const angle = -0.45 + Math.random() * 0.9;
+    ctx.strokeStyle = Math.random() > 0.45 ? "#ebe3d4" : "#faf6ef";
+    ctx.lineWidth = 0.55 + Math.random() * 1.15;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + Math.sin(angle) * len, y + Math.cos(angle) * len);
+    ctx.stroke();
+  }
+  const tex = new CanvasTexture(canvas);
+  tex.wrapS = RepeatWrapping;
+  tex.wrapT = RepeatWrapping;
+  tex.colorSpace = SRGBColorSpace;
+  tex.repeat.set(2.2, 2.2);
+  tex.needsUpdate = true;
+  return tex;
+}
+
+function getFurMap(): CanvasTexture | null {
+  if (typeof document === "undefined") {
+    return null;
+  }
+  if (!furMap) {
+    furMap = makeFurMap();
+  }
+  return furMap;
+}
+
 export function FurMaterial({ color = FUR }: { color?: string }) {
-  return <meshStandardMaterial color={color} roughness={0.9} metalness={0.02} />;
+  const map = getFurMap();
+  return (
+    <meshStandardMaterial
+      color={color}
+      map={map ?? undefined}
+      roughness={0.94}
+      metalness={0.02}
+      bumpMap={map ?? undefined}
+      bumpScale={0.04}
+    />
+  );
+}
+
+export function FaceMaterial() {
+  return <meshStandardMaterial color={FACE} roughness={0.42} metalness={0.02} />;
 }
 
 export function Headphones() {
@@ -100,16 +167,16 @@ export function Hoodie() {
   const { shadows } = usePerf();
   return (
     <group>
-      <mesh position={[0, 0.36, 0.01]} scale={[1.12, 1.04, 1.08]} castShadow={shadows}>
-        <sphereGeometry args={[0.38, 22, 18]} />
+      <mesh position={[0, 0.3, 0.02]} scale={[1.02, 0.72, 0.98]} castShadow={shadows}>
+        <sphereGeometry args={[0.36, 22, 18]} />
         <meshStandardMaterial color={HOOD} roughness={0.72} />
       </mesh>
-      <mesh position={[0, 0.7, -0.1]} scale={[0.9, 0.68, 0.58]}>
-        <sphereGeometry args={[0.26, 16, 12]} />
+      <mesh position={[0, 0.58, -0.14]} scale={[0.7, 0.42, 0.48]}>
+        <sphereGeometry args={[0.22, 16, 12]} />
         <meshStandardMaterial color="#121212" roughness={0.74} />
       </mesh>
-      <mesh position={[0, 0.3, 0.28]} scale={[1.25, 0.62, 0.42]}>
-        <sphereGeometry args={[0.12, 12, 10]} />
+      <mesh position={[0, 0.26, 0.3]} scale={[1.1, 0.5, 0.3]}>
+        <sphereGeometry args={[0.1, 12, 10]} />
         <meshStandardMaterial color="#1a1a1a" roughness={0.68} />
       </mesh>
     </group>
@@ -137,8 +204,8 @@ export function Scarf() {
 
 export function Halo() {
   return (
-    <mesh position={[0, 0.42, 0]} rotation={[Math.PI / 2.15, 0, 0]}>
-      <torusGeometry args={[0.16, 0.012, 8, 24]} />
+    <mesh position={[0, 0.5, 0]} rotation={[Math.PI / 2.15, 0, 0]}>
+      <torusGeometry args={[0.18, 0.013, 8, 24]} />
       <meshStandardMaterial
         color="#f0d48a"
         emissive="#e8c56a"
@@ -153,15 +220,54 @@ export function Halo() {
 export function FloppyEars() {
   return (
     <group>
-      <mesh position={[-0.2, 0.22, -0.02]} rotation={[0.25, 0, 0.55]} scale={[0.55, 1.2, 0.45]}>
-        <sphereGeometry args={[0.16, 12, 10]} />
-        <meshStandardMaterial color={FUR_LIGHT} roughness={0.9} />
+      <mesh position={[-0.24, 0.08, -0.04]} rotation={[0.72, 0.12, 0.92]} scale={[0.58, 1.72, 0.4]} castShadow>
+        <sphereGeometry args={[0.18, 14, 12]} />
+        <FurMaterial color={FUR_LIGHT} />
       </mesh>
-      <mesh position={[0.2, 0.22, -0.02]} rotation={[0.25, 0, -0.55]} scale={[0.55, 1.2, 0.45]}>
-        <sphereGeometry args={[0.16, 12, 10]} />
-        <meshStandardMaterial color={FUR_LIGHT} roughness={0.9} />
+      <mesh position={[-0.23, 0.02, 0.01]} rotation={[0.72, 0.12, 0.92]} scale={[0.38, 1.15, 0.22]}>
+        <sphereGeometry args={[0.16, 10, 8]} />
+        <meshStandardMaterial color={EAR_IN} roughness={0.78} />
+      </mesh>
+      <mesh position={[0.24, 0.08, -0.04]} rotation={[0.72, -0.12, -0.92]} scale={[0.58, 1.72, 0.4]} castShadow>
+        <sphereGeometry args={[0.18, 14, 12]} />
+        <FurMaterial color={FUR_LIGHT} />
+      </mesh>
+      <mesh position={[0.23, 0.02, 0.01]} rotation={[0.72, -0.12, -0.92]} scale={[0.38, 1.15, 0.22]}>
+        <sphereGeometry args={[0.16, 10, 8]} />
+        <meshStandardMaterial color={EAR_IN} roughness={0.78} />
       </mesh>
     </group>
+  );
+}
+
+export function FurSparkles({ seed }: { seed: number }) {
+  const mesh = useRef<InstancedMesh>(null);
+  const dummy = useMemo(() => new Object3D(), []);
+
+  useLayoutEffect(() => {
+    if (!mesh.current) {
+      return;
+    }
+    for (let i = 0; i < 18; i += 1) {
+      const a = seed + i * 0.73;
+      dummy.position.set(
+        Math.cos(a) * (0.4 + (i % 4) * 0.05),
+        0.2 + (i % 6) * 0.15,
+        Math.sin(a) * (0.32 + (i % 3) * 0.045),
+      );
+      const size = 0.7 + (i % 5) * 0.18;
+      dummy.scale.set(size, size, size);
+      dummy.updateMatrix();
+      mesh.current.setMatrixAt(i, dummy.matrix);
+    }
+    mesh.current.instanceMatrix.needsUpdate = true;
+  }, [dummy, seed]);
+
+  return (
+    <instancedMesh ref={mesh} args={[undefined, undefined, 18]}>
+      <sphereGeometry args={[0.016, 6, 6]} />
+      <meshBasicMaterial color="#fff8ee" transparent opacity={0.5} depthWrite={false} />
+    </instancedMesh>
   );
 }
 
@@ -227,9 +333,9 @@ export function Flipper({
 }) {
   const x = side === "left" ? -1 : 1;
   return (
-    <mesh rotation={[0.25, 0, x * 0.45]} scale={[1.15, 0.42, 0.72]} position={[x * 0.02, -0.02, 0.02]}>
-      <sphereGeometry args={[0.08, 12, 10]} />
-      <meshStandardMaterial color={FUR} roughness={0.86} />
+    <mesh rotation={[0.25, 0, x * 0.45]} scale={[1.28, 0.5, 0.82]} position={[x * 0.02, -0.02, 0.02]}>
+      <sphereGeometry args={[0.09, 12, 10]} />
+      <FurMaterial />
     </mesh>
   );
 }

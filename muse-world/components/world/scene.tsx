@@ -217,6 +217,7 @@ export function LivingScene({
       />
       <UsedBits />
       <GrokPresence
+        world={world}
         waking={world.grokWake.phase === "waking" || deskGrokLive(world.events)}
         honesty={world.grokWake.honesty}
         lookAt={grokLookAt(world)}

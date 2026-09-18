@@ -1,4 +1,5 @@
 import { cleanTicker } from "@/lib/adapters/parse";
+import { stepGrokWorld } from "@/lib/sim/grok-patrol";
 import { pickStoryBeat, upsertWallPin, type StoryBeat } from "@/lib/sim/stories";
 import { grokAskPacket } from "@/lib/world/grok-watch";
 import {
@@ -609,14 +610,14 @@ export function tickSnapshot(
     now,
     random,
   });
-  if (!beat) {
-    return {
-      ...world,
-      muses,
-      events,
-      packet: grokAskFrom && !packet ? grokAskPacket(grokAskFrom, now) : packet,
-      wallPins,
-    };
-  }
-  return { ...world, ...applyStoryBeat(beat, muses, events, packet, wallPins, now, random) };
+  const afterMuses = beat
+    ? { ...world, ...applyStoryBeat(beat, muses, events, packet, wallPins, now, random) }
+    : {
+        ...world,
+        muses,
+        events,
+        packet: grokAskFrom && !packet ? grokAskPacket(grokAskFrom, now) : packet,
+        wallPins,
+      };
+  return stepGrokWorld(afterMuses, now, random);
 }

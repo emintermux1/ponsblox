@@ -6,9 +6,11 @@ import type { Group, Mesh } from "three";
 import { loftPickHandlers } from "@/components/world/loft-cursor";
 import {
   BodyDress,
+  FaceMaterial,
   Flipper,
   FloppyEars,
   FurMaterial,
+  FurSparkles,
   HeadDress,
   HeldProps,
 } from "@/components/world/muse-kit";
@@ -98,28 +100,28 @@ function OvalEye({ x }: { x: number }) {
 function OfficialHead({ id }: { id: MuseId }) {
   const { shadows } = usePerf();
   return (
-    <group position={[0, 0.78, 0]}>
+    <group position={[0, 0.8, 0]}>
       {museHasEars(id) ? <FloppyEars /> : null}
       <mesh castShadow={shadows}>
-        <sphereGeometry args={[0.22, 24, 20]} />
+        <sphereGeometry args={[0.255, 26, 22]} />
         <FurMaterial />
       </mesh>
-      <mesh position={[0, 0.04, 0.04]} scale={[0.86, 0.78, 0.72]}>
-        <sphereGeometry args={[0.2, 18, 14]} />
-        <FurMaterial color="#fbf7ef" />
+      <mesh position={[0, 0.02, 0.12]} scale={[0.82, 0.78, 0.42]}>
+        <sphereGeometry args={[0.22, 20, 16]} />
+        <FaceMaterial />
       </mesh>
-      <OvalEye x={-0.052} />
-      <OvalEye x={0.052} />
-      <mesh position={[-0.092, -0.012, 0.176]} scale={[1.15, 0.55, 0.35]}>
-        <sphereGeometry args={[0.028, 10, 8]} />
+      <OvalEye x={-0.056} />
+      <OvalEye x={0.056} />
+      <mesh position={[-0.1, -0.01, 0.2]} scale={[1.15, 0.55, 0.35]}>
+        <sphereGeometry args={[0.03, 10, 8]} />
         <meshStandardMaterial color={BLUSH} roughness={0.7} transparent opacity={0.55} />
       </mesh>
-      <mesh position={[0.092, -0.012, 0.176]} scale={[1.15, 0.55, 0.35]}>
-        <sphereGeometry args={[0.028, 10, 8]} />
+      <mesh position={[0.1, -0.01, 0.2]} scale={[1.15, 0.55, 0.35]}>
+        <sphereGeometry args={[0.03, 10, 8]} />
         <meshStandardMaterial color={BLUSH} roughness={0.7} transparent opacity={0.55} />
       </mesh>
-      <mesh position={[0, -0.042, 0.2]} rotation={[1.15, 0, 0]} scale={[1, 0.55, 1]}>
-        <torusGeometry args={[0.032, 0.005, 8, 14, Math.PI]} />
+      <mesh position={[0, -0.046, 0.22]} rotation={[1.15, 0, 0]} scale={[1, 0.55, 1]}>
+        <torusGeometry args={[0.034, 0.005, 8, 14, Math.PI]} />
         <meshStandardMaterial color={SMILE} roughness={0.45} />
       </mesh>
       <HeadDress id={id} />
@@ -139,22 +141,26 @@ function OfficialBody({
   const { shadows } = usePerf();
   return (
     <group>
-      <mesh position={[0, seated ? 0.32 : 0.36, 0]} scale={[0.92, 1.08, 0.86]} castShadow={shadows}>
-        <sphereGeometry args={[0.38, 26, 22]} />
+      <mesh
+        position={[0, seated ? 0.3 : 0.36, 0]}
+        scale={seated ? [0.98, 0.92, 0.9] : [0.88, 1.14, 0.8]}
+        castShadow={shadows}
+      >
+        <sphereGeometry args={[0.36, 26, 22]} />
         <FurMaterial />
       </mesh>
-      <mesh position={[0, seated ? 0.28 : 0.32, 0.06]} scale={[0.7, 0.62, 0.55]}>
-        <sphereGeometry args={[0.32, 16, 12]} />
+      <mesh position={[0, seated ? 0.28 : 0.34, 0.07]} scale={[0.68, 0.58, 0.5]}>
+        <sphereGeometry args={[0.3, 16, 12]} />
         <FurMaterial color="#fbf7ef" />
       </mesh>
       <BodyDress id={id} />
       {seated ? null : (
         <group>
-          <mesh position={[-0.11, 0.05, 0.05]} scale={[0.7, 0.32, 0.95]} castShadow={shadows}>
+          <mesh position={[-0.12, 0.05, 0.05]} scale={[0.72, 0.34, 0.98]} castShadow={shadows}>
             <sphereGeometry args={[0.08, 10, 8]} />
             <FurMaterial />
           </mesh>
-          <mesh position={[0.11, 0.05, 0.05]} scale={[0.7, 0.32, 0.95]} castShadow={shadows}>
+          <mesh position={[0.12, 0.05, 0.05]} scale={[0.72, 0.34, 0.98]} castShadow={shadows}>
             <sphereGeometry args={[0.08, 10, 8]} />
             <FurMaterial />
           </mesh>
@@ -240,17 +246,18 @@ export function MuseBody({
       {...loftPickHandlers(onSelect)}
     >
       <mesh visible={false} position={[0, 0.52, 0]}>
-        <capsuleGeometry args={[0.32, 0.46, 4, 8]} />
+        <capsuleGeometry args={[0.36, 0.5, 4, 8]} />
       </mesh>
       <OfficialBody id={muse.id} activity={muse.activity} seated={seated} />
-      <group ref={leftArm} position={[-0.3, 0.5, 0.04]}>
+      <group ref={leftArm} position={[-0.32, 0.52, 0.04]}>
         <Flipper side="left" />
       </group>
-      <group ref={rightArm} position={[0.3, 0.5, 0.04]}>
+      <group ref={rightArm} position={[0.32, 0.52, 0.04]}>
         <Flipper side="right" />
       </group>
       <OfficialHead id={muse.id} />
-      <NameTag name={muse.name} mark={muse.role} y={1.28} />
+      {pauseExtras ? null : <FurSparkles seed={phase} />}
+      <NameTag name={muse.name} mark={muse.role} y={1.46} />
       {selected ? (
         <mesh ref={ring} position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[0.36, 0.46, 32]} />

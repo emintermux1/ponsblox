@@ -11,6 +11,7 @@ import {
   grokIngestEventSource,
   honestyFromLabel,
 } from "@/lib/adapters/source";
+import { assignWakeTask } from "@/lib/sim/grok-patrol";
 import type { MuseId, WorldSnapshot } from "@/types/world";
 
 const LOFT_THOUGHT_MS = 8_000;
@@ -29,7 +30,7 @@ export function applyGrokWakeToWorld(
   assertSimNotReal(honesty, loft.source);
   const grokField = wake.xai ? wake.xai.summary : muse.mind.grok;
 
-  return {
+  const woken: WorldSnapshot = {
     ...world,
     muses: {
       ...world.muses,
@@ -61,6 +62,24 @@ export function applyGrokWakeToWorld(
       }),
       ...world.events,
     ].slice(0, 24),
+  };
+  const tasked = assignWakeTask(
+    woken,
+    museId,
+    now,
+    wake.xai?.summary ?? null,
+    loft.source === "xai",
+  );
+  return {
+    ...tasked,
+    muses: {
+      ...tasked.muses,
+      [museId]: {
+        ...tasked.muses[museId],
+        thought: loft.thought,
+        thoughtUntil: now + LOFT_THOUGHT_MS,
+      },
+    },
   };
 }
 
