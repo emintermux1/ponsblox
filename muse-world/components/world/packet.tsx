@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Mesh } from "three";
+import { usePerf } from "@/components/world/perf-context";
 import type { MuseId, SpatialPacket } from "@/types/world";
 
 export function TravelPacket({
@@ -13,7 +14,11 @@ export function TravelPacket({
   positions: Record<MuseId, [number, number, number]>;
 }) {
   const mesh = useRef<Mesh>(null);
+  const { hidden } = usePerf();
   useFrame(() => {
+    if (hidden) {
+      return;
+    }
     if (!mesh.current || !packet) {
       if (mesh.current) mesh.current.visible = false;
       return;

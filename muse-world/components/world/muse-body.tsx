@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import type { Group } from "three";
+import { usePerf } from "@/components/world/perf-context";
 import type { MuseId, MuseState } from "@/types/world";
 import { assertNever } from "@/types/world";
 
@@ -31,13 +32,18 @@ export function MuseBody({
   onSelect: () => void;
 }) {
   const group = useRef<Group>(null);
+  const { pauseExtras, shadows } = usePerf();
   useFrame((state) => {
     if (!group.current) return;
-    const breathe = Math.sin(state.clock.elapsedTime * 1.6 + muse.position[0]) * 0.012;
+    const breathe = pauseExtras
+      ? 0
+      : Math.sin(state.clock.elapsedTime * 1.6 + muse.position[0]) * 0.012;
     group.current.position.set(muse.position[0], muse.position[1] + breathe, muse.position[2]);
     group.current.rotation.y = muse.facing;
-    if (muse.activity === "SCROLLING") {
+    if (!pauseExtras && muse.activity === "SCROLLING") {
       group.current.rotation.z = Math.sin(state.clock.elapsedTime * 3) * 0.03;
+    } else {
+      group.current.rotation.z = 0;
     }
   });
 
@@ -51,11 +57,11 @@ export function MuseBody({
         onSelect();
       }}
     >
-      <mesh castShadow position={[0, 0.42, 0]}>
+      <mesh castShadow={shadows} position={[0, 0.42, 0]} frustumCulled>
         <capsuleGeometry args={[0.28, 0.38, 8, 16]} />
         <meshStandardMaterial color="#f3efe6" roughness={0.78} />
       </mesh>
-      <mesh castShadow position={[0, 0.98, 0.02]}>
+      <mesh castShadow={shadows} position={[0, 0.98, 0.02]} frustumCulled>
         <sphereGeometry args={[0.27, 24, 24]} />
         <meshStandardMaterial color="#f7f3ea" roughness={0.72} />
       </mesh>

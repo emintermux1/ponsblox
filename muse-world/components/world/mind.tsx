@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { useRef } from "react";
 import type { Group } from "three";
+import { usePerf } from "@/components/world/perf-context";
 import type { MuseMind } from "@/types/world";
 import { MIND_NODES } from "@/types/world";
 
@@ -28,6 +28,7 @@ export function MuseMindField({
   visible: boolean;
 }) {
   const group = useRef<Group>(null);
+  const { pauseExtras } = usePerf();
   const links = useMemo(() => {
     const pairs: [string, string][] = [
       ["ATTENTION", "CURIOSITY"],
@@ -45,7 +46,9 @@ export function MuseMindField({
   useFrame((state) => {
     if (!group.current) return;
     group.current.visible = visible;
-    group.current.rotation.y = state.clock.elapsedTime * 0.12;
+    if (!pauseExtras) {
+      group.current.rotation.y = state.clock.elapsedTime * 0.12;
+    }
   });
 
   if (!visible) {

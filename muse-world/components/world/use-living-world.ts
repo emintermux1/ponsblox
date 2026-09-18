@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { tickSnapshot, type Pulse } from "@/lib/sim/tick";
 import { seedWorld } from "@/lib/world/defaults";
+import { PERF_BUDGET } from "@/lib/world/perf";
 import type { CameraPreset, MuseId, WorldEvent, WorldSnapshot } from "@/types/world";
 import { presetForMuse } from "@/lib/world/camera";
 
@@ -13,6 +14,11 @@ export function useLivingWorld() {
   const [pulse, setPulse] = useState<Pulse>({ kind: "QUIET", ticker: null });
 
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setIntroLine(null);
+      setIntroDone(true);
+      return;
+    }
     const lines = [
       { at: 0, text: "MUSE WORLD" },
       { at: 3200, text: "They don’t wait for prompts." },
@@ -28,13 +34,16 @@ export function useLivingWorld() {
   useEffect(() => {
     const id = window.setInterval(() => {
       setWorld((current) => tickSnapshot(current, pulse));
-    }, 900);
+    }, PERF_BUDGET.tickMs);
     return () => window.clearInterval(id);
   }, [pulse]);
 
   useEffect(() => {
     let cancelled = false;
     const pull = async () => {
+      if (document.hidden) {
+        return;
+      }
       try {
         const market = await fetch("/api/market", { cache: "no-store" });
         if (market.ok) {
@@ -59,11 +68,18 @@ export function useLivingWorld() {
         /* local world still lives */
       }
     };
+    const onVis = () => {
+      if (!document.hidden) {
+        void pull();
+      }
+    };
     void pull();
     const id = window.setInterval(() => void pull(), 14000);
+    document.addEventListener("visibilitychange", onVis);
     return () => {
       cancelled = true;
       window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVis);
     };
   }, []);
 
