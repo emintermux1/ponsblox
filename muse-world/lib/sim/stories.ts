@@ -1,3 +1,4 @@
+import { cleanTicker } from "@/lib/adapters/parse";
 import { PACKET_HOLD_MS, WALL_SLOT_COUNT } from "@/lib/world/layout";
 import type {
   MuseId,
@@ -70,7 +71,11 @@ export function storySubject(
   pulseTicker: string | null,
   muses: Record<MuseId, MuseState>,
 ): string | null {
-  return pulseTicker ?? muses.trader.mind.watching ?? muses.scroller.mind.watching;
+  return (
+    cleanTicker(pulseTicker) ??
+    cleanTicker(muses.trader.mind.watching) ??
+    cleanTicker(muses.scroller.mind.watching)
+  );
 }
 
 export function pickStoryBeat(input: StoryInput): StoryBeat | null {

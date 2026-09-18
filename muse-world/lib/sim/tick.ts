@@ -449,7 +449,7 @@ export function tickSnapshot(
     packet,
     wallPins,
     spiked,
-    pulseTicker: pulse.ticker,
+    pulseTicker: cleanTicker(pulse.ticker),
     now,
     random,
   });

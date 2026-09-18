@@ -44,9 +44,15 @@ describe("client tick purity", () => {
 
 describe("junk tickers stay off the tape", () => {
   it("does not watch PAID from a junk pulse", () => {
-    const next = tickSnapshot(seedWorld(), { kind: "TREND_SPIKE", ticker: "PAID" });
-    assert.notEqual(next.muses.trader.mind.watching, "PAID");
-    assert.notEqual(next.muses.scroller.mind.watching, "PAID");
+    for (let i = 0; i < 48; i += 1) {
+      const next = tickSnapshot(seedWorld(), { kind: "TREND_SPIKE", ticker: "PAID" }, 10_000 + i, () => (i % 7) / 10);
+      assert.notEqual(next.muses.trader.mind.watching, "PAID");
+      assert.notEqual(next.muses.scroller.mind.watching, "PAID");
+      if (next.packet) {
+        assert.notEqual(next.packet.label, "PAID");
+        assert.notEqual(next.packet.label, "$PAID");
+      }
+    }
     assert.notEqual(pickTicker("PAID"), "PAID");
     assert.equal(pickTicker("WIF"), "WIF");
   });
