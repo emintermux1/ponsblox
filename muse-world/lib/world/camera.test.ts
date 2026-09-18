@@ -62,10 +62,13 @@ test("ROOM preset is the loft home shot", () => {
   assert.deepEqual(shotForPreset("ROOM", null, null), HOME_SHOT);
 });
 
-test("GROK shot looks at the desk orb, not an empty lounge hover", () => {
-  const shot = shotForPreset("GROK", null, null);
-  assert.deepEqual(shot.target, GROK_ORB_POS);
-  assert.ok(GROK_ORB_POS[0] > 3, "hero Grok sits on the trader desk");
+test("GROK shot looks at the orb, including when it has left the shelf", () => {
+  const parked = shotForPreset("GROK", null, null);
+  assert.deepEqual(parked.target, [GROK_ORB_POS[0], GROK_ORB_POS[1] + 0.36, GROK_ORB_POS[2]]);
+  const beside = shotForPreset("GROK", null, [-4.2, 1.5, 1.5]);
+  assert.equal(beside.target[0], -4.2);
+  assert.ok(Math.abs(beside.target[1] - 1.86) < 1e-9);
+  assert.equal(beside.target[2], 1.5);
 });
 
 test("look-cam keeps a usable orbit range", () => {

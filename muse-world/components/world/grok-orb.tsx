@@ -6,6 +6,7 @@ import { Mesh, type Group } from "three";
 import { loftPickHandlers } from "@/components/world/loft-cursor";
 import { NameTag } from "@/components/world/name-tag";
 import { usePerf } from "@/components/world/perf-context";
+import { GROK_BODY_HEX, GROK_EYE_HEX } from "@/lib/sim/grok-patrol";
 import { GROK_NAME } from "@/lib/world/cast";
 import { damp } from "@/lib/world/camera";
 import { GROK_ORB_POS } from "@/lib/world/layout";
@@ -13,9 +14,6 @@ import type { GrokHonesty } from "@/types/world";
 import { assertNever } from "@/types/world";
 
 export const GROK_DESK = GROK_ORB_POS;
-
-const ORB = "#f7f7f5";
-const EYE = "#111111";
 
 function physicalGlass(glass: "physical" | "standard"): boolean {
   switch (glass) {
@@ -28,11 +26,11 @@ function physicalGlass(glass: "physical" | "standard"): boolean {
   }
 }
 
-function PillEye({ x }: { x: number }) {
+function PillSlot({ x }: { x: number }) {
   return (
-    <mesh position={[x, 0.028, 0.168]} rotation={[0.08, 0, 0]} scale={[0.42, 1, 0.42]}>
-      <capsuleGeometry args={[0.026, 0.058, 6, 12]} />
-      <meshStandardMaterial color={EYE} roughness={0.22} metalness={0.04} />
+    <mesh position={[x, 0.04, 0.214]} rotation={[0.18, 0, 0]} scale={[0.55, 1.42, 0.5]}>
+      <capsuleGeometry args={[0.034, 0.092, 8, 16]} />
+      <meshStandardMaterial color={GROK_EYE_HEX} roughness={0.16} metalness={0.02} />
     </mesh>
   );
 }
@@ -50,23 +48,23 @@ function OrbSkin({
 }) {
   return (
     <mesh ref={meshRef} castShadow={shadows}>
-      <sphereGeometry args={[radius, 32, 24]} />
+      <sphereGeometry args={[radius, 40, 28]} />
       {physical ? (
         <meshPhysicalMaterial
-          color={ORB}
-          roughness={0.08}
-          metalness={0.14}
+          color={GROK_BODY_HEX}
+          roughness={0.06}
+          metalness={0.1}
           clearcoat={1}
-          clearcoatRoughness={0.06}
-          emissive={ORB}
+          clearcoatRoughness={0.05}
+          emissive={GROK_BODY_HEX}
           emissiveIntensity={0.03}
         />
       ) : (
         <meshStandardMaterial
-          color={ORB}
-          roughness={0.12}
-          metalness={0.18}
-          emissive={ORB}
+          color={GROK_BODY_HEX}
+          roughness={0.1}
+          metalness={0.14}
+          emissive={GROK_BODY_HEX}
           emissiveIntensity={0.03}
         />
       )}
@@ -93,11 +91,15 @@ export function GrokOrb({
   waking,
   honesty,
   lookAt,
+  position,
+  mark,
   onWake,
 }: {
   waking: boolean;
   honesty: GrokHonesty | null;
   lookAt: [number, number, number];
+  position: [number, number, number];
+  mark?: string;
   onWake: () => void;
 }) {
   const root = useRef<Group>(null);
@@ -112,7 +114,9 @@ export function GrokOrb({
     }
     const t = pauseExtras ? 0 : state.clock.elapsedTime;
     const bob = pauseExtras ? 0 : 0.028 * Math.sin(t * 1.15);
-    root.current.position.y = damp(root.current.position.y, GROK_ORB_POS[1] + bob, 4.2, delta);
+    root.current.position.x = damp(root.current.position.x, position[0], 4.2, delta);
+    root.current.position.y = damp(root.current.position.y, position[1] + bob, 4.2, delta);
+    root.current.position.z = damp(root.current.position.z, position[2], 4.2, delta);
     lookGroupAt(face.current, lookAt);
     if (!pauseExtras) {
       pulseEmissive(body.current, waking, honesty, t);
@@ -122,63 +126,19 @@ export function GrokOrb({
   return (
     <group
       ref={root}
-      position={GROK_ORB_POS}
-      userData={{ grok: "hero" }}
+      position={position}
+      userData={{ species: "grok", grok: "hero" }}
       {...loftPickHandlers(onWake)}
     >
       <mesh visible={false}>
-        <sphereGeometry args={[0.34, 12, 12]} />
+        <sphereGeometry args={[0.4, 12, 12]} />
       </mesh>
-      <OrbSkin radius={0.2} physical={physical} shadows={shadows} meshRef={body} />
+      <OrbSkin radius={0.26} physical={physical} shadows={shadows} meshRef={body} />
       <group ref={face}>
-        <PillEye x={-0.055} />
-        <PillEye x={0.055} />
+        <PillSlot x={-0.068} />
+        <PillSlot x={0.068} />
       </group>
-      <NameTag name={GROK_NAME} mark={honesty === "REAL" ? "GROK LIVE" : "SIM"} y={0.36} />
-    </group>
-  );
-}
-
-function GrokWatcher({
-  index,
-  lookAt,
-  onWake,
-}: {
-  index: number;
-  lookAt: [number, number, number];
-  onWake: () => void;
-}) {
-  const root = useRef<Group>(null);
-  const face = useRef<Group>(null);
-  const { glass, pauseExtras, shadows } = usePerf();
-  const physical = physicalGlass(glass);
-  const radius = 0.55 + index * 0.18;
-  const lift = 0.22 + index * 0.08;
-
-  useFrame((state) => {
-    if (!root.current) {
-      return;
-    }
-    const t = pauseExtras ? index : state.clock.elapsedTime;
-    const angle = t * (0.55 + index * 0.12) + index * 2.2;
-    root.current.position.set(
-      lookAt[0] + Math.cos(angle) * radius,
-      lookAt[1] + lift + Math.sin(t * 1.3 + index) * 0.04,
-      lookAt[2] + Math.sin(angle) * radius,
-    );
-    lookGroupAt(face.current, lookAt);
-  });
-
-  return (
-    <group ref={root} userData={{ grok: "watch" }} {...loftPickHandlers(onWake)}>
-      <mesh visible={false}>
-        <sphereGeometry args={[0.16, 10, 10]} />
-      </mesh>
-      <OrbSkin radius={0.09} physical={physical} shadows={shadows} />
-      <group ref={face} scale={0.46}>
-        <PillEye x={-0.055} />
-        <PillEye x={0.055} />
-      </group>
+      <NameTag name={GROK_NAME} mark={mark ?? (honesty === "REAL" ? "GROK LIVE" : "SIM")} y={0.42} />
     </group>
   );
 }
@@ -187,18 +147,25 @@ export function GrokPresence({
   waking,
   honesty,
   lookAt,
+  position,
+  mark,
   onWake,
 }: {
   waking: boolean;
   honesty: GrokHonesty | null;
   lookAt: [number, number, number];
+  position: [number, number, number];
+  mark?: string;
   onWake: () => void;
 }) {
   return (
-    <group>
-      <GrokOrb waking={waking} honesty={honesty} lookAt={lookAt} onWake={onWake} />
-      <GrokWatcher index={0} lookAt={lookAt} onWake={onWake} />
-      <GrokWatcher index={1} lookAt={lookAt} onWake={onWake} />
-    </group>
+    <GrokOrb
+      waking={waking}
+      honesty={honesty}
+      lookAt={lookAt}
+      position={position}
+      mark={mark}
+      onWake={onWake}
+    />
   );
 }

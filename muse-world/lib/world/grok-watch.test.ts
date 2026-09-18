@@ -23,8 +23,10 @@ describe("grok watch honesty", () => {
     const sim = applyGrokWake(seedWorld(), null, "trader", 10);
     assert.equal(grokCompanyLine(sim), null);
     assert.equal(grokSupportCaption(sim), SIM_GROK_SUMMARY);
-    assert.equal(sim.packet?.from, "trader");
-    assert.equal(sim.packet?.to, "grok");
+    assert.equal(sim.packet?.from, "grok");
+    assert.equal(sim.packet?.to, "trader");
+    assert.equal(sim.muses.trader.task?.line, "check the tape");
+    assert.equal(sim.muses.trader.task?.source, "sim");
 
     const real = applyGrokWake(
       seedWorld(),
@@ -40,6 +42,9 @@ describe("grok watch honesty", () => {
     assert.equal(grokSupportCaption(real), "thin book, PASS");
     assert.equal(real.packet?.from, "grok");
     assert.equal(real.packet?.to, "trader");
+    assert.equal(real.muses.trader.task?.source, "xai");
+    assert.equal(real.muses.trader.task?.line, "thin book, PASS");
+    assert.equal(real.muses.trader.task?.honesty, "REAL");
   });
 
   it("never fills a CoT dump into the support caption", () => {

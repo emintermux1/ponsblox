@@ -167,6 +167,22 @@ describe("purposeful work", () => {
   });
 });
 
+describe("grok leaves the shelf", () => {
+  it("floats off the desk toward a muse during quiet ticks", () => {
+    let world = seedWorld();
+    const shelf = world.grok.position;
+    for (let i = 0; i < 10; i += 1) {
+      world = tickSnapshot(world, { kind: "QUIET", ticker: null }, 8_000 + i * 400, () => 0.2);
+    }
+    assert.ok(
+      Math.hypot(
+        world.grok.position[0] - shelf[0],
+        world.grok.position[2] - shelf[2],
+      ) > 0.2,
+    );
+  });
+});
+
 describe("desk grok orb", () => {
   it("pulses on wake and real xAI, not on tape chatter", () => {
     const now = 50_000;

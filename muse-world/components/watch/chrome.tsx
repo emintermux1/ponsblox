@@ -1,7 +1,8 @@
 "use client";
 
 import { CAST, GROK_NAME, grokPresence } from "@/lib/world/cast";
-import { ASK_GROK, grokCompanyLine, grokSupportCaption } from "@/lib/world/grok-watch";
+import { ASK_GROK, grokCompanyLine, grokSupportCaption, grokTaskChip } from "@/lib/world/grok-watch";
+import { taskHonestyMark } from "@/lib/sim/grok-patrol";
 import { inspectCopy } from "@/lib/world/pick";
 import type { RenderMode } from "@/lib/world/perf";
 import type { CameraPreset, MuseId, ScreenId, WorldSnapshot } from "@/types/world";
@@ -49,6 +50,8 @@ export function SpectatorChrome({
   const caption = compact ? null : quietIntro(introLine);
   const inspect = world.inspecting ? inspectCopy(world, world.inspecting) : null;
   const company = grokCompanyLine(world);
+  const taskChip = grokTaskChip(world);
+  const taskMark = taskHonestyMark(world.grok?.task ?? null);
 
   return (
     <div
@@ -89,12 +92,20 @@ export function SpectatorChrome({
           <span>{activityLine(selected.activity)}</span>
           {world.mindOpen ? <span>{selected.mind.action}</span> : null}
           {company ? <span>{company}</span> : null}
+          {taskChip ? <span className="loft-task-chip">{taskChip}</span> : null}
         </p>
       ) : world.camera === "GROK" || world.grokWake.phase !== "idle" ? (
         <p className="loft-selected-note">
           {GROK_NAME}
           <span>{world.grokWake.phase === "waking" ? "waking" : world.grokWake.honesty ?? "SIM"}</span>
           {company ? <span>{company}</span> : null}
+          {taskChip ? <span className="loft-task-chip">{taskChip}</span> : null}
+        </p>
+      ) : taskChip ? (
+        <p className="loft-selected-note">
+          {GROK_NAME}
+          {taskMark ? <span>{taskMark}</span> : null}
+          <span className="loft-task-chip">{taskChip}</span>
         </p>
       ) : company ? (
         <p className="loft-selected-note">{company}</p>
@@ -237,11 +248,13 @@ function AskGrok({
   world: WorldSnapshot;
   onWake: () => void;
 }) {
+  const chip = grokTaskChip(world);
   return (
     <div className="loft-ask-grok">
       <button type="button" onClick={onWake}>
         {ASK_GROK}
       </button>
+      {chip ? <p className="loft-task-chip">{chip}</p> : null}
       <p>{grokSupportCaption(world)}</p>
     </div>
   );

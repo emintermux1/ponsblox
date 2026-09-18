@@ -15,10 +15,11 @@ import { usePerf } from "@/components/world/perf-context";
 import { CameraRig } from "@/components/world/rig";
 import { useTape } from "@/components/world/tape-context";
 import { ThoughtChip } from "@/components/world/thoughts";
+import { grokOf, taskHonestyMark } from "@/lib/sim/grok-patrol";
 import { deskGrokLive } from "@/lib/sim/tick";
 import { presetForMuse } from "@/lib/world/camera";
 import { grokLookAt } from "@/lib/world/grok-watch";
-import { GROK_ORB_POS, wallSlotWorld } from "@/lib/world/layout";
+import { wallSlotWorld } from "@/lib/world/layout";
 import { MIND_LIFT } from "@/lib/world/mind-graph";
 import type { TapeView } from "@/lib/world/tape";
 import type { MuseId, PacketEndpoint, ScreenId, WorldSnapshot } from "@/types/world";
@@ -151,6 +152,8 @@ function worldRevision(world: WorldSnapshot, tape: TapeView): string {
     tape.name ?? "",
     tape.changePct ?? "",
     world.grokWake.summary ?? "",
+    world.grok?.position[0].toFixed(2) ?? "",
+    world.grok?.task?.line ?? "",
     ...(world.wallPins ?? []).map((pin) => `${pin.slot}:${pin.label}:${pin.at}`),
     ...MUSE_IDS.map((id) => {
       const muse = world.muses[id];
@@ -176,10 +179,13 @@ export function LivingScene({
 }) {
   const tape = useTape();
   const selected = world.selected;
+  const grok = grokOf(world);
   const musePos =
-    selected && (world.camera === "MIND" || world.camera === presetForMuse(selected))
-      ? world.muses[selected].position
-      : null;
+    world.camera === "GROK"
+      ? grok.position
+      : selected && (world.camera === "MIND" || world.camera === presetForMuse(selected))
+        ? world.muses[selected].position
+        : null;
   const { contactShadows } = usePerf();
   const positions: Record<PacketEndpoint, [number, number, number]> = {
     scroller: world.muses.scroller.position,
@@ -187,7 +193,7 @@ export function LivingScene({
     chill: world.muses.chill.position,
     builder: world.muses.builder.position,
     wall: wallSlotWorld(world.packet?.slot ?? 0),
-    grok: GROK_ORB_POS,
+    grok: grok.position,
   };
 
   return (
@@ -216,12 +222,16 @@ export function LivingScene({
         world={world}
       />
       <UsedBits />
-      <GrokPresence
-        waking={world.grokWake.phase === "waking" || deskGrokLive(world.events)}
-        honesty={world.grokWake.honesty}
-        lookAt={grokLookAt(world)}
-        onWake={onWakeGrok}
-      />
+      <FrustumGuard center={grok.position} radius={1.6}>
+        <GrokPresence
+          waking={world.grokWake.phase === "waking" || deskGrokLive(world.events)}
+          honesty={world.grokWake.honesty}
+          lookAt={grokLookAt(world)}
+          position={grok.position}
+          mark={taskHonestyMark(grok.task) ?? (world.grokWake.honesty === "REAL" ? "REAL/xai" : "SIM")}
+          onWake={onWakeGrok}
+        />
+      </FrustumGuard>
       {MUSE_IDS.map((id) => (
         <FrustumGuard key={id} center={world.muses[id].position} radius={id === "chill" ? 2.1 : 1.6}>
           <MuseBody

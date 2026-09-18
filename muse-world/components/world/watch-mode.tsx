@@ -5,7 +5,8 @@ import { motion } from "framer-motion";
 import { activityLine, asCaption } from "@/components/watch/copy";
 import { usePerf } from "@/components/world/perf-context";
 import { useTape } from "@/components/world/tape-context";
-import { GROK_ORB_POS, SCREEN_POS, wallSlotWorld } from "@/lib/world/layout";
+import { grokOf, taskChipText } from "@/lib/sim/grok-patrol";
+import { SCREEN_POS, wallSlotWorld } from "@/lib/world/layout";
 import { tapeHeadline } from "@/lib/world/tape";
 import { projectLoft, watchFrame } from "@/lib/world/perf";
 import { screenView, type ScreenPulse } from "@/lib/world/screen-texture";
@@ -22,7 +23,7 @@ function loftPoint(world: WorldSnapshot, endpoint: PacketEndpoint): { left: numb
     case "wall":
       return projectLoft(wallSlotWorld(world.packet?.slot ?? 0));
     case "grok":
-      return projectLoft(GROK_ORB_POS);
+      return projectLoft(grokOf(world).position);
     default:
       return assertNever(endpoint);
   }
@@ -268,15 +269,19 @@ function WatchPacket({ world, now }: { world: WorldSnapshot; now: number }) {
 }
 
 function WatchGrok({
+  world,
   waking,
   honesty,
   onWake,
 }: {
+  world: WorldSnapshot;
   waking: boolean;
   honesty: WorldSnapshot["grokWake"]["honesty"];
   onWake: () => void;
 }) {
-  const point = projectLoft(GROK_ORB_POS);
+  const grok = grokOf(world);
+  const point = projectLoft(grok.position);
+  const chip = taskChipText(grok.task);
   return (
     <button
       type="button"
@@ -286,14 +291,15 @@ function WatchGrok({
       aria-label="GROK"
     >
       <span
-        className="relative mx-auto block h-8 w-8 rounded-full bg-[#f5f5f2] shadow-[0_0_16px_rgba(245,245,242,0.28)]"
+        className="relative mx-auto block h-8 w-8 rounded-full bg-[#ffffff] shadow-[0_0_16px_rgba(255,255,255,0.28)]"
         style={{ transform: waking ? "scale(1.06)" : "scale(1)" }}
       >
-        <span className="absolute left-[28%] top-[30%] h-[10px] w-[3px] rounded-full bg-[#141414]" />
-        <span className="absolute right-[28%] top-[30%] h-[10px] w-[3px] rounded-full bg-[#141414]" />
+        <span className="absolute left-[30%] top-[28%] h-[11px] w-[3.5px] rounded-full bg-[#0a0a0a]" />
+        <span className="absolute right-[30%] top-[28%] h-[11px] w-[3.5px] rounded-full bg-[#0a0a0a]" />
       </span>
       <span className="mt-1 block text-[9px] tracking-[0.2em] text-[#f7f7f5]">GROK</span>
       <span className="block text-[8px] tracking-[0.16em] text-[#c9ae7a]">{honesty ?? "SIM"}</span>
+      {chip ? <span className="mt-0.5 block text-[8px] tracking-[0.12em] text-[#efe6d4]/70">{chip}</span> : null}
     </button>
   );
 }
@@ -398,6 +404,7 @@ export function WatchMode({
         <Furniture pulse={pulse} />
         <WatchScreens inspecting={world.inspecting} onInspect={onInspect} />
         <WatchGrok
+          world={world}
           waking={world.grokWake.phase === "waking"}
           honesty={world.grokWake.honesty}
           onWake={onWakeGrok}

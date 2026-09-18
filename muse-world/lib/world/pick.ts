@@ -1,4 +1,5 @@
 import { makeGrokEvent } from "@/lib/adapters/parse";
+import { assignWakeTask, forceNextAssignment } from "@/lib/sim/grok-patrol";
 import { honestyFromLabel, SIM_GROK_SUMMARY } from "@/lib/adapters/source";
 import { presetForMuse } from "@/lib/world/camera";
 import { grokAskPacket, grokWakePacket } from "@/lib/world/grok-watch";
@@ -74,8 +75,9 @@ export function applyScreenInspect(
 }
 
 export function applyGrokFocus(world: WorldSnapshot, museId: MuseId, now = Date.now()): WorldSnapshot {
+  const assigned = forceNextAssignment(world, museId, now);
   return {
-    ...world,
+    ...assigned,
     selected: null,
     inspecting: null,
     mindOpen: false,
@@ -103,12 +105,12 @@ export function applyGrokWake(
   const pendingIngest = payload?.pendingIngest === true;
   const muse = world.muses[museId];
   const kind = source === "xai" ? "GROK_RESPONSE" : "GROK_REQUESTED";
-  return {
+  const wokenWorld = {
     ...world,
-    camera: "GROK",
+    camera: "GROK" as const,
     inspecting: null,
     grokWake: {
-      phase: "done",
+      phase: "done" as const,
       museId,
       source,
       honesty,
@@ -143,6 +145,7 @@ export function applyGrokWake(
       ...world.events,
     ].slice(0, 24),
   };
+  return assignWakeTask(wokenWorld, museId, now, source === "xai" ? summary : null, source === "xai");
 }
 
 export function inspectCopy(

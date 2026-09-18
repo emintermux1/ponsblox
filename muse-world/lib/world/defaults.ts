@@ -1,3 +1,4 @@
+import { seedGrokAgent } from "@/lib/sim/grok-patrol";
 import { CAST } from "@/lib/world/cast";
 import { STATIONS } from "@/lib/world/layout";
 import { emptyGrokWake } from "@/lib/world/pick";
@@ -54,6 +55,7 @@ export function seedMuses(): Record<MuseId, MuseState> {
       position: STATIONS.scrollerSofa.position,
       facing: STATIONS.scrollerSofa.facing,
       mind: emptyMind("notice what is actually moving"),
+      task: null,
     },
     trader: {
       id: "trader",
@@ -65,6 +67,7 @@ export function seedMuses(): Record<MuseId, MuseState> {
       position: STATIONS.traderDesk.position,
       facing: STATIONS.traderDesk.facing,
       mind: emptyMind("find asymmetric setups"),
+      task: null,
     },
     chill: {
       id: "chill",
@@ -76,6 +79,7 @@ export function seedMuses(): Record<MuseId, MuseState> {
       position: STATIONS.chillArmchair.position,
       facing: STATIONS.chillArmchair.facing,
       mind: emptyMind("be bored on purpose"),
+      task: null,
     },
     builder: {
       id: "builder",
@@ -87,6 +91,7 @@ export function seedMuses(): Record<MuseId, MuseState> {
       position: STATIONS.builderWall.position,
       facing: STATIONS.builderWall.facing,
       mind: emptyMind("write a thesis worth sending"),
+      task: null,
     },
   };
 }
@@ -98,6 +103,7 @@ export function seedWorld(): WorldSnapshot {
     selected: null,
     inspecting: null,
     grokWake: emptyGrokWake(),
+    grok: seedGrokAgent(),
     mindOpen: false,
     camera: "ROOM",
     muses: seedMuses(),

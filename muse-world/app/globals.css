@@ -257,6 +257,11 @@ canvas {
   margin: 0;
 }
 
+.loft-task-chip {
+  letter-spacing: 0.08em;
+  color: color-mix(in srgb, var(--loft-paper) 70%, transparent);
+}
+
 .loft-dot {
   display: inline-block;
   width: 0.35rem;

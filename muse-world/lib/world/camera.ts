@@ -117,11 +117,7 @@ export function shotForPreset(
     case "BUILDER":
       return lookAtMuse([3.8, 2.2, 6.2], [6.3, 0.74, 2.8], musePos, 34);
     case "GROK":
-      return {
-        position: [6.55, 2.18, 2.42],
-        target: [GROK_ORB_POS[0], GROK_ORB_POS[1], GROK_ORB_POS[2]],
-        fov: 30,
-      };
+      return lookAtMuse([6.55, 2.18, 2.42], GROK_ORB_POS, musePos, 30);
     case "MIND": {
       const [x, y, z] = musePos ?? [0, 1, 0];
       return { position: [x + 1.6, y + 1.72, z + 2.55], target: [x, y + 1.08, z], fov: 32 };

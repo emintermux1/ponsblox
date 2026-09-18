@@ -1,5 +1,6 @@
 import { asCaption, mostAwakeId } from "@/components/watch/copy";
 import { SIM_GROK_SUMMARY } from "@/lib/adapters/source";
+import { grokOf, taskChipText } from "@/lib/sim/grok-patrol";
 import type {
   GrokHonesty,
   MuseId,
@@ -12,18 +13,26 @@ export const ASK_GROK = "ask Grok";
 export const SIM_GROK_STUB = SIM_GROK_SUMMARY;
 
 export function grokAttendId(world: WorldSnapshot): MuseId {
-  if (world.grokWake.museId) {
+  if (world.grokWake.museId && world.grokWake.phase !== "idle") {
     return world.grokWake.museId;
   }
   if (world.selected) {
     return world.selected;
   }
-  return mostAwakeId(world);
+  return grokOf(world).targetId ?? mostAwakeId(world);
 }
 
 export function grokLookAt(world: WorldSnapshot): [number, number, number] {
+  const live = grokOf(world).lookAt;
+  if (world.grok) {
+    return live;
+  }
   const muse = world.muses[grokAttendId(world)];
   return [muse.position[0], muse.position[1] + 0.82, muse.position[2]];
+}
+
+export function grokTaskChip(world: WorldSnapshot): string | null {
+  return taskChipText(grokOf(world).task ?? world.muses[grokAttendId(world)]?.task ?? null);
 }
 
 export function grokCompanyLine(world: WorldSnapshot): string | null {

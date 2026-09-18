@@ -64,6 +64,27 @@ export type GrokWakeState = {
   pendingIngest: boolean;
 };
 
+export type GrokTaskKind = "SCROLL" | "WATCH_TAPE" | "PIN_NOTE" | "CHILL";
+
+export type GrokTask = {
+  kind: GrokTaskKind;
+  line: string;
+  museId: MuseId;
+  source: "xai" | "sim";
+  honesty: GrokHonesty;
+  at: number;
+  accepted: boolean;
+};
+
+export type GrokAgent = {
+  position: [number, number, number];
+  lookAt: [number, number, number];
+  targetId: MuseId;
+  hoverUntil: number;
+  nextAssignAt: number;
+  task: GrokTask | null;
+};
+
 export type ActionLabel = "WATCH" | "PASS" | "BUY" | "HOLD" | "IDLE";
 
 export type MindNodeState = {
@@ -91,6 +112,7 @@ export type MuseState = {
   position: [number, number, number];
   facing: number;
   mind: MuseMind;
+  task: GrokTask | null;
 };
 
 export type WorldEvent = {
@@ -108,6 +130,7 @@ export type WorldSnapshot = {
   selected: MuseId | null;
   inspecting: ScreenId | null;
   grokWake: GrokWakeState;
+  grok: GrokAgent;
   mindOpen: boolean;
   camera: CameraPreset;
   muses: Record<MuseId, MuseState>;

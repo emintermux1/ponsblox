@@ -102,7 +102,7 @@ async function askXai(ask: GrokAsk): Promise<GrokToolReply | null> {
         {
           role: "system",
           content:
-            "You are a tool called by a Muse agent. One short sentence. No chain of thought. End with WATCH, PASS, or BUY. Do not invent fills or claim you executed a trade.",
+            "You assign one short loft task to a muse. One sentence. No chain of thought. Prefer: check the tape, stay on the feed, pin a note, or take a breath. You may end with WATCH, PASS, or BUY. Do not invent fills or claim you executed a trade. Never pretend to be Grok Bot.",
         },
         {
           role: "user",
