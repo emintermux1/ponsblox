@@ -5,10 +5,12 @@ import { motion } from "framer-motion";
 import { activityLine, asCaption } from "@/components/watch/copy";
 import { usePerf } from "@/components/world/perf-context";
 import { useTape } from "@/components/world/tape-context";
+import { GROK_NAME, grokPresence } from "@/lib/world/cast";
 import { GROK_ORB_POS, SCREEN_POS, wallSlotWorld } from "@/lib/world/layout";
-import { tapeHeadline } from "@/lib/world/tape";
+import { musePlushPhoto, musePlushTint } from "@/lib/world/muse-face";
 import { projectLoft, watchFrame } from "@/lib/world/perf";
-import { screenView, type ScreenPulse } from "@/lib/world/screen-texture";
+import { PLATE } from "@/lib/world/plates";
+import { screenTapeHeader, screenTapeRows } from "@/lib/world/screen-tape";
 import type { MuseId, MuseState, PacketEndpoint, ScreenId, WorldSnapshot } from "@/types/world";
 import { MIND_NODES, MUSE_IDS, SCREEN_IDS, assertNever } from "@/types/world";
 
@@ -28,21 +30,33 @@ function loftPoint(world: WorldSnapshot, endpoint: PacketEndpoint): { left: numb
   }
 }
 
+function museAccent(id: MuseId): string {
+  switch (id) {
+    case "scroller":
+      return "#d8c6a6";
+    case "trader":
+      return "#2a2a28";
+    case "chill":
+      return "#3f7a4a";
+    case "builder":
+      return "#c9b48a";
+    default:
+      return assertNever(id);
+  }
+}
+
 function MuseFigure({
   muse,
-  pulse,
   selected,
   onSelect,
 }: {
   muse: MuseState;
-  pulse: ScreenPulse;
   selected: boolean;
   onSelect: () => void;
 }) {
   const { reducedMotion } = usePerf();
   const point = projectLoft(muse.position);
   const caption = asCaption(muse.thought);
-  const view = screenView(pulse);
   const seated =
     muse.activity === "CHILLING" ||
     muse.activity === "SMOKING" ||
@@ -72,51 +86,23 @@ function MuseFigure({
       {caption ? (
         <span className="thought-caption mb-2 block text-center">{caption}</span>
       ) : null}
-      <span className="relative mx-auto block h-[78px] w-12">
-        {muse.id === "chill" ? (
-          <span className="absolute bottom-1 left-1/2 h-7 w-10 -translate-x-1/2 rounded-sm bg-[#5c4a3e]" />
-        ) : null}
-        <span className="absolute left-1/2 top-2 h-[46px] w-10 -translate-x-1/2 rounded-[20px] bg-[#f6f1e8] shadow-[0_0_14px_rgba(246,241,232,0.22)]" />
-        {muse.id === "trader" ? (
-          <span className="absolute left-1/2 top-[22px] h-7 w-10 -translate-x-1/2 rounded-b-[16px] bg-[#1a1d24]" />
-        ) : null}
-        <span className="absolute left-[14px] top-[18px] h-[3px] w-[7px] rounded-full bg-[#1a1d33]" />
-        <span className="absolute right-[14px] top-[18px] h-[3px] w-[7px] rounded-full bg-[#1a1d33]" />
-        <span className="absolute left-[13px] top-[26px] h-1.5 w-1.5 rounded-full bg-[#f0b4ae]/80" />
-        <span className="absolute right-[13px] top-[26px] h-1.5 w-1.5 rounded-full bg-[#f0b4ae]/80" />
-        {muse.id === "scroller" ? (
-          <span className="absolute left-1/2 top-1 h-3 w-9 -translate-x-1/2 rounded-full border border-[#14161c]" />
-        ) : null}
-        {muse.id === "trader" ? (
-          <span className="absolute left-1/2 top-0.5 h-2.5 w-7 -translate-x-1/2 rounded-t-full bg-[#14161c]" />
-        ) : null}
-        {muse.id === "chill" ? (
-          <span className="absolute left-1/2 top-[30px] h-1.5 w-8 -translate-x-1/2 rounded-full bg-[#3f7a4a]" />
-        ) : null}
-        {muse.id === "builder" ? (
-          <span className="absolute bottom-3 right-0 h-3 w-4 rounded-[2px] bg-[#ead9c0]" />
-        ) : null}
-        {muse.id === "scroller" || muse.id === "trader" ? (
-          <span className="absolute bottom-2 left-1/2 h-3 w-5 -translate-x-1/2 rounded-[2px] bg-[#3a3d42]" />
-        ) : null}
+      <span className="relative mx-auto block h-[92px] w-[92px]">
+        <img
+          src={musePlushPhoto(muse.id)}
+          alt={muse.name}
+          className="h-full w-full object-contain"
+          style={{ background: musePlushTint(muse.id) }}
+        />
+        <span
+          className="pointer-events-none absolute inset-x-[18%] bottom-[18%] h-1.5 rounded-full"
+          style={{ background: museAccent(muse.id) }}
+        />
         {selected ? (
           <span className="absolute -bottom-0.5 left-1/2 h-1.5 w-8 -translate-x-1/2 rounded-full bg-[#e6d3a8]/55" />
-        ) : null}
-        {muse.id === "scroller" ? (
-          <span
-            data-screen="phone"
-            className="absolute -right-4 top-3 flex h-5 w-3 flex-col items-center justify-center bg-[#1a3b52] shadow-[0_0_8px_#7eb7d455]"
-          >
-            <span className="text-[4px] font-semibold text-[#ecf6ff]">{view.title}</span>
-            <span className="text-[4px] text-[#7ee3a4]">{view.change}</span>
-          </span>
         ) : null}
       </span>
       <span className="mt-1 block min-h-11 cursor-pointer text-center text-base font-medium tracking-wide text-[#efe6d4]">
         {muse.name}
-      </span>
-      <span className="block cursor-pointer text-center text-[8px] tracking-[0.18em] text-[#c9b48a]">
-        {muse.role}
       </span>
       <span className="block cursor-pointer text-center text-sm tracking-normal text-[#cfc3aa]">
         {activityLine(muse.activity)}
@@ -156,14 +142,12 @@ function CitySilhouette() {
   );
 }
 
-function Furniture({ pulse }: { pulse: ScreenPulse }) {
+function Furniture() {
   const couch = projectLoft([-4.15, 0, 1.35]);
   const desk = projectLoft([3.4, 0, -0.85]);
   const wall = projectLoft([7.55, 0, 2.6]);
   const table = projectLoft([-2.7, 0, 2.2]);
-  const view = screenView(pulse);
-  const changeColor =
-    view.changeTone === "up" ? "#7ee3a4" : view.changeTone === "down" ? "#ef8b8b" : "#d7c9a6";
+  const tv = projectLoft([-9.2, 2.15, 1.1]);
 
   return (
     <>
@@ -177,35 +161,18 @@ function Furniture({ pulse }: { pulse: ScreenPulse }) {
         className="absolute z-10 h-[8%] w-[18%] -translate-x-1/2 -translate-y-1/2 bg-[#4a2c18] shadow-[0_8px_18px_#00000040]"
         style={{ left: `${desk.left}%`, top: `${desk.top}%` }}
       >
-        <div className="absolute inset-x-2 -top-6 flex justify-between gap-1">
+        <div className="absolute inset-x-3 -top-3 flex justify-between">
           <span
-            data-screen="desk-left"
-            className="flex h-7 w-12 flex-col items-center justify-center rounded-[1px] bg-[#1a3b52] shadow-[0_0_10px_#7eb7d455]"
-          >
-            <span className="text-[6px] font-semibold tracking-[0.08em] text-[#ecf6ff]">{view.title}</span>
-            <span className="text-[6px] font-semibold" style={{ color: changeColor }}>
-              {view.change}
-            </span>
-          </span>
+            className="h-3 w-6 bg-[#f4ead4]"
+            style={{ boxShadow: "0 0 10px rgba(244,234,212,0.7)" }}
+            aria-hidden
+          />
           <span
-            data-screen="desk-right"
-            className="flex h-7 w-12 flex-col items-center justify-center rounded-[1px] bg-[#1a3b52] shadow-[0_0_10px_#7eb7d455]"
-          >
-            <span className="text-[6px] font-semibold tracking-[0.08em] text-[#ecf6ff]">{view.title}</span>
-            <span className="text-[6px] font-semibold" style={{ color: changeColor }}>
-              {view.change}
-            </span>
-          </span>
+            className="h-3 w-6 bg-[#d7ead4]"
+            style={{ boxShadow: "0 0 10px rgba(215,234,212,0.7)" }}
+            aria-hidden
+          />
         </div>
-        <span
-          data-screen="laptop"
-          className="absolute -right-4 -top-3 flex h-7 w-11 flex-col items-center justify-center bg-[#16344a] shadow-[0_0_8px_#7eb7d440]"
-        >
-          <span className="text-[6px] font-semibold text-[#ecf6ff]">{view.title}</span>
-          <span className="text-[6px]" style={{ color: changeColor }}>
-            {view.change}
-          </span>
-        </span>
       </div>
       <div
         className="absolute z-10 h-[26%] w-[5%] -translate-x-1/2 -translate-y-1/2 bg-[#1a1713]"
@@ -218,6 +185,16 @@ function Furniture({ pulse }: { pulse: ScreenPulse }) {
       <div
         className="absolute z-10 h-2.5 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#1f1b16]"
         style={{ left: `${table.left}%`, top: `${table.top}%` }}
+      />
+      <div
+        className="absolute z-10 h-[9%] w-[14%] -translate-x-1/2 -translate-y-1/2 overflow-hidden bg-[#24506c]"
+        style={{
+          left: `${tv.left}%`,
+          top: `${tv.top}%`,
+          boxShadow: "0 0 18px rgba(155,182,200,0.55)",
+          backgroundImage: `url(${PLATE.tv})`,
+          backgroundSize: "cover",
+        }}
       />
     </>
   );
@@ -283,16 +260,17 @@ function WatchGrok({
       onClick={onWake}
       className="absolute z-20 -translate-x-1/2 -translate-y-1/2 cursor-pointer text-center"
       style={{ left: `${point.left}%`, top: `${point.top}%` }}
-      aria-label="GROK"
+      aria-label={GROK_NAME}
     >
       <span
-        className="relative mx-auto block h-8 w-8 rounded-full bg-[#f5f5f2] shadow-[0_0_16px_rgba(245,245,242,0.28)]"
+        className="relative mx-auto block h-10 w-10 overflow-hidden rounded-full bg-[#f5f5f2] shadow-[0_0_16px_rgba(245,245,242,0.28)]"
         style={{ transform: waking ? "scale(1.06)" : "scale(1)" }}
       >
+        <img src="/muse/grok-orb.jpg" alt="" className="h-full w-full object-cover" />
         <span className="absolute left-[28%] top-[30%] h-[10px] w-[3px] rounded-full bg-[#141414]" />
         <span className="absolute right-[28%] top-[30%] h-[10px] w-[3px] rounded-full bg-[#141414]" />
       </span>
-      <span className="mt-1 block text-[9px] tracking-[0.2em] text-[#f7f7f5]">GROK</span>
+      <span className="mt-1 block text-[9px] tracking-[0.2em] text-[#f7f7f5]">{GROK_NAME}</span>
       <span className="block text-[8px] tracking-[0.16em] text-[#c9ae7a]">{honesty ?? "SIM"}</span>
     </button>
   );
@@ -309,6 +287,17 @@ function screenLabel(id: ScreenId): string {
   }
 }
 
+function plateFor(id: ScreenId): string {
+  switch (id) {
+    case "tape":
+      return PLATE.tape;
+    case "notes":
+      return PLATE.notes;
+    default:
+      return assertNever(id);
+  }
+}
+
 function WatchScreens({
   inspecting,
   onInspect,
@@ -317,6 +306,13 @@ function WatchScreens({
   onInspect: (id: ScreenId) => void;
 }) {
   const tape = useTape();
+  const rows = screenTapeRows(tape);
+  const label = rows.length
+    ? rows
+        .slice(0, 3)
+        .map((row) => `${row.ticker} ${row.change ?? ""}`.trim())
+        .join(" · ")
+    : screenTapeHeader(tape);
   return (
     <>
       {SCREEN_IDS.map((id) => {
@@ -326,15 +322,20 @@ function WatchScreens({
             key={id}
             type="button"
             onClick={() => onInspect(id)}
-            className="absolute z-20 flex h-4 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden bg-[#0e1216] text-[5px] leading-none text-[#d7b56a]"
+            className="absolute z-20 flex h-6 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden bg-[#24506c] px-0.5 text-center text-[5px] leading-none text-[#fff8ea]"
             style={{
               left: `${point.left}%`,
               top: `${point.top}%`,
-              boxShadow: inspecting === id ? "0 0 10px rgba(74,106,130,0.7)" : undefined,
+              backgroundImage: `url(${plateFor(id)})`,
+              backgroundSize: "cover",
+              boxShadow:
+                inspecting === id
+                  ? "0 0 12px rgba(246,236,216,0.8)"
+                  : "0 0 8px rgba(126,200,176,0.45)",
             }}
             aria-label={screenLabel(id)}
           >
-            {tapeHeadline(tape)}
+            {label}
           </button>
         );
       })}
@@ -344,13 +345,11 @@ function WatchScreens({
 
 export function WatchMode({
   world,
-  pulse,
   onSelect,
   onInspect,
   onWakeGrok,
 }: {
   world: WorldSnapshot;
-  pulse: ScreenPulse;
   onSelect: (id: MuseId) => void;
   onInspect: (id: ScreenId) => void;
   onWakeGrok: () => void;
@@ -359,6 +358,7 @@ export function WatchMode({
   const frame = watchFrame(world.camera);
   const selected = world.selected;
   const [now, setNow] = useState(() => Date.now());
+  const honesty = grokPresence(world.events) === "LIVE" ? "REAL" : world.grokWake.honesty;
 
   useEffect(() => {
     if (!world.packet || reducedMotion || hidden) {
@@ -395,18 +395,17 @@ export function WatchMode({
           <div className="absolute left-[9%] top-[8%] h-[46%] w-[40%] bg-[#5c4a3e]/55" />
           <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-[#15202c]/35 to-transparent" />
         </div>
-        <Furniture pulse={pulse} />
+        <Furniture />
         <WatchScreens inspecting={world.inspecting} onInspect={onInspect} />
         <WatchGrok
           waking={world.grokWake.phase === "waking"}
-          honesty={world.grokWake.honesty}
+          honesty={honesty}
           onWake={onWakeGrok}
         />
         {MUSE_IDS.map((id) => (
           <MuseFigure
             key={id}
             muse={world.muses[id]}
-            pulse={pulse}
             selected={selected === id}
             onSelect={() => onSelect(id)}
           />
