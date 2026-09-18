@@ -77,18 +77,12 @@ export function LivingScene({
   const selected = world.selected;
   const musePos = selected ? world.muses[selected].position : null;
   const { contactShadows, cameraFar } = usePerf();
-  const camera = useThree((state) => state.camera);
   const positions = {
     scroller: world.muses.scroller.position,
     trader: world.muses.trader.position,
     chill: world.muses.chill.position,
     builder: world.muses.builder.position,
   };
-
-  useEffect(() => {
-    camera.far = cameraFar;
-    camera.updateProjectionMatrix();
-  }, [camera, cameraFar]);
 
   return (
     <>

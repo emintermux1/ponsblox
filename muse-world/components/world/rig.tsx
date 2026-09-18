@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useFrame, useThree } from "@react-three/fiber";
+import { useFrame } from "@react-three/fiber";
 import { PerspectiveCamera } from "three";
 import { usePerf } from "@/components/world/perf-context";
 import { damp, INTRO_SHOTS, shotForPreset, type Shot } from "@/lib/world/camera";
@@ -20,12 +20,15 @@ export function CameraRig({
   introDone: boolean;
   onIntroDone: () => void;
 }) {
-  const camera = useThree((state) => state.camera);
   const { reducedMotion, hidden } = usePerf();
-  const started = useRef(performance.now());
+  const started = useRef(0);
   const current = useRef<Shot>(INTRO_SHOTS[0]);
   const target = useRef<Shot>(INTRO_SHOTS[0]);
   const finished = useRef(false);
+
+  useEffect(() => {
+    started.current = performance.now();
+  }, []);
 
   useEffect(() => {
     if (reducedMotion && !introDone) {
@@ -39,10 +42,11 @@ export function CameraRig({
       : INTRO_SHOTS[0];
   }, [preset, selected, musePos, introDone]);
 
-  useFrame((_, dt) => {
+  useFrame((state, dt) => {
     if (hidden) {
       return;
     }
+    const camera = state.camera;
     const elapsed = (performance.now() - started.current) / 1000;
     const lambda = reducedMotion ? 8 : 2.4;
     if (!introDone && !reducedMotion) {
