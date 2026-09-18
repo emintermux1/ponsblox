@@ -95,6 +95,7 @@ export function tapeFromPulse(pulse: {
   mint?: unknown;
   source?: unknown;
   changePct?: unknown;
+  priceChange24h?: unknown;
   candles?: unknown;
 }): TapeView {
   const ticker = paidSafeTicker(typeof pulse.ticker === "string" ? pulse.ticker : null);
@@ -107,7 +108,7 @@ export function tapeFromPulse(pulse: {
     ticker,
     mint: typeof pulse.mint === "string" && pulse.mint.length >= 32 ? pulse.mint : null,
     source,
-    changePct: parseFiniteNumber(pulse.changePct),
+    changePct: parseFiniteNumber(pulse.changePct) ?? parseFiniteNumber(pulse.priceChange24h),
     candles: sanitizeCandles(pulse.candles),
     fills: [],
   };
