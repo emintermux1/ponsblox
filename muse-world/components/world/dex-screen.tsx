@@ -11,6 +11,10 @@ import { tapeHeadline, tapeStamp } from "@/lib/world/tape";
 const bl = new Vector3();
 const br = new Vector3();
 const tl = new Vector3();
+const mid = new Vector3();
+
+const MIN_W = 320;
+const MIN_H = 180;
 
 export function DexOnLcd({ width, height }: { width: number; height: number }) {
   const tape = useTape();
@@ -35,13 +39,15 @@ export function DexOnLcd({ width, height }: { width: number; height: number }) {
       }
       return;
     }
+    group.updateWorldMatrix(true, false);
     const el = gl.domElement;
     const hw = width / 2;
     const hh = height / 2;
     bl.set(-hw, -hh, 0).applyMatrix4(group.matrixWorld).project(camera);
     br.set(hw, -hh, 0).applyMatrix4(group.matrixWorld).project(camera);
     tl.set(-hw, hh, 0).applyMatrix4(group.matrixWorld).project(camera);
-    if (bl.z > 1 || br.z > 1 || tl.z > 1) {
+    mid.set(0, 0, 0).applyMatrix4(group.matrixWorld).project(camera);
+    if (mid.z > 1 || Math.abs(mid.x) > 1.35 || Math.abs(mid.y) > 1.35) {
       node.style.display = "none";
       return;
     }
@@ -49,26 +55,20 @@ export function DexOnLcd({ width, height }: { width: number; height: number }) {
     const right = (br.x * 0.5 + 0.5) * el.clientWidth;
     const top = (-tl.y * 0.5 + 0.5) * el.clientHeight;
     const bottom = (-bl.y * 0.5 + 0.5) * el.clientHeight;
-    const w = Math.abs(right - left);
-    const h = Math.abs(bottom - top);
-    if (w < 64 || h < 36) {
-      node.style.display = "none";
-      return;
-    }
+    const cx = (mid.x * 0.5 + 0.5) * el.clientWidth;
+    const cy = (-mid.y * 0.5 + 0.5) * el.clientHeight;
+    const w = Math.max(Math.abs(right - left), MIN_W);
+    const h = Math.max(Math.abs(bottom - top), MIN_H);
     node.style.display = "flex";
-    node.style.left = `${Math.min(left, right)}px`;
-    node.style.top = `${Math.min(top, bottom)}px`;
+    node.style.left = `${Math.max(8, cx - w / 2)}px`;
+    node.style.top = `${Math.max(8, cy - h / 2)}px`;
     node.style.width = `${w}px`;
     node.style.height = `${h}px`;
   });
 
-  if (!src) {
-    return null;
-  }
-
   return (
     <group ref={mount}>
-      {host
+      {host && src
         ? createPortal(
             <div
               ref={pane}
