@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "check": "tsc --noEmit",
-    "test": "tsx --import ./tests/register.mjs --test --test-concurrency=1 lib/adapters/source.test.ts lib/sim/tick.test.ts lib/world/store.test.ts tests/ingest-auth.test.ts tests/adapter-fail-open.test.ts"
+    "test": "tsx --require ./tests/preload.cjs --import ./tests/register.mjs --test --test-concurrency=1 lib/adapters/source.test.ts lib/sim/tick.test.ts lib/world/store.test.ts tests/ingest-auth.test.ts tests/adapter-fail-open.test.ts"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.8",

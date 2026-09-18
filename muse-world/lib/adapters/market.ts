@@ -1,6 +1,8 @@
 import "server-only";
 
 import {
+  assertSource,
+  honestyFromLabel,
   marketPulseFromFetch,
   simMarketPulse,
   type MarketPulse,
@@ -14,6 +16,7 @@ let lastAt = 0;
 export async function peekMarketPulse(): Promise<MarketPulse> {
   const now = Date.now();
   if (now - lastAt < 12_000) {
+    assertSource(honestyFromLabel(lastPulse.source));
     return lastPulse;
   }
   lastAt = now;
@@ -28,13 +31,16 @@ export async function peekMarketPulse(): Promise<MarketPulse> {
     );
     if (!response.ok) {
       lastPulse = marketPulseFromFetch({ status: "http-error" });
+      assertSource(honestyFromLabel(lastPulse.source));
       return lastPulse;
     }
     const body: unknown = await response.json();
     lastPulse = marketPulseFromFetch({ status: "ok", body });
+    assertSource(honestyFromLabel(lastPulse.source));
     return lastPulse;
   } catch {
     lastPulse = marketPulseFromFetch({ status: "network-error" });
+    assertSource(honestyFromLabel(lastPulse.source));
     return lastPulse;
   }
 }

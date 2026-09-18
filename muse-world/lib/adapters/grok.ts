@@ -1,7 +1,9 @@
 import "server-only";
 
 import {
+  assertSource,
   grokReplyAfterWake,
+  honestyFromLabel,
   isGrokWebhookConfigured,
   type GrokAsk,
   type GrokReply,
@@ -93,5 +95,7 @@ export async function askGrok(ask: GrokAsk): Promise<GrokReply> {
   const webhookConfigured = isGrokWebhookConfigured();
   const woken = webhookConfigured ? await wakeGrokBot(ask).catch(() => false) : false;
   const xai = await askXai(ask).catch(() => null);
-  return grokReplyAfterWake({ webhookConfigured, woken, xai });
+  const reply = grokReplyAfterWake({ webhookConfigured, woken, xai });
+  assertSource(honestyFromLabel(reply.source));
+  return reply;
 }
