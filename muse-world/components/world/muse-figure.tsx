@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { RepeatWrapping, SRGBColorSpace, Texture, TextureLoader } from "three";
-import { Cap, FloppyEars, Halo, Headphones, Scarf } from "@/components/world/muse-kit";
+import { FloppyEars, Halo, Headphones, Scarf } from "@/components/world/muse-kit";
 import { usePerf } from "@/components/world/perf-context";
 import { MUSE_FUR_JPG } from "@/lib/world/muse-face";
 import type { MuseId } from "@/types/world";
@@ -11,8 +11,6 @@ import { assertNever } from "@/types/world";
 const FUR = "#f3eee4";
 const INK = "#1a1a1a";
 const BLUSH = "#f0b4ae";
-const HOOD = "#141414";
-
 const textureCache = new Map<string, Texture>();
 
 function useFurMap(): Texture | null {
@@ -94,16 +92,6 @@ function OfficialFace() {
   );
 }
 
-function Vest() {
-  const { shadows } = usePerf();
-  return (
-    <mesh castShadow={shadows} position={[0, 0.32, 0.02]} scale={[1.14, 0.62, 1.08]}>
-      <sphereGeometry args={[0.26, 20, 16]} />
-      <meshStandardMaterial color={HOOD} roughness={0.74} />
-    </mesh>
-  );
-}
-
 function Kit({ id }: { id: MuseId }) {
   switch (id) {
     case "scroller":
@@ -113,14 +101,7 @@ function Kit({ id }: { id: MuseId }) {
         </group>
       );
     case "trader":
-      return (
-        <group>
-          <Vest />
-          <group position={[0, 0.8, 0]}>
-            <Cap />
-          </group>
-        </group>
-      );
+      return null;
     case "chill":
       return <Scarf />;
     case "builder":

@@ -37,7 +37,6 @@ function holdsLaptop(id: MuseId): boolean {
   switch (id) {
     case "scroller":
     case "trader":
-      return true;
     case "chill":
     case "builder":
       return false;

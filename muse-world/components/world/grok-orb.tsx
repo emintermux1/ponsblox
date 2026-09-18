@@ -112,14 +112,9 @@ export function GrokOrb({
     }
     const t = pauseExtras ? 0 : state.clock.elapsedTime;
     const bob = pauseExtras ? 0 : 0.028 * Math.sin(t * 1.15);
-    const hover: [number, number, number] = [
-      lookAt[0] + 0.38,
-      lookAt[1] + 0.26 + bob,
-      lookAt[2] + 0.34,
-    ];
-    root.current.position.x = damp(root.current.position.x, hover[0], 2.2, delta);
-    root.current.position.y = damp(root.current.position.y, hover[1], 2.2, delta);
-    root.current.position.z = damp(root.current.position.z, hover[2], 2.2, delta);
+    root.current.position.x = damp(root.current.position.x, GROK_ORB_POS[0], 3.4, delta);
+    root.current.position.y = damp(root.current.position.y, GROK_ORB_POS[1] + bob, 3.4, delta);
+    root.current.position.z = damp(root.current.position.z, GROK_ORB_POS[2], 3.4, delta);
     lookGroupAt(face.current, lookAt);
     if (!pauseExtras) {
       pulseEmissive(body.current, waking, honesty, t);

@@ -119,7 +119,7 @@ export function shotForPreset(
     case "SCROLLER":
       return lookAtMuse([-6.4, 1.9, 3.8], [-4.1, 0.59, 1.15], musePos, 32);
     case "TRADER":
-      return lookAtMuse([6.6, 2.1, 3.4], [3.35, 0.69, -0.2], musePos, 32);
+      return lookAtMuse([4.8, 3.1, 6.4], [3.35, 0.86, -0.15], musePos, 40);
     case "BUILDER":
       return lookAtMuse([3.8, 2.2, 6.2], [6.3, 0.74, 2.8], musePos, 34);
     case "GROK":
