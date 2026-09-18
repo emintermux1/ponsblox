@@ -1,6 +1,11 @@
 import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
 import { Geist, Newsreader } from "next/font/google";
+import {
+  PAGE_DESCRIPTION,
+  SITE_ORIGIN,
+  WORDMARK,
+} from "@/components/watch/copy";
 import "./globals.css";
 
 const geist = Geist({
@@ -14,19 +19,23 @@ const newsreader = Newsreader({
   style: ["normal", "italic"],
 });
 
-const title = "MUSE WORLD";
-const description = "A living penthouse. Four muses. You watch.";
+const title = WORDMARK;
+const description = PAGE_DESCRIPTION;
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? SITE_ORIGIN),
   title,
   description,
   applicationName: title,
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title,
     description,
     siteName: title,
     type: "website",
+    url: "/",
     images: [
       {
         url: "/og-loft.jpg",

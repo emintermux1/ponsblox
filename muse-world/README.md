@@ -1,6 +1,6 @@
-# MUSE WORLD
+# Muse Grok
 
-A living cinematic loft. Four Muse agents scroll, trade, research, and chill. Grok is a tool they call — not the owner.
+The living penthouse at [musegrok.world](https://musegrok.world). Four Muse agents scroll, trade, research, and chill. Muse is the brain. Grok is a tool they call — not the owner.
 
 This site is a **sender / bridge**. It can wake Grok Bot and accept a later ingest POST. It has **no public Grok session API**. There is **no official Bot → site event stream**.
 
@@ -12,7 +12,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open http://localhost:3000
+Open http://localhost:3000 — production is https://musegrok.world
 
 ## Owner setup
 
@@ -20,10 +20,10 @@ Do this on your machine. Do not paste secrets into git, chat, or this repo.
 
 1. **Grok Bot webhook.** Open Grok Bot → Routines → webhook. Copy the POST URL and Bearer key into `.env.local` as `GROK_BOT_WEBHOOK_URL` and `GROK_BOT_WEBHOOK_KEY`.
 2. **Ingest secret.** Create a long random value and set `GROK_INGEST_SECRET` in `.env.local`. The Bot must send it as `x-muse-ingest` when it POSTs `/api/grok/ingest`. If this name is unset, the ingest route does not reject callers — set it.
-3. **Public URL.** Set `NEXT_PUBLIC_APP_URL` to the origin the Bot should call (local `http://localhost:3000` or the *muse-world* Vercel URL). Give the Bot `public/grok-bot.md` (served at `/grok-bot.md`).
+3. **Public URL.** Set `NEXT_PUBLIC_APP_URL` to the origin the Bot should call (`http://localhost:3000` locally, `https://musegrok.world` in production). Give the Bot `public/grok-bot.md` (served at `/grok-bot.md`).
 4. **Cursor GitHub App.** Grant the Cursor GitHub App access to this repo so the Bot can write code when a routine asks it to.
 5. **Optional xAI.** Paste `XAI_API_KEY` if you want a fast Chat Completions call to `api.x.ai`. That is **not** the Grok Bot app.
-6. **Sibling names.** Other names in `.env.example` are copied from musefomo / indexpad / longer so you can paste the same local keys. Muse World does not read most of them yet. Never commit values.
+6. **Paste-list names.** Other names in `.env.example` are unused keys so you can paste the same local values. Muse Grok does not read most of them yet. Never commit values.
 7. Slack (if you use it) stays on the owner’s Slack. This site is not a Slack listener.
 
 ## SIM vs REAL
@@ -67,9 +67,9 @@ Names only — see `.env.example`. Paste values into `.env.local` (gitignored). 
 | `GROK_INGEST_SECRET` | Shared secret for `/api/grok/ingest` |
 | `XAI_API_KEY` | Optional xAI Chat Completions |
 | `XAI_API_URL` | Optional; adapter defaults to `https://api.x.ai/v1` |
-| `NEXT_PUBLIC_APP_URL` | Origin printed for the Bot ingest URL |
+| `NEXT_PUBLIC_APP_URL` | Origin printed for the Bot ingest URL. Production example: `https://musegrok.world` |
 
-**Copied names (paste locally; unused by Muse World adapters)**
+**Copied names (paste locally; unused by Muse Grok adapters)**
 
 From musefomo: `HELIUS_API_KEY`, `HELIUS_WEBHOOK_SECRET`, `PRIVY_APP_ID`, `NEXT_PUBLIC_PRIVY_APP_ID`, `PRIVY_APP_SECRET`, `PRIVY_JWKS_URL`, `PRIVY_AUTHORIZATION_PRIVATE_KEY`, `PRIVY_AUTHORIZATION_KEY_ID`, `DFLOW_API_KEY`, `BIRDEYE_API_KEY`, `GMGN_API_KEY`, `SOLSCAN_API_KEY`, `FOMOSCAN_API_KEY`, `FOMOSCAN_API_URL`, `BLOCKSCOUT_API_KEY`, `DATABASE_URL`, `SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `CREDENTIAL_PEPPER`.
 
@@ -91,20 +91,10 @@ From longer: `PINATA_JWT`, `NEXT_PUBLIC_PONS_FACTORY`, `NEXT_PUBLIC_PONS_LAUNCH_
 
 ## Deploy
 
-Create a **new** Vercel project named `muse-world`.
+Public host: **https://musegrok.world**. App root: `muse-world`. Framework: Next.js (`vercel.json`).
 
-- **Root Directory:** `muse-world`
-- **Framework:** Next.js (`vercel.json`)
-- **Production env:** paste the Grok names you use locally (`GROK_BOT_WEBHOOK_URL`, `GROK_BOT_WEBHOOK_KEY`, `GROK_INGEST_SECRET`, optional `XAI_API_KEY`, `NEXT_PUBLIC_APP_URL` = this project’s URL)
-
-**Do not** alias or attach this project to existing hosts:
-
-- do **not** alias `musefomo.family`
-- do **not** alias indexpad
-- do **not** alias musefans
-- do **not** overwrite those Vercel projects
-
-Preview URL is whatever Vercel assigns to **muse-world** only.
+- **Production env:** paste the Grok names you use locally (`GROK_BOT_WEBHOOK_URL`, `GROK_BOT_WEBHOOK_KEY`, `GROK_INGEST_SECRET`, optional `XAI_API_KEY`, `NEXT_PUBLIC_APP_URL=https://musegrok.world`)
+- Do not delete this Vercel project or retarget other domains. A sibling deploy attaches Vercel + `musegrok.world`.
 
 ```bash
 cd muse-world

@@ -1,18 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { mostAwakeId } from "@/components/watch/copy";
+import { INTRO_COPY, mostAwakeId } from "@/components/watch/copy";
 import { tickSnapshot, type Pulse } from "@/lib/sim/tick";
 import { INTRO_CLEAR_MS, INTRO_COPY_AT_MS, presetForMuse } from "@/lib/world/camera";
 import { seedWorld } from "@/lib/world/defaults";
 import { PERF_BUDGET } from "@/lib/world/perf";
 import type { CameraPreset, MuseId, WorldEvent, WorldSnapshot } from "@/types/world";
-
-const INTRO_COPY = [
-  "MUSE WORLD",
-  "They don't wait for prompts",
-  "Watch them live.",
-] as const;
 
 function prefersReducedMotion(): boolean {
   return (

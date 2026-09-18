@@ -127,8 +127,11 @@ function EntryVeil({
 }) {
   return (
     <div className="loft-veil absolute inset-0 flex flex-col items-center justify-center">
-      <p className="font-serif text-[clamp(3.4rem,9vw,7rem)] italic leading-none tracking-[-0.03em]">
+      <p className="text-center font-serif text-[clamp(2.8rem,8vw,6.2rem)] italic leading-none tracking-[-0.03em]">
         {WORDMARK}
+      </p>
+      <p className="mt-4 text-[12px] tracking-[0.28em] text-loft-brass/80">
+        {WORLD_MARK}
       </p>
       <span className="loft-rule mt-5" />
       <p className="loft-entry-caption mt-6 text-[15px] text-loft-paper/88 md:text-[16px]">

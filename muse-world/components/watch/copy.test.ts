@@ -1,6 +1,23 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { activityLine, asCaption, isAwake } from "./copy";
+import {
+  activityLine,
+  asCaption,
+  INTRO_COPY,
+  isAwake,
+  PAGE_DESCRIPTION,
+  SITE_ORIGIN,
+  WORDMARK,
+  WORLD_MARK,
+} from "./copy";
+
+test("first paint brand is Muse Grok at musegrok.world", () => {
+  assert.equal(WORDMARK, "Muse Grok");
+  assert.equal(WORLD_MARK, "musegrok.world");
+  assert.equal(SITE_ORIGIN, "https://musegrok.world");
+  assert.equal(PAGE_DESCRIPTION, "A living penthouse. Four muses. You watch.");
+  assert.equal(INTRO_COPY[0], WORDMARK);
+});
 
 test("asCaption keeps a short literary line", () => {
   assert.equal(asCaption("the tape is leaning"), "the tape is leaning");
