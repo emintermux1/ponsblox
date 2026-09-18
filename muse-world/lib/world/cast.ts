@@ -21,25 +21,25 @@ export const CAST: Record<MuseId, CastCard> = {
   scroller: {
     name: "Euterpe",
     role: "SCROLLER",
-    portrait: "/cast/pip.jpg",
+    portrait: "/muse/muse-plush.jpg",
     focus: "center 18%",
   },
   trader: {
     name: "Urania",
     role: "TRADER",
-    portrait: "/cast/tape.jpg",
+    portrait: "/muse/muse-plush.jpg",
     focus: "center 22%",
   },
   chill: {
     name: "Thalia",
     role: "CHILL",
-    portrait: "/cast/sable.jpg",
+    portrait: "/muse/muse-plush.jpg",
     focus: "center 28%",
   },
   builder: {
     name: "Calliope",
     role: "BUILDER",
-    portrait: "/cast/halo.jpg",
+    portrait: "/muse/muse-plush-halo.jpg",
     focus: "center 20%",
   },
 };

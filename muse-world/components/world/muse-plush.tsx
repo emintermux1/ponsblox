@@ -2,16 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { Billboard } from "@react-three/drei";
-import { DoubleSide, SRGBColorSpace, Texture, TextureLoader } from "three";
-import { musePlushBillboard, musePlushTint } from "@/lib/world/muse-face";
+import { DoubleSide, NoColorSpace, SRGBColorSpace, Texture, TextureLoader } from "three";
+import {
+  MUSE_PLUSH_ALPHA,
+  musePlushBillboard,
+  musePlushTint,
+} from "@/lib/world/muse-face";
 import type { MuseId } from "@/types/world";
 import { assertNever } from "@/types/world";
 
-const CARD_W = 1.18;
-const CARD_H = 1.18;
+const CARD_W = 1.22;
+const CARD_H = 1.22;
 const textureCache = new Map<string, Texture>();
 
-function usePlushMap(src: string): Texture | null {
+function usePlushMap(src: string, kind: "color" | "alpha"): Texture | null {
   const [map, setMap] = useState<Texture | null>(() => textureCache.get(src) ?? null);
 
   useEffect(() => {
@@ -27,7 +31,7 @@ function usePlushMap(src: string): Texture | null {
     const tex = loader.load(
       src,
       (loaded) => {
-        loaded.colorSpace = SRGBColorSpace;
+        loaded.colorSpace = kind === "color" ? SRGBColorSpace : NoColorSpace;
         loaded.anisotropy = 8;
         loaded.needsUpdate = true;
         textureCache.set(src, loaded);
@@ -43,7 +47,7 @@ function usePlushMap(src: string): Texture | null {
         tex.dispose();
       }
     };
-  }, [src]);
+  }, [kind, src]);
 
   return map;
 }
@@ -113,28 +117,30 @@ function PlushGear({ id }: { id: MuseId }) {
 
 export function MusePlushCard({ id }: { id: MuseId }) {
   const src = musePlushBillboard(id);
-  const map = usePlushMap(src);
+  const map = usePlushMap(src, "color");
+  const alphaMap = usePlushMap(MUSE_PLUSH_ALPHA, "alpha");
   const tint = musePlushTint(id);
+
+  if (!map || !alphaMap) {
+    return null;
+  }
 
   return (
     <Billboard follow position={[0, 0.66, 0]}>
       <mesh>
         <planeGeometry args={[CARD_W, CARD_H]} />
-        {map ? (
-          <meshBasicMaterial
-            map={map}
-            color={tint}
-            transparent
-            alphaTest={0.08}
-            depthWrite
-            toneMapped={false}
-            side={DoubleSide}
-          />
-        ) : (
-          <meshBasicMaterial color="#f3eee4" toneMapped={false} side={DoubleSide} />
-        )}
+        <meshBasicMaterial
+          map={map}
+          alphaMap={alphaMap}
+          color={tint}
+          transparent
+          alphaTest={0.12}
+          depthWrite
+          toneMapped={false}
+          side={DoubleSide}
+        />
       </mesh>
-      {map ? <PlushGear id={id} /> : null}
+      <PlushGear id={id} />
     </Billboard>
   );
 }
