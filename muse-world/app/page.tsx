@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <div className="loft-root">
       <h1 className="sr-only">
-        {WORDMARK} at {new URL(SITE_ORIGIN).host}. Scroller, Trader, Chill, Builder, and Grok.{" "}
+        {WORDMARK} at {new URL(SITE_ORIGIN).host}. Euterpe, Urania, Thalia, Calliope, and Grok.{" "}
         {PAGE_DESCRIPTION}
       </h1>
       <SpectatorFrame />
