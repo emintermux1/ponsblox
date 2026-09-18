@@ -107,7 +107,7 @@ describe("public tape honesty", () => {
     assert.equal(tapeHeadline(tape), "BONK  -1.3%");
     assert.equal(tape.candles.length, 1);
     assert.deepEqual(tape.fills, []);
-    assert.equal(tapeStamp("dexscreener"), "LIVE · dexscreener");
+    assert.equal(tapeStamp("dexscreener"), "LIVE · dex");
   });
 
   it("keeps dexscreener and solana pulses live instead of remapping them to SIM", () => {
@@ -119,7 +119,7 @@ describe("public tape honesty", () => {
       candles: [],
     });
     assert.equal(dex.source, "dexscreener");
-    assert.equal(tapeStamp(dex.source), "LIVE · dexscreener");
+    assert.equal(tapeStamp(dex.source), "LIVE · dex");
     assert.deepEqual(dex.fills, []);
     const sol = tapeFromPulse({ kind: "VIRAL_POST", ticker: "WIF", source: "solana" });
     assert.equal(sol.source, "solana");

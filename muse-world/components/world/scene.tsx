@@ -150,6 +150,7 @@ function worldRevision(world: WorldSnapshot, tape: TapeView): string {
     tape.ticker ?? "",
     tape.name ?? "",
     tape.changePct ?? "",
+    tape.rows.map((row) => `${row.ticker}:${row.changePct ?? ""}:${row.source}`).join(","),
     world.grokWake.summary ?? "",
     ...(world.wallPins ?? []).map((pin) => `${pin.slot}:${pin.label}:${pin.at}`),
     ...MUSE_IDS.map((id) => {

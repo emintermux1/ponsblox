@@ -5,6 +5,7 @@ import {
   pulseDisplayName,
   type MarketProviderId,
 } from "@/lib/adapters/parse";
+import { screenSourceLabel } from "@/lib/world/tape";
 
 export type ScreenSource = MarketProviderId | "sim";
 
@@ -95,7 +96,7 @@ export function screenView(pulse: ScreenPulse): ScreenView {
     change: formatChange(clean.changePct),
     changeTone: changeTone(clean.changePct),
     mark: live ? "REAL" : "SIM",
-    source: clean.source.toUpperCase(),
+    source: screenSourceLabel(clean.source),
   };
 }
 

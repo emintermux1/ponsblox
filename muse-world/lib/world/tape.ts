@@ -181,6 +181,30 @@ export function tapeFromPulse(pulse: {
   };
 }
 
+/** Honest short stamps painted on the 3D tape. dexscreener → dex. */
+export type ScreenSourceLabel = "gecko" | "dex" | "gmgn" | "helius" | "sim" | "birdeye" | "solana";
+
+export function screenSourceLabel(source: TapeSource): ScreenSourceLabel {
+  switch (source) {
+    case "gecko":
+      return "gecko";
+    case "dexscreener":
+      return "dex";
+    case "gmgn":
+      return "gmgn";
+    case "helius":
+      return "helius";
+    case "sim":
+      return "sim";
+    case "birdeye":
+      return "birdeye";
+    case "solana":
+      return "solana";
+    default:
+      return assertNever(source);
+  }
+}
+
 export function tapeStamp(source: TapeSource): string {
   switch (source) {
     case "sim":
@@ -194,7 +218,7 @@ export function tapeStamp(source: TapeSource): string {
     case "helius":
       return "LIVE · helius";
     case "dexscreener":
-      return "LIVE · dexscreener";
+      return "LIVE · dex";
     case "solana":
       return "LIVE · solana";
     default:

@@ -281,19 +281,21 @@ function hitFromDexPair(pair: DexPair): MarketHit | null {
 }
 
 async function peekDexBoosts(): Promise<{ status: ProviderStatus; mints: string[]; hits: MarketHit[] }> {
-  const [boosts, profiles] = await Promise.all([
+  const [boosts, profiles, latest] = await Promise.all([
     readProvider("https://api.dexscreener.com/token-boosts/top/v1", UA, MARKET_FETCH_MS),
     readProvider("https://api.dexscreener.com/token-profiles/latest/v1", UA, MARKET_FETCH_MS),
+    readProvider("https://api.dexscreener.com/token-boosts/latest/v1", UA, MARKET_FETCH_MS),
   ]);
-  if (boosts.status === "skip" && profiles.status === "skip") {
+  if (boosts.status === "skip" && profiles.status === "skip" && latest.status === "skip") {
     return { status: "skip", mints: [], hits: [] };
   }
-  if (boosts.status !== "ok" && profiles.status !== "ok") {
+  if (boosts.status !== "ok" && profiles.status !== "ok" && latest.status !== "ok") {
     return { status: "error", mints: [], hits: [] };
   }
   const mints = [
     ...solanaBoostMints(boosts.status === "ok" ? boosts.body : []),
     ...solanaBoostMints(profiles.status === "ok" ? profiles.body : []),
+    ...solanaBoostMints(latest.status === "ok" ? latest.body : []),
   ].filter((mint, index, all) => all.indexOf(mint) === index);
   const hits = mints.slice(0, TAPE_LIMIT).flatMap((mint) => {
     const hit = skipPaidHit({
@@ -335,6 +337,40 @@ async function peekDexPairs(mints: string[]): Promise<MarketHits> {
     hits.push(hit);
   }
   return hits.length ? hits : "error";
+}
+
+async function peekDexSearchPairs(): Promise<MarketHits> {
+  const result = await readProvider(
+    "https://api.dexscreener.com/latest/dex/search?q=SOL",
+    UA,
+    MARKET_FETCH_MS,
+  );
+  if (result.status !== "ok") {
+    return result.status;
+  }
+  const ranked = dexPairsOf(result.body)
+    .map(hitFromDexPair)
+    .filter((hit): hit is MarketHit => Boolean(hit))
+    .sort(
+      (a, b) =>
+        (b.liquidityUsd ?? 0) - (a.liquidityUsd ?? 0) || (b.volumeUsd ?? 0) - (a.volumeUsd ?? 0),
+    );
+  const seen = new Set<string>();
+  const hits: MarketHit[] = [];
+  for (const hit of ranked) {
+    const key = hit.mint ?? hit.ticker;
+    if (!key || seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    hits.push(hit);
+  }
+  return hits.length ? hits.slice(0, TAPE_LIMIT) : "error";
+}
+
+/** No documented public Phantom trending URL — do not scrape explore pages. */
+export async function peekPhantomTrending(): Promise<MarketHits> {
+  return "skip";
 }
 
 function mapBirdeyeHits(body: unknown): MarketHit[] {
@@ -625,18 +661,21 @@ function collectMints(...groups: MarketHits[]): string[] {
 
 async function gatherPulse(now: number): Promise<MarketPulse> {
   const started = Date.now();
-  const [gecko, dexBoosts, birdeye, gmgn, solana, solUsd] = await Promise.all([
+  const [gecko, dexBoosts, dexSearch, birdeye, gmgn, _phantom, solana, solUsd] = await Promise.all([
     peekGecko(),
     peekDexBoosts(),
+    peekDexSearchPairs(),
     peekBirdeye(),
     peekGmgn(),
+    peekPhantomTrending(),
     peekSolana(),
     peekSolUsd(),
   ]);
+  void _phantom;
   const remaining = Math.max(0, MARKET_BUDGET_MS - (Date.now() - started));
-  const seed = firstMint(gecko, dexBoosts.hits, birdeye, gmgn) ?? dexBoosts.mints[0] ?? null;
-  const pool = firstPool(gecko, birdeye, gmgn);
-  const hydrateMints = collectMints(gecko, dexBoosts.hits, birdeye, gmgn);
+  const seed = firstMint(gecko, dexSearch, dexBoosts.hits, birdeye, gmgn) ?? dexBoosts.mints[0] ?? null;
+  const pool = firstPool(gecko, dexSearch, birdeye, gmgn);
+  const hydrateMints = collectMints(gecko, dexSearch, dexBoosts.hits, birdeye, gmgn);
   for (const mint of dexBoosts.mints) {
     if (!hydrateMints.includes(mint)) {
       hydrateMints.push(mint);
@@ -653,11 +692,17 @@ async function gatherPulse(now: number): Promise<MarketPulse> {
   const dexPairs = wave2[0];
   const helius = wave2[1];
   const candles = wave2[2];
-  const dexscreener: MarketHits =
-    typeof dexPairs !== "string"
+  const dexHits = [
+    ...rowsOf(dexPairs),
+    ...rowsOf(dexSearch),
+    ...dexBoosts.hits.filter((hit) => Boolean(hit.ticker)),
+  ];
+  const dexscreener: MarketHits = dexHits.length
+    ? dexHits
+    : typeof dexPairs === "string" && dexPairs !== "skip"
       ? dexPairs
-      : dexBoosts.hits.length
-        ? dexBoosts.hits
+      : typeof dexSearch === "string" && dexSearch !== "skip"
+        ? dexSearch
         : dexBoosts.status;
   return mergeMarketPulse({
     gecko,

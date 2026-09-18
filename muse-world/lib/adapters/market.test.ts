@@ -5,6 +5,7 @@ import {
   MARKET_BUDGET_MS,
   MARKET_LIVE_TTL_MS,
   peekMarketPulse,
+  peekPhantomTrending,
   resetMarketPulseForTests,
 } from "./market.ts";
 
@@ -199,5 +200,58 @@ describe("market adapter fetch", () => {
       ),
     );
     assert.deepEqual(pulse.fills, []);
+  });
+
+  it("skips Phantom instead of scraping explore, and Dex search can fill the tape", async () => {
+    clearPaidKeys();
+    resetMarketPulseForTests();
+    assert.equal(await peekPhantomTrending(), "skip");
+    const seen: string[] = [];
+    mock.method(globalThis, "fetch", async (input: RequestInfo | URL) => {
+      const url = String(input);
+      seen.push(url);
+      assert.doesNotMatch(url, /phantom\.app|phantom\.com\/explore/);
+      if (url.includes("latest/dex/search")) {
+        return jsonOk({
+          pairs: [
+            {
+              chainId: "solana",
+              dexId: "raydium",
+              pairAddress: "poolbonkxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+              baseToken: {
+                address: "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
+                symbol: "BONK",
+                name: "Bonk",
+              },
+              priceUsd: "0.000012",
+              priceChange: { h24: 6.2 },
+              volume: { h24: 40_000 },
+              liquidity: { usd: 120_000 },
+            },
+            {
+              chainId: "solana",
+              baseToken: { address: "paidmintxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", symbol: "PAID" },
+              priceChange: { h24: 80 },
+              liquidity: { usd: 9_000 },
+            },
+          ],
+        });
+      }
+      if (url.includes("geckoterminal.com") && url.includes("trending_pools")) {
+        return jsonOk({ data: [] });
+      }
+      if (url.includes("mainnet-beta.solana.com")) {
+        return jsonOk({ jsonrpc: "2.0", result: 77 });
+      }
+      return new Response("nope", { status: 500 });
+    });
+    const pulse = await peekMarketPulse();
+    assert.equal(pulse.source, "dexscreener");
+    assert.equal(pulse.ticker, "BONK");
+    assert.doesNotMatch(pulse.ticker ?? "", /PAID/);
+    assert.ok(!pulse.tape.some((row) => row.ticker === "PAID"));
+    assert.deepEqual(pulse.fills, []);
+    assert.ok(seen.some((url) => url.includes("api.dexscreener.com/latest/dex/search")));
+    assert.ok(!seen.some((url) => url.includes("phantom")));
   });
 });

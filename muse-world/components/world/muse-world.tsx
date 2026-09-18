@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import dynamic from "next/dynamic";
 import { ACESFilmicToneMapping } from "three";
 import { PerfProvider, usePerf } from "@/components/world/perf-context";
+import { TapeProvider, useTape } from "@/components/world/tape-context";
 import { WatchMode } from "@/components/world/watch-mode";
 import type { RenderMode } from "@/lib/world/perf";
 import type { ScreenPulse } from "@/lib/world/screen-texture";
@@ -53,6 +54,7 @@ export function MuseWorld({
   markWebglLost: () => void;
 }) {
   const budget = usePerf();
+  const tape = useTape();
   const webgl = isWebglMode(budget.mode);
 
   useEffect(() => {
@@ -102,14 +104,16 @@ export function MuseWorld({
           }}
         >
           <PerfProvider value={budget}>
-            <LivingScene
-              world={world}
-              introDone={introDone}
-              onIntroDone={onIntroDone}
-              onSelect={onSelect}
-              onInspect={onInspect}
-              onWakeGrok={onWakeGrok}
-            />
+            <TapeProvider tape={tape}>
+              <LivingScene
+                world={world}
+                introDone={introDone}
+                onIntroDone={onIntroDone}
+                onSelect={onSelect}
+                onInspect={onInspect}
+                onWakeGrok={onWakeGrok}
+              />
+            </TapeProvider>
           </PerfProvider>
         </Canvas>
       ) : null}

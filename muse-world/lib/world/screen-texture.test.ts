@@ -66,6 +66,6 @@ describe("screen pulse", () => {
     });
     assert.equal(dex.lit, true);
     assert.equal(dex.mark, "REAL");
-    assert.equal(dex.source, "DEXSCREENER");
+    assert.equal(dex.source, "dex");
   });
 });

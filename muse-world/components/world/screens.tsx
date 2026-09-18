@@ -1,20 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import { RoundedBox } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
-import { CanvasTexture, SRGBColorSpace, type MeshStandardMaterial } from "three";
+import { CanvasTexture, SRGBColorSpace } from "three";
 import { loftPickHandlers } from "@/components/world/loft-cursor";
-import { usePerf } from "@/components/world/perf-context";
 import { useTape } from "@/components/world/tape-context";
-import {
-  formatChange,
-  formatPrice,
-  rowLabel,
-  tapeHeadline,
-  tapeStamp,
-  type TapeView,
-} from "@/lib/world/tape";
+import { screenTapeHeader, screenTapeRows } from "@/lib/world/screen-tape";
+import { type TapeView } from "@/lib/world/tape";
 import type { PlateKind } from "@/lib/world/plates";
 import type { ScreenId } from "@/types/world";
 import { assertNever } from "@/types/world";
@@ -51,12 +43,12 @@ function ensureRoundRect(ctx: CanvasRenderingContext2D) {
 function lcdSize(kind: LcdKind): { w: number; h: number } {
   switch (kind) {
     case "phone":
-      return { w: 390, h: 844 };
+      return { w: 512, h: 900 };
     case "feed":
     case "tape":
     case "notes":
     case "tv":
-      return { w: 960, h: 540 };
+      return { w: 1024, h: 576 };
     default:
       return assertNever(kind);
   }
@@ -97,67 +89,22 @@ export function lcdFromPlate(kind: PlateKind): LcdKind {
   }
 }
 
-function ohlcvLabel(tape: TapeView): string {
-  return tape.source === "sim" ? "SIM · no OHLCV" : "LIVE · no OHLCV";
-}
-
-function drawCandles(
+function drawSparkCloses(
   ctx: CanvasRenderingContext2D,
-  tape: TapeView,
+  closes: number[],
   x: number,
   y: number,
   w: number,
   h: number,
 ) {
-  if (tape.candles.length === 0) {
-    ctx.fillStyle = "#6a7380";
-    ctx.font = "12px ui-sans-serif, system-ui";
-    ctx.fillText(ohlcvLabel(tape), x, y + h * 0.52);
+  if (closes.length < 2) {
     return;
   }
-  const highs = tape.candles.map((candle) => candle.h);
-  const lows = tape.candles.map((candle) => candle.l);
-  const max = Math.max(...highs);
-  const min = Math.min(...lows);
-  const span = max - min || 1;
-  const gap = w / tape.candles.length;
-  const body = Math.max(2, gap * 0.46);
-  tape.candles.forEach((candle, index) => {
-    const cx = x + index * gap + gap * 0.5;
-    const highY = y + ((max - candle.h) / span) * h;
-    const lowY = y + ((max - candle.l) / span) * h;
-    const openY = y + ((max - candle.o) / span) * h;
-    const closeY = y + ((max - candle.c) / span) * h;
-    const up = candle.c >= candle.o;
-    ctx.strokeStyle = up ? "#7dcea0" : "#c9ae7a";
-    ctx.beginPath();
-    ctx.moveTo(cx, highY);
-    ctx.lineTo(cx, lowY);
-    ctx.stroke();
-    const top = Math.min(openY, closeY);
-    const height = Math.max(2, Math.abs(closeY - openY));
-    ctx.fillStyle = up ? "#7dcea0" : "#c9ae7a";
-    ctx.fillRect(cx - body / 2, top, body, height);
-  });
-}
-
-function drawSpark(
-  ctx: CanvasRenderingContext2D,
-  tape: TapeView,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-) {
-  if (tape.candles.length < 2) {
-    return;
-  }
-  const closes = tape.candles.map((candle) => candle.c);
   const max = Math.max(...closes);
   const min = Math.min(...closes);
   const span = max - min || 1;
-  ctx.strokeStyle = "#d7c089";
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#f0d4ae";
+  ctx.lineWidth = 3;
   ctx.beginPath();
   closes.forEach((close, index) => {
     const px = x + (index / (closes.length - 1)) * w;
@@ -171,153 +118,79 @@ function drawSpark(
   ctx.stroke();
 }
 
-function drawRows(
+function paintRowTape(
   ctx: CanvasRenderingContext2D,
-  tape: TapeView,
-  x: number,
-  y: number,
   w: number,
-  rowH: number,
-  limit: number,
+  h: number,
+  tape: TapeView,
+  portrait: boolean,
 ) {
-  if (tape.rows.length === 0) {
-    ctx.fillStyle = "#6a7380";
-    ctx.font = "13px ui-sans-serif, system-ui";
-    ctx.fillText(tape.source === "sim" ? "SIM · quiet tape" : "LIVE · waiting on a public row", x, y + 22);
+  ctx.fillStyle = "#24506c";
+  ctx.fillRect(0, 0, w, h);
+  const headH = portrait ? 72 : 64;
+  ctx.fillStyle = "#f6ecd8";
+  ctx.fillRect(0, 0, w, headH);
+  ctx.fillStyle = "#1a1712";
+  ctx.font = `800 ${portrait ? 34 : 32}px ui-sans-serif, system-ui`;
+  ctx.fillText(screenTapeHeader(tape), 22, portrait ? 48 : 44);
+  ctx.font = `600 ${portrait ? 16 : 15}px ui-sans-serif, system-ui`;
+  ctx.fillStyle = "#5c4a3e";
+  ctx.fillText(tape.source === "sim" ? "quiet · no fills" : "live · no fills", w * 0.42, portrait ? 46 : 42);
+
+  const rows = screenTapeRows(tape);
+  const top = headH + 16;
+  if (rows.length === 0) {
+    for (let i = 0; i < 3; i += 1) {
+      const y = top + i * (portrait ? 88 : 72);
+      ctx.fillStyle = "rgba(246,236,216,0.14)";
+      ctx.fillRect(16, y, w - 32, portrait ? 76 : 62);
+      ctx.fillStyle = "#d7c6a6";
+      ctx.font = `700 ${portrait ? 40 : 36}px ui-sans-serif, system-ui`;
+      ctx.fillText("—", 36, y + (portrait ? 50 : 42));
+      ctx.font = `600 ${portrait ? 18 : 16}px ui-sans-serif, system-ui`;
+      ctx.fillText("sim", w * 0.68, y + (portrait ? 48 : 40));
+    }
     return;
   }
-  tape.rows.slice(0, limit).forEach((row, index) => {
-    const top = y + index * rowH;
-    ctx.fillStyle = index % 2 === 0 ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.12)";
-    roundRect(ctx, x, top, w, rowH - 6, 8);
-    ctx.fill();
-    ctx.fillStyle = "#efe6d4";
-    ctx.font = "600 15px ui-sans-serif, system-ui";
-    ctx.fillText(rowLabel(row), x + 12, top + 22);
-    const price = formatPrice(row.priceUsd);
-    const meta = [price, tapeStamp(row.source)].filter(Boolean).join("  ·  ");
-    ctx.fillStyle = row.changePct != null && row.changePct < 0 ? "#c9ae7a" : "#7dcea0";
-    ctx.font = "12px ui-sans-serif, system-ui";
-    ctx.fillText(meta, x + 12, top + 40);
+
+  const rowH = Math.min(portrait ? 96 : 80, (h - top - 20) / Math.max(rows.length, 3));
+  rows.forEach((row, index) => {
+    const y = top + index * rowH;
+    ctx.fillStyle = index % 2 === 0 ? "rgba(246,236,216,0.16)" : "rgba(246,236,216,0.08)";
+    ctx.fillRect(14, y, w - 28, rowH - 8);
+    ctx.fillStyle = "#fff8ea";
+    ctx.font = `800 ${Math.floor(rowH * 0.46)}px ui-sans-serif, system-ui`;
+    ctx.fillText(row.ticker, 28, y + rowH * 0.58);
+    ctx.fillStyle = row.change?.startsWith("-") ? "#f0c08a" : "#9be7b8";
+    ctx.font = `800 ${Math.floor(rowH * 0.38)}px ui-sans-serif, system-ui`;
+    ctx.fillText(row.change ?? "—", w * 0.4, y + rowH * 0.58);
+    ctx.fillStyle = "#f0d4ae";
+    ctx.font = `700 ${Math.floor(rowH * 0.26)}px ui-sans-serif, system-ui`;
+    ctx.fillText(row.source, w * 0.68, y + rowH * 0.56);
+    if (row.spark.length >= 2) {
+      drawSparkCloses(ctx, row.spark, w * 0.8, y + 10, w * 0.16, rowH - 24);
+    }
   });
 }
 
 function paintPhone(ctx: CanvasRenderingContext2D, w: number, h: number, tape: TapeView) {
-  const g = ctx.createLinearGradient(0, 0, 0, h);
-  g.addColorStop(0, "#1c1814");
-  g.addColorStop(1, "#0e0c0a");
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, w, h);
-  ctx.fillStyle = "#0a0908";
-  roundRect(ctx, w / 2 - 58, 10, 116, 28, 14);
-  ctx.fill();
-  ctx.fillStyle = "#cfc6b4";
-  ctx.font = "600 12px ui-sans-serif, system-ui";
-  ctx.fillText(tapeStamp(tape.source), 22, 56);
-  ctx.fillStyle = "#efe6d4";
-  ctx.font = "700 34px ui-sans-serif, system-ui";
-  ctx.fillText(tapeHeadline(tape), 22, 108);
-  const change = formatChange(tape.changePct);
-  ctx.fillStyle = tape.changePct != null && tape.changePct < 0 ? "#c9ae7a" : "#7dcea0";
-  ctx.font = "600 16px ui-sans-serif, system-ui";
-  ctx.fillText(change ?? (tape.source === "sim" ? "fail-open SIM" : "watching"), 22, 138);
-  const price = formatPrice(tape.priceUsd);
-  if (price) {
-    ctx.fillStyle = "#d8c6a6";
-    ctx.fillText(price, 22, 162);
-  }
-  ctx.fillStyle = "#161310";
-  roundRect(ctx, 16, 180, w - 32, 168, 18);
-  ctx.fill();
-  drawCandles(ctx, tape, 28, 196, w - 56, 88);
-  drawSpark(ctx, tape, 28, 196, w - 56, 88);
-  drawRows(ctx, tape, 16, 368, w - 32, 58, 6);
-  ctx.fillStyle = "#8d8370";
-  ctx.font = "11px ui-sans-serif, system-ui";
-  ctx.fillText("public tape  ·  no fills", 22, h - 28);
+  paintRowTape(ctx, w, h, tape, true);
 }
 
 function paintFeed(ctx: CanvasRenderingContext2D, w: number, h: number, tape: TapeView) {
-  ctx.fillStyle = "#14110e";
-  ctx.fillRect(0, 0, w, h);
-  ctx.fillStyle = "#efe6d4";
-  roundRect(ctx, 24, 18, 280, 44, 12);
-  ctx.fill();
-  ctx.fillStyle = "#1a1712";
-  ctx.font = "700 18px ui-sans-serif, system-ui";
-  ctx.fillText(tapeHeadline(tape), 40, 46);
-  ctx.fillStyle = "#8d8370";
-  ctx.font = "12px ui-sans-serif, system-ui";
-  ctx.fillText(tapeStamp(tape.source), 320, 46);
-  ctx.fillStyle = "#1b1814";
-  roundRect(ctx, 24, 78, 420, 250, 14);
-  ctx.fill();
-  drawSpark(ctx, tape, 40, 96, 388, 96);
-  drawCandles(ctx, tape, 40, 204, 388, 108);
-  drawRows(ctx, tape, 460, 78, 476, 58, 6);
-  ctx.fillStyle = "#8d8370";
-  ctx.font = "12px ui-sans-serif, system-ui";
-  ctx.fillText("laptop  ·  public tape  ·  no fills", 24, h - 18);
+  paintRowTape(ctx, w, h, tape, false);
 }
 
 function paintTape(ctx: CanvasRenderingContext2D, w: number, h: number, tape: TapeView) {
-  ctx.fillStyle = "#0c1014";
-  ctx.fillRect(0, 0, w, h);
-  ctx.fillStyle = "#d7b56a";
-  ctx.font = "700 26px ui-sans-serif, system-ui";
-  ctx.fillText(tapeHeadline(tape), 28, 42);
-  ctx.fillStyle = "#8d8370";
-  ctx.font = "13px ui-sans-serif, system-ui";
-  ctx.fillText(`${tapeStamp(tape.source)}  ·  no fills`, 28, 66);
-  ctx.fillStyle = "#151a20";
-  ctx.fillRect(20, 84, 620, h - 112);
-  drawCandles(ctx, tape, 36, 100, 588, h - 150);
-  drawSpark(ctx, tape, 36, 100, 588, h - 150);
-  drawRows(ctx, tape, 656, 84, 284, 58, 7);
-  ctx.fillStyle = "#6a7380";
-  ctx.font = "12px ui-sans-serif, system-ui";
-  ctx.fillText(tape.ticker ? `${tape.ticker} public book` : "watching only", 28, h - 16);
+  paintRowTape(ctx, w, h, tape, false);
 }
 
 function paintNotes(ctx: CanvasRenderingContext2D, w: number, h: number, tape: TapeView) {
-  ctx.fillStyle = "#ead9c0";
-  ctx.fillRect(0, 0, w, h);
-  ctx.fillStyle = "#f4ead4";
-  ctx.fillRect(18, 16, w - 36, h - 32);
-  ctx.fillStyle = "#3a3226";
-  ctx.font = "italic 26px Georgia, serif";
-  ctx.fillText(tapeHeadline(tape), 40, 58);
-  ctx.fillStyle = "#8d8370";
-  ctx.font = "12px ui-sans-serif, system-ui";
-  ctx.fillText(`${tapeStamp(tape.source)}  ·  desk research  ·  no fills`, 40, 82);
-  ctx.fillStyle = "#e6d3b4";
-  ctx.fillRect(36, 100, 560, 210);
-  drawCandles(ctx, tape, 48, 112, 536, 186);
-  drawRows(ctx, tape, 616, 100, 308, 58, 6);
+  paintRowTape(ctx, w, h, tape, false);
 }
 
 function paintTv(ctx: CanvasRenderingContext2D, w: number, h: number, tape: TapeView) {
-  const g = ctx.createLinearGradient(0, 0, 0, h);
-  g.addColorStop(0, "#1a2430");
-  g.addColorStop(1, "#0e1216");
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, w, h);
-  ctx.fillStyle = "#0b0f14";
-  ctx.fillRect(0, 0, w, 52);
-  ctx.fillStyle = "#d7b56a";
-  ctx.font = "700 22px ui-sans-serif, system-ui";
-  ctx.fillText(tapeHeadline(tape), 28, 34);
-  ctx.fillStyle = "#8ea6b8";
-  ctx.font = "12px ui-sans-serif, system-ui";
-  ctx.fillText(tapeStamp(tape.source), w - 200, 34);
-  ctx.fillStyle = "#121820";
-  ctx.fillRect(24, 68, 680, h - 120);
-  drawCandles(ctx, tape, 40, 84, 648, h - 160);
-  drawSpark(ctx, tape, 40, 84, 648, h - 160);
-  drawRows(ctx, tape, 720, 68, 216, 56, 7);
-  ctx.fillStyle = "#8d8370";
-  ctx.font = "13px ui-sans-serif, system-ui";
-  ctx.fillText("public tape  ·  no fills", 28, h - 22);
+  paintRowTape(ctx, w, h, tape, false);
 }
 
 function paintLcd(kind: LcdKind, tape: TapeView): HTMLCanvasElement | null {
@@ -377,23 +250,6 @@ function useLiveMap(kind: LcdKind, tape: TapeView): CanvasTexture | null {
   return map;
 }
 
-function LcdGlass({ width, height }: { width: number; height: number }) {
-  return (
-    <mesh position={[0, 0, 0.0012]}>
-      <planeGeometry args={[width, height]} />
-      <meshPhysicalMaterial
-        color="#d8e4f0"
-        transparent
-        opacity={0.08}
-        roughness={0.08}
-        metalness={0.12}
-        transmission={0.18}
-        thickness={0.01}
-      />
-    </mesh>
-  );
-}
-
 export function LiveLcd({
   kind,
   width,
@@ -409,42 +265,24 @@ export function LiveLcd({
 }) {
   const tape = useTape();
   const map = useLiveMap(kind, tape);
-  const material = useRef<MeshStandardMaterial>(null);
-  const { extraLights } = usePerf();
-
-  useFrame((state) => {
-    if (!material.current) {
-      return;
-    }
-    material.current.emissiveIntensity = intensity * (0.96 + Math.sin(state.clock.elapsedTime * 1.7) * 0.04);
-  });
 
   return (
     <group>
       <mesh>
         <planeGeometry args={[width, height]} />
-        <meshStandardMaterial
-          ref={material}
+        <meshBasicMaterial
           map={map ?? undefined}
-          color="#f4ead8"
-          emissive="#f2e4c4"
-          emissiveMap={map ?? undefined}
-          emissiveIntensity={intensity}
-          roughness={0.16}
-          metalness={0.03}
+          color={map ? "#ffffff" : "#24506c"}
           toneMapped={false}
         />
       </mesh>
-      <LcdGlass width={width} height={height} />
-      {extraLights ? (
-        <pointLight
-          position={[0, 0, 0.18]}
-          intensity={kind === "tv" ? wash * 1.45 : wash}
-          color={glowFor(kind)}
-          distance={Math.max(width, height) * (kind === "tv" ? 3.6 : 3.1)}
-          decay={2}
-        />
-      ) : null}
+      <pointLight
+        position={[0, 0, 0.12]}
+        intensity={0.55 + intensity * 0.2 + wash * 0.15}
+        color={glowFor(kind)}
+        distance={Math.max(width, height) * 2.8}
+        decay={2}
+      />
     </group>
   );
 }
@@ -489,7 +327,7 @@ export function PhoneDevice({ scale = 1 }: { scale?: number }) {
         <meshStandardMaterial color="#1a1a1d" roughness={0.26} metalness={0.68} />
       </RoundedBox>
       <RoundedBox args={[0.074, 0.158, 0.0024]} radius={0.008} smoothness={4} position={[0, 0, 0.0046]}>
-        <meshStandardMaterial color="#050506" roughness={0.2} metalness={0.55} />
+        <meshStandardMaterial color="#24506c" roughness={0.2} metalness={0.55} />
       </RoundedBox>
       <group position={[0, -0.004, 0.006]}>
         <LiveLcd kind="phone" width={0.068} height={0.142} intensity={1.5} wash={0.42} />
@@ -560,7 +398,7 @@ export function LaptopDevice({
         </mesh>
         <mesh position={[0, 0, 0.0052]}>
           <boxGeometry args={[0.398, 0.246, 0.001]} />
-          <meshStandardMaterial color="#050506" roughness={0.2} metalness={0.4} />
+          <meshStandardMaterial color="#24506c" roughness={0.2} metalness={0.4} />
         </mesh>
         <group position={[0, 0, 0.0062]}>
           <LiveLcd kind={kind} width={0.388} height={0.236} intensity={1.22} wash={0.7} />
@@ -612,7 +450,7 @@ export function MonitorDevice({
         </mesh>
         <mesh position={[0, 0.01, 0.015]}>
           <boxGeometry args={[0.9, 0.51, 0.002]} />
-          <meshStandardMaterial color="#050506" roughness={0.18} metalness={0.35} />
+          <meshStandardMaterial color="#24506c" roughness={0.18} metalness={0.35} />
         </mesh>
         <group position={[0, 0.01, 0.017]}>
           <LiveLcd kind={kind} width={0.88} height={0.5} intensity={active ? 1.32 : 1.12} wash={0.82} />
@@ -634,7 +472,7 @@ export function TvDevice() {
       </mesh>
       <mesh position={[0, 0.02, 0.024]}>
         <boxGeometry args={[2.08, 1.12, 0.004]} />
-        <meshStandardMaterial color="#050608" roughness={0.16} metalness={0.3} />
+        <meshStandardMaterial color="#24506c" roughness={0.16} metalness={0.3} />
       </mesh>
       <group position={[0, 0.02, 0.028]}>
         <LiveLcd kind="tv" width={2.06} height={1.1} intensity={1.08} wash={1.05} />

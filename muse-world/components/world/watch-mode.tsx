@@ -6,7 +6,7 @@ import { activityLine, asCaption } from "@/components/watch/copy";
 import { usePerf } from "@/components/world/perf-context";
 import { useTape } from "@/components/world/tape-context";
 import { GROK_ORB_POS, SCREEN_POS, wallSlotWorld } from "@/lib/world/layout";
-import { tapeHeadline } from "@/lib/world/tape";
+import { screenTapeHeader, screenTapeRows } from "@/lib/world/screen-tape";
 import { projectLoft, watchFrame } from "@/lib/world/perf";
 import { screenView, type ScreenPulse } from "@/lib/world/screen-texture";
 import type { MuseId, MuseState, PacketEndpoint, ScreenId, WorldSnapshot } from "@/types/world";
@@ -156,14 +156,29 @@ function CitySilhouette() {
   );
 }
 
+function TapeChip() {
+  const tape = useTape();
+  const rows = screenTapeRows(tape);
+  const lead = rows[0];
+  const title = lead?.ticker ?? screenTapeHeader(tape);
+  const change = lead?.change ?? "—";
+  const down = change.startsWith("-");
+  return (
+    <>
+      <span className="text-[6px] font-semibold tracking-[0.08em] text-[#ecf6ff]">{title}</span>
+      <span className="text-[6px] font-semibold" style={{ color: down ? "#f0c08a" : "#9be7b8" }}>
+        {change}
+      </span>
+    </>
+  );
+}
+
 function Furniture({ pulse }: { pulse: ScreenPulse }) {
+  void pulse;
   const couch = projectLoft([-4.15, 0, 1.35]);
   const desk = projectLoft([3.4, 0, -0.85]);
   const wall = projectLoft([7.55, 0, 2.6]);
   const table = projectLoft([-2.7, 0, 2.2]);
-  const view = screenView(pulse);
-  const changeColor =
-    view.changeTone === "up" ? "#7ee3a4" : view.changeTone === "down" ? "#ef8b8b" : "#d7c9a6";
 
   return (
     <>
@@ -180,31 +195,22 @@ function Furniture({ pulse }: { pulse: ScreenPulse }) {
         <div className="absolute inset-x-2 -top-6 flex justify-between gap-1">
           <span
             data-screen="desk-left"
-            className="flex h-7 w-12 flex-col items-center justify-center rounded-[1px] bg-[#1a3b52] shadow-[0_0_10px_#7eb7d455]"
+            className="flex h-7 w-12 flex-col items-center justify-center rounded-[1px] bg-[#24506c] shadow-[0_0_10px_#7eb7d455]"
           >
-            <span className="text-[6px] font-semibold tracking-[0.08em] text-[#ecf6ff]">{view.title}</span>
-            <span className="text-[6px] font-semibold" style={{ color: changeColor }}>
-              {view.change}
-            </span>
+            <TapeChip />
           </span>
           <span
             data-screen="desk-right"
-            className="flex h-7 w-12 flex-col items-center justify-center rounded-[1px] bg-[#1a3b52] shadow-[0_0_10px_#7eb7d455]"
+            className="flex h-7 w-12 flex-col items-center justify-center rounded-[1px] bg-[#24506c] shadow-[0_0_10px_#7eb7d455]"
           >
-            <span className="text-[6px] font-semibold tracking-[0.08em] text-[#ecf6ff]">{view.title}</span>
-            <span className="text-[6px] font-semibold" style={{ color: changeColor }}>
-              {view.change}
-            </span>
+            <TapeChip />
           </span>
         </div>
         <span
           data-screen="laptop"
-          className="absolute -right-4 -top-3 flex h-7 w-11 flex-col items-center justify-center bg-[#16344a] shadow-[0_0_8px_#7eb7d440]"
+          className="absolute -right-4 -top-3 flex h-7 w-11 flex-col items-center justify-center bg-[#24506c] shadow-[0_0_8px_#7eb7d440]"
         >
-          <span className="text-[6px] font-semibold text-[#ecf6ff]">{view.title}</span>
-          <span className="text-[6px]" style={{ color: changeColor }}>
-            {view.change}
-          </span>
+          <TapeChip />
         </span>
       </div>
       <div
@@ -317,6 +323,7 @@ function WatchScreens({
   onInspect: (id: ScreenId) => void;
 }) {
   const tape = useTape();
+  const rows = screenTapeRows(tape);
   return (
     <>
       {SCREEN_IDS.map((id) => {
@@ -326,7 +333,7 @@ function WatchScreens({
             key={id}
             type="button"
             onClick={() => onInspect(id)}
-            className="absolute z-20 flex h-4 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center overflow-hidden bg-[#0e1216] text-[5px] leading-none text-[#d7b56a]"
+            className="absolute z-20 flex h-10 w-16 -translate-x-1/2 -translate-y-1/2 flex-col justify-center overflow-hidden bg-[#24506c] px-1 text-left text-[5px] leading-tight text-[#fff8ea]"
             style={{
               left: `${point.left}%`,
               top: `${point.top}%`,
@@ -334,7 +341,14 @@ function WatchScreens({
             }}
             aria-label={screenLabel(id)}
           >
-            {tapeHeadline(tape)}
+            <span className="font-semibold text-[#f6ecd8]">{screenTapeHeader(tape)}</span>
+            {(rows.length ? rows.slice(0, 3) : [{ ticker: "—", change: null, source: "sim" as const }]).map(
+              (row, index) => (
+                <span key={`${row.ticker}-${index}`}>
+                  {row.ticker} {row.change ?? ""}
+                </span>
+              ),
+            )}
           </button>
         );
       })}
