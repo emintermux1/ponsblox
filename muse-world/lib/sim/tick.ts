@@ -145,6 +145,7 @@ export function applyActivity(
   ticker: string,
 ): MuseState {
   const mind = { ...muse.mind, nodes: { ...muse.mind.nodes } };
+  mind.nodes.GROK = nudge(mind.nodes.GROK, -0.016);
   switch (activity) {
     case "SCROLLING":
       mind.nodes.ATTENTION = nudge(mind.nodes.ATTENTION, 0.04);
@@ -153,12 +154,16 @@ export function applyActivity(
       break;
     case "THINKING":
       mind.nodes.CURIOSITY = nudge(mind.nodes.CURIOSITY, 0.06);
+      mind.nodes.GROK = nudge(mind.nodes.GROK, muse.id === "trader" ? 0.11 : 0.035);
       mind.observed = `weighing ${ticker}`;
       break;
     case "WATCHING":
       mind.watching = ticker;
       mind.action = "WATCH";
       mind.nodes.ATTENTION = nudge(mind.nodes.ATTENTION, 0.05);
+      if (muse.id === "trader") {
+        mind.nodes.GROK = nudge(mind.nodes.GROK, 0.04);
+      }
       break;
     case "TRADING":
       mind.nodes.RISK = nudge(mind.nodes.RISK, 0.04);
@@ -220,7 +225,17 @@ export function tickSnapshot(
       muse = applyActivity(muse, nextActivity(muse, spiked), ticker);
     }
     if (Math.random() < 0.16) {
-      muse = setThought(muse, pick(THOUGHTS[muse.id]));
+      const line = pick(THOUGHTS[muse.id]);
+      muse = setThought(muse, line);
+      if (line === "send to grok") {
+        muse = {
+          ...muse,
+          mind: {
+            ...muse.mind,
+            nodes: { ...muse.mind.nodes, GROK: nudge(muse.mind.nodes.GROK, 0.42) },
+          },
+        };
+      }
     }
     muses[id] = muse;
   }

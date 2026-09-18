@@ -9,6 +9,7 @@ import { Penthouse } from "@/components/world/penthouse";
 import { TravelPacket } from "@/components/world/packet";
 import { CameraRig } from "@/components/world/rig";
 import { ThoughtChip } from "@/components/world/thoughts";
+import { MIND_LIFT } from "@/lib/world/mind-graph";
 import type { MuseId, WorldSnapshot } from "@/types/world";
 import { MUSE_IDS } from "@/types/world";
 
@@ -105,9 +106,14 @@ export function LivingScene({
           />
           <MuseMindField
             mind={world.muses[id].mind}
+            origin={[
+              world.muses[id].position[0],
+              world.muses[id].position[1] + MIND_LIFT,
+              world.muses[id].position[2],
+            ]}
             visible={world.mindOpen && selected === id}
           />
-          <ThoughtChip muse={world.muses[id]} />
+          <ThoughtChip muse={world.muses[id]} hush={world.mindOpen && selected === id} />
         </group>
       ))}
       <TravelPacket packet={world.packet} positions={positions} />
