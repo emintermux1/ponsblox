@@ -21,6 +21,7 @@ export function SpectatorFrame() {
           mode={budget.mode}
           onPreset={living.setCamera}
           onSelect={living.select}
+          onInspect={living.inspect}
           onEnterMind={living.toggleMind}
         />
         <SceneGate>
@@ -29,6 +30,8 @@ export function SpectatorFrame() {
             introDone={living.introDone}
             onIntroDone={() => living.setIntroDone(true)}
             onSelect={living.select}
+            onInspect={living.inspect}
+            onWakeGrok={living.wakeGrok}
             ready={ready}
             markWebglLost={markWebglLost}
           />

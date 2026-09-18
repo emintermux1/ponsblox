@@ -9,10 +9,14 @@ import {
   projectMindNode,
 } from "@/lib/world/mind-graph";
 import type { RenderMode } from "@/lib/world/perf";
+import { inspectCopy } from "@/lib/world/pick";
 import type {
   CameraPreset,
+  GrokHonesty,
+  GrokWakeState,
   MuseId,
   MuseState,
+  ScreenId,
   WorldSnapshot,
 } from "@/types/world";
 import { assertNever, MIND_NODES, MUSE_IDS } from "@/types/world";
@@ -36,6 +40,7 @@ export function SpectatorChrome({
   mode,
   onPreset,
   onSelect,
+  onInspect,
   onEnterMind,
 }: {
   world: WorldSnapshot;
@@ -43,6 +48,7 @@ export function SpectatorChrome({
   mode: RenderMode;
   onPreset: (preset: CameraPreset) => void;
   onSelect: (id: MuseId | null) => void;
+  onInspect: (id: ScreenId | null) => void;
   onEnterMind: () => void;
 }) {
   const reduceMotion = useReducedMotion();
@@ -87,14 +93,14 @@ export function SpectatorChrome({
               onLeave={onEnterMind}
             />
           </div>
-          <div className="hidden sm:block">
-            <SelectedPane
-              selected={selected}
-              mindOpen={world.mindOpen}
-              onEnter={enterMind}
-              onLeave={onEnterMind}
-            />
-          </div>
+          <PickPane
+            world={world}
+            selected={selected}
+            mindOpen={world.mindOpen}
+            onEnter={enterMind}
+            onLeave={onEnterMind}
+            onInspect={onInspect}
+          />
         </div>
       )}
     </div>
@@ -343,20 +349,104 @@ function MindStatus({ muse }: { muse: MuseState }) {
   );
 }
 
-function SelectedPane({
+function honestyDotClass(mark: GrokHonesty): string {
+  switch (mark) {
+    case "REAL":
+      return "inline-block h-1.5 w-1.5 rounded-full bg-loft-brass";
+    case "SIM":
+      return "inline-block h-1.5 w-1.5 rounded-full bg-loft-paper/35";
+    default:
+      return assertNever(mark);
+  }
+}
+
+function grokPhaseLine(wake: GrokWakeState): string {
+  switch (wake.phase) {
+    case "idle":
+      return "";
+    case "waking":
+      return "waking";
+    case "done":
+      return wake.honesty ?? "";
+    default:
+      return assertNever(wake.phase);
+  }
+}
+
+function GrokWakeCopy({ wake }: { wake: GrokWakeState }) {
+  switch (wake.phase) {
+    case "idle":
+    case "waking":
+      return null;
+    case "done":
+      return wake.summary ? (
+        <p className="mt-2 font-serif text-[13px] italic leading-6 text-loft-paper/70">
+          {wake.summary}
+        </p>
+      ) : null;
+    default:
+      return assertNever(wake.phase);
+  }
+}
+
+function PickPane({
+  world,
   selected,
   mindOpen,
   onEnter,
   onLeave,
+  onInspect,
 }: {
+  world: WorldSnapshot;
   selected: MuseState | null;
   mindOpen: boolean;
   onEnter: () => void;
   onLeave: () => void;
+  onInspect: (id: ScreenId | null) => void;
 }) {
+  if (world.inspecting) {
+    const copy = inspectCopy(world, world.inspecting);
+    return (
+      <div className="pointer-events-auto absolute inset-x-5 bottom-20 text-right sm:inset-x-auto sm:bottom-7 sm:right-7 sm:w-[15.5rem]">
+        <p className="font-serif text-[1.35rem] italic leading-none tracking-[-0.02em]">
+          {copy.title}
+        </p>
+        {copy.lines.map((line) => (
+          <p key={line} className="mt-2 font-serif text-[13px] italic leading-6 text-loft-paper/70">
+            {line}
+          </p>
+        ))}
+        <button
+          type="button"
+          onClick={() => onInspect(null)}
+          className="mt-4 text-[10px] tracking-[0.18em] text-loft-brass/80 hover:text-loft-paper"
+        >
+          close
+        </button>
+      </div>
+    );
+  }
+
+  if (world.camera === "GROK" || world.grokWake.phase === "waking") {
+    const wake = world.grokWake;
+    return (
+      <div className="pointer-events-auto absolute inset-x-5 bottom-20 text-right sm:inset-x-auto sm:bottom-7 sm:right-7 sm:w-[15.5rem]">
+        <p className="font-serif text-[1.35rem] italic leading-none tracking-[-0.02em]">
+          Grok
+        </p>
+        <p className="mt-2 flex items-center justify-end gap-2 text-[10px] tracking-[0.2em] text-loft-paper/55">
+          {wake.honesty ? <span className={honestyDotClass(wake.honesty)} /> : null}
+          {grokPhaseLine(wake)}
+        </p>
+        <GrokWakeCopy wake={wake} />
+        <MindButton mindOpen={mindOpen} onEnter={onEnter} onLeave={onLeave} />
+      </div>
+    );
+  }
+
   if (!selected) {
     return (
-      <div className="pointer-events-auto absolute bottom-5 right-5 w-[14.5rem] md:bottom-7 md:right-7">
+      <div className="pointer-events-auto absolute bottom-5 right-5 hidden w-[14.5rem] sm:block md:bottom-7 md:right-7">
         <p className="font-serif text-[13px] italic leading-6 text-loft-paper/62">
           {EMPTY_SELECTION}
         </p>
@@ -366,7 +456,7 @@ function SelectedPane({
   }
 
   return (
-    <div className="pointer-events-auto absolute bottom-5 right-5 w-[15.5rem] text-right md:bottom-7 md:right-7">
+    <div className="pointer-events-auto absolute inset-x-5 bottom-20 text-right sm:inset-x-auto sm:bottom-5 sm:right-5 sm:w-[15.5rem] md:bottom-7 md:right-7">
       <p className="font-serif text-[1.35rem] italic leading-none tracking-[-0.02em]">
         {selected.name}
       </p>
@@ -374,7 +464,9 @@ function SelectedPane({
         {activityLine(selected.activity)}
       </p>
       {mindOpen ? <MindStatus muse={selected} /> : null}
-      <MindButton mindOpen={mindOpen} onEnter={onEnter} onLeave={onLeave} />
+      <div className="hidden sm:block">
+        <MindButton mindOpen={mindOpen} onEnter={onEnter} onLeave={onLeave} />
+      </div>
     </div>
   );
 }

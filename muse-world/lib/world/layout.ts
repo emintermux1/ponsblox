@@ -1,5 +1,12 @@
-import type { PacketEndpoint } from "@/types/world";
+import type { PacketEndpoint, ScreenId } from "@/types/world";
 import { assertNever } from "@/types/world";
+
+export const GROK_ORB_POS: [number, number, number] = [0.18, 1.36, 2.08];
+
+export const SCREEN_POS: Record<ScreenId, [number, number, number]> = {
+  tape: [2.82, 1.2, -1.13],
+  notes: [4.02, 1.2, -1.13],
+};
 
 export const PACKET_TRAVEL_MS = 2200;
 export const PACKET_HOLD_MS = 2400;

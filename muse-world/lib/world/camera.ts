@@ -1,5 +1,6 @@
 import gsap from "gsap";
 import { PerspectiveCamera, Vector3, type Camera } from "three";
+import { GROK_ORB_POS } from "@/lib/world/layout";
 import type { CameraPreset, MuseId } from "@/types/world";
 import { assertNever } from "@/types/world";
 
@@ -50,6 +51,20 @@ export function armCinema(): void {
   gsap.ticker.lagSmoothing(1000, 33);
 }
 
+function lookAtMuse(
+  position: [number, number, number],
+  fallback: [number, number, number],
+  musePos: [number, number, number] | null,
+  fov: number,
+): Shot {
+  const [x, y, z] = musePos ?? fallback;
+  return {
+    position,
+    target: [x, y + 0.36, z],
+    fov,
+  };
+}
+
 export function shotForPreset(
   preset: CameraPreset,
   _selected: MuseId | null,
@@ -57,13 +72,19 @@ export function shotForPreset(
 ): Shot {
   switch (preset) {
     case "LOUNGE":
-      return { position: [-6.2, 2.5, 7.1], target: [-3.2, 0.9, 1.6], fov: 38 };
+      return lookAtMuse([-6.2, 2.5, 7.1], [-3.2, 0.54, 1.6], musePos, 38);
     case "SCROLLER":
-      return { position: [-6.4, 1.9, 3.8], target: [-4.1, 0.95, 1.15], fov: 32 };
+      return lookAtMuse([-6.4, 1.9, 3.8], [-4.1, 0.59, 1.15], musePos, 32);
     case "TRADER":
-      return { position: [6.6, 2.1, 3.4], target: [3.35, 1.05, -0.2], fov: 32 };
+      return lookAtMuse([6.6, 2.1, 3.4], [3.35, 0.69, -0.2], musePos, 32);
     case "BUILDER":
-      return { position: [3.8, 2.2, 6.2], target: [6.3, 1.1, 2.8], fov: 34 };
+      return lookAtMuse([3.8, 2.2, 6.2], [6.3, 0.74, 2.8], musePos, 34);
+    case "GROK":
+      return {
+        position: [2.05, 2.08, 4.85],
+        target: [GROK_ORB_POS[0], GROK_ORB_POS[1], GROK_ORB_POS[2]],
+        fov: 30,
+      };
     case "MIND": {
       const [x, y, z] = musePos ?? [0, 1, 0];
       return { position: [x + 1.6, y + 1.72, z + 2.55], target: [x, y + 1.08, z], fov: 32 };

@@ -89,6 +89,8 @@ export function locationLabel(preset: CameraPreset): string {
       return "Bench";
     case "SCROLLER":
       return "Window";
+    case "GROK":
+      return "Grok";
     case "MIND":
       return "Mind";
     default:

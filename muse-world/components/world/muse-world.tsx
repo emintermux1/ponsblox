@@ -6,7 +6,7 @@ import { ACESFilmicToneMapping } from "three";
 import { PerfProvider, usePerf } from "@/components/world/perf-context";
 import { WatchMode } from "@/components/world/watch-mode";
 import type { RenderMode } from "@/lib/world/perf";
-import type { MuseId, WorldSnapshot } from "@/types/world";
+import type { MuseId, ScreenId, WorldSnapshot } from "@/types/world";
 import { assertNever } from "@/types/world";
 
 const Canvas = dynamic(
@@ -35,6 +35,8 @@ export function MuseWorld({
   introDone,
   onIntroDone,
   onSelect,
+  onInspect,
+  onWakeGrok,
   ready,
   markWebglLost,
 }: {
@@ -42,6 +44,8 @@ export function MuseWorld({
   introDone: boolean;
   onIntroDone: () => void;
   onSelect: (id: MuseId) => void;
+  onInspect: (id: ScreenId) => void;
+  onWakeGrok: () => void;
   ready: boolean;
   markWebglLost: () => void;
 }) {
@@ -89,11 +93,20 @@ export function MuseWorld({
               introDone={introDone}
               onIntroDone={onIntroDone}
               onSelect={onSelect}
+              onInspect={onInspect}
+              onWakeGrok={onWakeGrok}
             />
           </PerfProvider>
         </Canvas>
       ) : null}
-      {ready && !webgl ? <WatchMode world={world} onSelect={onSelect} /> : null}
+      {ready && !webgl ? (
+        <WatchMode
+          world={world}
+          onSelect={onSelect}
+          onInspect={onInspect}
+          onWakeGrok={onWakeGrok}
+        />
+      ) : null}
     </main>
   );
 }

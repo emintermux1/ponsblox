@@ -2,7 +2,7 @@
 
 import { SpectatorChrome } from "@/components/watch/chrome";
 import type { RenderMode } from "@/lib/world/perf";
-import type { CameraPreset, MuseId, WorldSnapshot } from "@/types/world";
+import type { CameraPreset, MuseId, ScreenId, WorldSnapshot } from "@/types/world";
 
 export type SpectatorHudProps = {
   world: WorldSnapshot;
@@ -10,6 +10,7 @@ export type SpectatorHudProps = {
   mode: RenderMode;
   onPreset: (preset: CameraPreset) => void;
   onSelect: (id: MuseId | null) => void;
+  onInspect: (id: ScreenId | null) => void;
   onEnterMind: () => void;
 };
 
@@ -19,6 +20,7 @@ export function SpectatorHud({
   mode,
   onPreset,
   onSelect,
+  onInspect,
   onEnterMind,
 }: SpectatorHudProps) {
   return (
@@ -28,6 +30,7 @@ export function SpectatorHud({
       mode={mode}
       onPreset={onPreset}
       onSelect={onSelect}
+      onInspect={onInspect}
       onEnterMind={onEnterMind}
     />
   );

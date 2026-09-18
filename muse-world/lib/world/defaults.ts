@@ -1,4 +1,21 @@
+import { emptyGrokWake } from "@/lib/world/pick";
 import type { MuseId, MuseMind, MuseState, WorldSnapshot } from "@/types/world";
+import { assertNever } from "@/types/world";
+
+export function museGivenName(id: MuseId): string {
+  switch (id) {
+    case "scroller":
+      return "Scroller";
+    case "trader":
+      return "Trader";
+    case "chill":
+      return "Chill";
+    case "builder":
+      return "Builder";
+    default:
+      return assertNever(id);
+  }
+}
 
 export function emptyMind(goal: string): MuseMind {
   return {
@@ -27,7 +44,7 @@ export function seedMuses(): Record<MuseId, MuseState> {
   return {
     scroller: {
       id: "scroller",
-      name: "MUSE 01",
+      name: museGivenName("scroller"),
       role: "SCROLLER",
       activity: "SCROLLING",
       thought: null,
@@ -38,7 +55,7 @@ export function seedMuses(): Record<MuseId, MuseState> {
     },
     trader: {
       id: "trader",
-      name: "MUSE 02",
+      name: museGivenName("trader"),
       role: "TRADER",
       activity: "WATCHING",
       thought: null,
@@ -49,7 +66,7 @@ export function seedMuses(): Record<MuseId, MuseState> {
     },
     chill: {
       id: "chill",
-      name: "MUSE 03",
+      name: museGivenName("chill"),
       role: "CHILL",
       activity: "CHILLING",
       thought: null,
@@ -60,7 +77,7 @@ export function seedMuses(): Record<MuseId, MuseState> {
     },
     builder: {
       id: "builder",
-      name: "MUSE 04",
+      name: museGivenName("builder"),
       role: "BUILDER",
       activity: "RESEARCHING",
       thought: null,
@@ -77,6 +94,8 @@ export function seedWorld(): WorldSnapshot {
     live: true,
     startedAt: Date.now(),
     selected: null,
+    inspecting: null,
+    grokWake: emptyGrokWake(),
     mindOpen: false,
     camera: "ROOM",
     muses: seedMuses(),

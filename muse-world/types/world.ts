@@ -45,7 +45,24 @@ export type CameraPreset =
   | "TRADER"
   | "BUILDER"
   | "SCROLLER"
+  | "GROK"
   | "MIND";
+
+export type ScreenId = "tape" | "notes";
+
+export type GrokWakePhase = "idle" | "waking" | "done";
+
+export type GrokHonesty = "SIM" | "REAL";
+
+export type GrokWakeState = {
+  phase: GrokWakePhase;
+  museId: MuseId | null;
+  source: GrokSource | null;
+  honesty: GrokHonesty | null;
+  summary: string | null;
+  woken: boolean;
+  pendingIngest: boolean;
+};
 
 export type ActionLabel = "WATCH" | "PASS" | "BUY" | "HOLD" | "IDLE";
 
@@ -89,6 +106,8 @@ export type WorldSnapshot = {
   live: boolean;
   startedAt: number;
   selected: MuseId | null;
+  inspecting: ScreenId | null;
+  grokWake: GrokWakeState;
   mindOpen: boolean;
   camera: CameraPreset;
   muses: Record<MuseId, MuseState>;
@@ -137,8 +156,14 @@ export const MUSE_IDS: MuseId[] = [
   "builder",
 ];
 
+export const SCREEN_IDS: ScreenId[] = ["tape", "notes"];
+
 export function isMuseId(value: unknown): value is MuseId {
   return typeof value === "string" && (MUSE_IDS as readonly string[]).includes(value);
+}
+
+export function isScreenId(value: unknown): value is ScreenId {
+  return typeof value === "string" && (SCREEN_IDS as readonly string[]).includes(value);
 }
 
 export function assertNever(value: never): never {

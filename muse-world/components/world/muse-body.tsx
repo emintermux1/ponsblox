@@ -1,8 +1,11 @@
 "use client";
 
 import { useRef } from "react";
+import { Text } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import type { Group, Mesh } from "three";
+import { activityLine } from "@/components/watch/copy";
+import { loftPickHandlers } from "@/components/world/loft-cursor";
 import { usePerf } from "@/components/world/perf-context";
 import { damp } from "@/lib/world/camera";
 import type { MuseActivity, MuseId, MuseState } from "@/types/world";
@@ -468,11 +471,35 @@ export function MuseBody({
       ref={root}
       position={muse.position}
       rotation={[0, muse.facing, 0]}
-      onClick={(event) => {
-        event.stopPropagation();
-        onSelect();
-      }}
+      {...loftPickHandlers(onSelect)}
     >
+      <mesh position={[0, 0.62, 0]} visible={false}>
+        <cylinderGeometry args={[0.46, 0.46, 1.28, 10]} />
+      </mesh>
+      <Text
+        position={[0, 1.68, 0]}
+        fontSize={0.052}
+        letterSpacing={0.08}
+        color="#efe6d4"
+        fillOpacity={selected ? 0.86 : 0.58}
+        anchorX="center"
+        anchorY="bottom"
+      >
+        {muse.name}
+      </Text>
+      {selected ? (
+        <Text
+          position={[0, 1.54, 0]}
+          fontSize={0.036}
+          letterSpacing={0.1}
+          color="#c9ae7a"
+          fillOpacity={0.78}
+          anchorX="center"
+          anchorY="bottom"
+        >
+          {activityLine(muse.activity)}
+        </Text>
+      ) : null}
       <group ref={sway}>
         <group ref={torso}>
           <Fluff position={[0, 0.4, 0.03]} radius={0.34} scale={[1.05, 0.95, 0.92]} />

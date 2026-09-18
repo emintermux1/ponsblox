@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { activityLine, asCaption } from "@/components/watch/copy";
 import { usePerf } from "@/components/world/perf-context";
-import { wallSlotWorld } from "@/lib/world/layout";
+import { GROK_ORB_POS, SCREEN_POS, wallSlotWorld } from "@/lib/world/layout";
 import { projectLoft, watchFrame } from "@/lib/world/perf";
-import type { MuseId, MuseState, PacketEndpoint, WorldSnapshot } from "@/types/world";
-import { MIND_NODES, MUSE_IDS, assertNever } from "@/types/world";
+import type { MuseId, MuseState, PacketEndpoint, ScreenId, WorldSnapshot } from "@/types/world";
+import { MIND_NODES, MUSE_IDS, SCREEN_IDS, assertNever } from "@/types/world";
 
 function loftPoint(world: WorldSnapshot, endpoint: PacketEndpoint): { left: number; top: number } {
   switch (endpoint) {
@@ -92,10 +92,10 @@ function MuseFigure({
           <span className="absolute -bottom-0.5 left-1/2 h-1.5 w-7 -translate-x-1/2 rounded-full bg-[#e6d3a8]/55" />
         ) : null}
       </span>
-      <span className="mt-1 block text-center font-serif text-[9px] tracking-[0.2em] text-[#efe6d4]/70">
+      <span className="mt-1 block cursor-pointer text-center font-serif text-[9px] tracking-[0.2em] text-[#efe6d4]/70">
         {muse.name}
       </span>
-      <span className="block text-center text-[8px] tracking-[0.18em] text-[#8d8370]">
+      <span className="block cursor-pointer text-center text-[8px] tracking-[0.18em] text-[#8d8370]">
         {activityLine(muse.activity)}
       </span>
     </motion.button>
@@ -152,8 +152,8 @@ function Furniture() {
         style={{ left: `${desk.left}%`, top: `${desk.top}%` }}
       >
         <div className="absolute inset-x-3 -top-3 flex justify-between">
-          <span className="h-3 w-5 bg-[#0e1216]" />
-          <span className="h-3 w-5 bg-[#0e1216]" />
+          <span className="h-3 w-5 bg-[#0e1216]" aria-hidden />
+          <span className="h-3 w-5 bg-[#0e1216]" aria-hidden />
         </div>
       </div>
       <div
@@ -216,12 +216,84 @@ function WatchPacket({ world, now }: { world: WorldSnapshot; now: number }) {
   );
 }
 
+function WatchGrok({
+  waking,
+  onWake,
+}: {
+  waking: boolean;
+  onWake: () => void;
+}) {
+  const point = projectLoft(GROK_ORB_POS);
+  return (
+    <button
+      type="button"
+      onClick={onWake}
+      className="absolute z-20 -translate-x-1/2 -translate-y-1/2 cursor-pointer"
+      style={{ left: `${point.left}%`, top: `${point.top}%` }}
+      aria-label="Grok"
+    >
+      <span
+        className="relative mx-auto block h-8 w-8 rounded-full bg-[#f5f5f2] shadow-[0_0_16px_rgba(245,245,242,0.28)]"
+        style={{ transform: waking ? "scale(1.06)" : "scale(1)" }}
+      >
+        <span className="absolute left-[22%] top-[42%] h-[3px] w-[7px] rounded-full bg-[#141414]" />
+        <span className="absolute right-[22%] top-[42%] h-[3px] w-[7px] rounded-full bg-[#141414]" />
+      </span>
+    </button>
+  );
+}
+
+function screenLabel(id: ScreenId): string {
+  switch (id) {
+    case "tape":
+      return "Tape";
+    case "notes":
+      return "Notes";
+    default:
+      return assertNever(id);
+  }
+}
+
+function WatchScreens({
+  inspecting,
+  onInspect,
+}: {
+  inspecting: ScreenId | null;
+  onInspect: (id: ScreenId) => void;
+}) {
+  return (
+    <>
+      {SCREEN_IDS.map((id) => {
+        const point = projectLoft(SCREEN_POS[id]);
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() => onInspect(id)}
+            className="absolute z-20 h-4 w-7 -translate-x-1/2 -translate-y-1/2 cursor-pointer bg-[#0e1216]"
+            style={{
+              left: `${point.left}%`,
+              top: `${point.top}%`,
+              boxShadow: inspecting === id ? "0 0 10px rgba(74,106,130,0.7)" : undefined,
+            }}
+            aria-label={screenLabel(id)}
+          />
+        );
+      })}
+    </>
+  );
+}
+
 export function WatchMode({
   world,
   onSelect,
+  onInspect,
+  onWakeGrok,
 }: {
   world: WorldSnapshot;
   onSelect: (id: MuseId) => void;
+  onInspect: (id: ScreenId) => void;
+  onWakeGrok: () => void;
 }) {
   const { reducedMotion, hidden } = usePerf();
   const frame = watchFrame(world.camera);
@@ -264,6 +336,8 @@ export function WatchMode({
           <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-[#15202c]/35 to-transparent" />
         </div>
         <Furniture />
+        <WatchScreens inspecting={world.inspecting} onInspect={onInspect} />
+        <WatchGrok waking={world.grokWake.phase === "waking"} onWake={onWakeGrok} />
         {MUSE_IDS.map((id) => (
           <MuseFigure
             key={id}

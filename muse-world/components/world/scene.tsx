@@ -5,6 +5,7 @@ import { ContactShadows } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
 import { FrustumGuard } from "@/components/world/frustum-guard";
+import { GrokOrb } from "@/components/world/grok-orb";
 import { MuseBody } from "@/components/world/muse-body";
 import { MuseMindField } from "@/components/world/mind";
 import { Penthouse } from "@/components/world/penthouse";
@@ -12,9 +13,10 @@ import { TravelPacket } from "@/components/world/packet";
 import { usePerf } from "@/components/world/perf-context";
 import { CameraRig } from "@/components/world/rig";
 import { ThoughtChip } from "@/components/world/thoughts";
-import { wallSlotWorld } from "@/lib/world/layout";
+import { presetForMuse } from "@/lib/world/camera";
+import { GROK_ORB_POS, wallSlotWorld } from "@/lib/world/layout";
 import { MIND_LIFT } from "@/lib/world/mind-graph";
-import type { MuseId, PacketEndpoint, WorldSnapshot } from "@/types/world";
+import type { MuseId, PacketEndpoint, ScreenId, WorldSnapshot } from "@/types/world";
 import { MUSE_IDS } from "@/types/world";
 
 function AreaLights() {
@@ -110,6 +112,9 @@ function worldRevision(world: WorldSnapshot): string {
   return [
     world.camera,
     world.selected ?? "",
+    world.inspecting ?? "",
+    world.grokWake.phase,
+    world.grokWake.honesty ?? "",
     world.mindOpen ? "1" : "0",
     world.packet?.t ?? 0,
     ...MUSE_IDS.map((id) => {
@@ -124,14 +129,21 @@ export function LivingScene({
   introDone,
   onIntroDone,
   onSelect,
+  onInspect,
+  onWakeGrok,
 }: {
   world: WorldSnapshot;
   introDone: boolean;
   onIntroDone: () => void;
   onSelect: (id: MuseId) => void;
+  onInspect: (id: ScreenId) => void;
+  onWakeGrok: () => void;
 }) {
   const selected = world.selected;
-  const musePos = selected ? world.muses[selected].position : null;
+  const musePos =
+    selected && (world.camera === "MIND" || world.camera === presetForMuse(selected))
+      ? world.muses[selected].position
+      : null;
   const { contactShadows } = usePerf();
   const positions: Record<PacketEndpoint, [number, number, number]> = {
     scroller: world.muses.scroller.position,
@@ -156,7 +168,16 @@ export function LivingScene({
         packet={world.packet}
         wallPins={world.wallPins ?? []}
         builderPos={world.muses.builder.position}
+        inspecting={world.inspecting}
+        onInspect={onInspect}
       />
+      <FrustumGuard center={GROK_ORB_POS} radius={1.4}>
+        <GrokOrb
+          waking={world.grokWake.phase === "waking"}
+          honesty={world.grokWake.honesty}
+          onWake={onWakeGrok}
+        />
+      </FrustumGuard>
       {MUSE_IDS.map((id) => (
         <FrustumGuard key={id} center={world.muses[id].position} radius={1.6}>
           <MuseBody
