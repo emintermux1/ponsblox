@@ -87,8 +87,6 @@ export function probeWebGL(): boolean {
       webglProbe = false;
       return false;
     }
-    const ext = gl.getExtension("WEBGL_lose_context");
-    ext?.loseContext();
     webglProbe = true;
     return true;
   } catch {

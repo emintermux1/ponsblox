@@ -9,6 +9,7 @@ import { useLivingWorld } from "@/components/world/use-living-world";
 import { usePerfBudget } from "@/components/world/use-perf";
 import { WatchMode } from "@/components/world/watch-mode";
 import type { RenderMode } from "@/lib/world/perf";
+import { PCFShadowMap } from "three";
 import { assertNever } from "@/types/world";
 
 function isWebglMode(mode: RenderMode): boolean {
@@ -50,7 +51,8 @@ export function MuseWorld() {
         <main className="relative h-dvh w-full overflow-hidden bg-[#0b0c10]">
           {ready && webgl ? (
             <Canvas
-              shadows={budget.shadows}
+              className="absolute inset-0"
+              shadows={budget.shadows ? { type: PCFShadowMap } : false}
               dpr={budget.dpr}
               frameloop={budget.frameloop}
               camera={{
@@ -64,20 +66,24 @@ export function MuseWorld() {
                 alpha: false,
                 powerPreference: budget.powerPreference,
                 stencil: false,
+                preserveDrawingBuffer: true,
               }}
               onCreated={({ gl }) => {
+                gl.shadowMap.type = PCFShadowMap;
                 gl.domElement.addEventListener("webglcontextlost", (event) => {
                   event.preventDefault();
                   markWebglLost();
                 });
               }}
             >
-              <LivingScene
-                world={world}
-                introDone={introDone}
-                onIntroDone={() => setIntroDone(true)}
-                onSelect={select}
-              />
+              <PerfProvider value={budget}>
+                <LivingScene
+                  world={world}
+                  introDone={introDone}
+                  onIntroDone={() => setIntroDone(true)}
+                  onSelect={select}
+                />
+              </PerfProvider>
             </Canvas>
           ) : null}
           {ready && !webgl ? <WatchMode world={world} onSelect={select} /> : null}

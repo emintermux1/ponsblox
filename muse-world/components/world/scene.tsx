@@ -18,7 +18,8 @@ function Lighting() {
   const { extraLights, shadows, shadowMapSize } = usePerf();
   return (
     <>
-      <hemisphereLight args={["#9aa8b8", "#1a1612", extraLights ? 0.42 : 0.55]} />
+      <ambientLight intensity={extraLights ? 0.1 : 0.2} color="#d5c7ae" />
+      <hemisphereLight args={["#9aa8b8", "#1a1612", extraLights ? 0.42 : 0.62]} />
       <directionalLight
         position={[6, 8, 4]}
         intensity={extraLights ? 1.15 : 1.05}
@@ -32,7 +33,9 @@ function Lighting() {
           <pointLight position={[-4, 2.4, 1.2]} intensity={0.35} color="#d8c49a" />
           <pointLight position={[3.4, 1.6, -0.6]} intensity={0.4} color="#8aa0b0" />
         </>
-      ) : null}
+      ) : (
+        <pointLight position={[0.4, 3.2, 8.4]} intensity={0.22} color="#c4b392" />
+      )}
     </>
   );
 }
