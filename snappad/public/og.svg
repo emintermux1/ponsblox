@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#000"/>
+  <rect x="72" y="72" width="88" height="88" rx="22" fill="#FFFC00"/>
+  <text x="184" y="132" fill="#FFFC00" font-size="56" font-family="Avenir Next, Helvetica, Arial" font-weight="800">SnapPad</text>
+  <text x="72" y="320" fill="#fff" font-size="88" font-family="Avenir Next, Helvetica, Arial" font-weight="800">Turn any Snap</text>
+  <text x="72" y="420" fill="#fff" font-size="88" font-family="Avenir Next, Helvetica, Arial" font-weight="800">into a coin.</text>
+  <text x="72" y="540" fill="#FFFC00" font-size="28" font-family="Avenir Next, Helvetica, Arial">The Snap disappears. The coin doesnt.</text>
+</svg>

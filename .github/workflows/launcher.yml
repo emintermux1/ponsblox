@@ -1,0 +1,33 @@
+name: launcher
+
+on:
+  push:
+    paths: ['launcher/**', '.github/workflows/launcher.yml']
+  pull_request:
+    paths: ['launcher/**', '.github/workflows/launcher.yml']
+
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: launcher
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run check
+      - run: npm test
+
+  contracts:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: launcher
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+      - run: forge install foundry-rs/forge-std --no-commit
+      - run: forge test

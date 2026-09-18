@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Microsoft Rewards</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='28' height='28' fill='%23f25022'/%3E%3Crect x='36' width='28' height='28' fill='%237fba00'/%3E%3Crect y='36' width='28' height='28' fill='%2300a4ef'/%3E%3Crect x='36' y='36' width='28' height='28' fill='%23ffb900'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <header class="ms-bar">
+      <div class="ms-brand">
+        <span class="squares" aria-hidden="true"></span>
+        <b>Microsoft Rewards</b>
+      </div>
+      <div class="ms-meta">
+        <div class="coin">
+          <span>Points</span>
+          <strong id="bank">0</strong>
+        </div>
+        <div class="coin">
+          <span>Streak</span>
+          <strong id="streak">1</strong>
+        </div>
+        <button type="button" id="copy-ca">CA</button>
+        <a class="buy" id="buy" href="#" target="_blank" rel="noreferrer">Buy</a>
+        <button type="button" id="open-claim">Claim</button>
+        <button type="button" id="open-hunt">Daily set</button>
+        <a class="x" href="https://x.com/penisbirdgame" target="_blank" rel="noreferrer">@penisbirdgame</a>
+      </div>
+    </header>
+
+    <section class="daily" id="daily"></section>
+
+    <main class="stage">
+      <canvas id="game" width="960" height="540" tabindex="0" role="img" aria-label="flyer"></canvas>
+    </main>
+
+    <div class="hunt" id="hunt" hidden>
+      <div class="hunt-card">
+        <h2>Daily set</h2>
+        <p class="muted">Available <span class="points" id="points">0</span></p>
+        <ul id="quests"></ul>
+        <h3>Wings</h3>
+        <div class="skins" id="skins"></div>
+        <h3>Achievements</h3>
+        <ul id="medals"></ul>
+        <button type="button" id="close-hunt">Back</button>
+      </div>
+    </div>
+
+    <div class="hunt" id="claim" hidden>
+      <div class="hunt-card">
+        <h2>Claim Rewards</h2>
+        <div class="claim-row">
+          <div>
+            <small>Available</small>
+            <b id="claim-avail">0</b>
+          </div>
+          <div>
+            <small>Claimed</small>
+            <b id="claim-done">0</b>
+          </div>
+        </div>
+        <button type="button" id="copy-ca-claim">Copy CA</button>
+        <button type="button" id="do-claim">Claim</button>
+        <button type="button" id="close-claim" class="ghost">Close</button>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

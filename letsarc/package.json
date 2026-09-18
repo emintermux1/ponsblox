@@ -1,0 +1,41 @@
+{
+  "name": "lets-arc",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Reply @letslauncharc $TICKER Name to launch a real token on Argus (Arc mainnet)",
+  "type": "module",
+  "scripts": {
+    "worker": "tsx src/worker.ts",
+    "dev": "tsx watch src/worker.ts",
+    "web:dev": "next dev --port 3017",
+    "web:build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test:parse": "tsx src/lib/parse/tweet.test.ts",
+    "test": "npm run test:parse",
+    "address": "tsx src/scripts/address.ts",
+    "probe": "tsx src/scripts/probe-argus.ts",
+    "smoke:launch": "tsx src/scripts/smoke-launch.ts"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "next": "^15.5.4",
+    "pg": "^8.16.3",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "twitter-api-v2": "^1.29.0",
+    "viem": "^2.37.8",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "@types/pg": "^8.15.5",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}

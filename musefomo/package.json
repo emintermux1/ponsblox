@@ -1,0 +1,41 @@
+{
+  "name": "musefomo",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "tsx --test lib/ledger.test.ts lib/money.test.ts lib/agent-profile-status.test.ts lib/directory.test.ts lib/market.test.ts lib/ohlcv.test.ts lib/chart-bars.test.ts lib/providers/mappers.test.ts lib/providers/hydrate.test.ts lib/providers/public-social.test.ts lib/robinhood.test.ts lib/cache.test.ts lib/thesis-sources.test.ts lib/thesis-guard.test.ts lib/family-harvest.test.ts lib/human-map.test.ts lib/known-mints.test.ts lib/pinned-tokens.test.ts lib/token-logo.test.ts lib/header-tape.test.ts lib/meme-rank.test.ts lib/home-paint.test.ts lib/sql-timeout.test.ts lib/fast-fetch.test.ts lib/feed.test.ts"
+  },
+  "dependencies": {
+    "@privy-io/node": "^0.34.0",
+    "@privy-io/react-auth": "^3.43.0",
+    "@privy-io/server-auth": "^1.32.5",
+    "@solana-program/memo": "^0.10.0",
+    "@solana-program/system": "^0.10.0",
+    "@solana-program/token": "^0.9.0",
+    "@solana/web3.js": "^1.99.0",
+    "bs58": "^6.0.0",
+    "framer-motion": "^13.4.0",
+    "jose": "^6.2.12",
+    "lightweight-charts": "^5.2.1",
+    "next": "16.3.5",
+    "postgres": "^3.4.9",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.5",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.13",
+    "typescript": "^5"
+  }
+}

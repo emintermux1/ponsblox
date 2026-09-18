@@ -1,0 +1,213 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  margin: 0;
+  min-height: 100%;
+  overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  min-height: 100dvh;
+  overflow-x: clip;
+  background: #080c09;
+  color: #e8f3ea;
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+::selection {
+  background: #86d49a;
+  color: #06140c;
+}
+
+:focus-visible {
+  outline: 1px solid #86d49a;
+  outline-offset: 2px;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex h-8 items-center justify-center border border-line px-3 text-[13px] text-paper transition-colors;
+    touch-action: manipulation;
+  }
+  .btn-accent {
+    @apply border-accent/40 bg-accent text-[#06140c] hover:bg-[#9be0ac];
+  }
+  .btn-ink {
+    @apply bg-ink hover:border-accent/40;
+  }
+  .btn-ghost {
+    @apply bg-transparent text-muted hover:text-paper;
+  }
+  .btn-lg {
+    @apply h-10 px-4;
+  }
+  .btn:disabled {
+    @apply cursor-not-allowed opacity-45;
+  }
+  .chip {
+    @apply inline-flex items-center justify-center border border-line bg-transparent px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-muted transition-colors hover:text-paper;
+  }
+  .chip-on {
+    @apply border-accent/50 text-accent;
+  }
+  .field {
+    @apply block text-[11px] uppercase tracking-[0.12em] text-muted;
+  }
+  .field > span {
+    @apply mb-1.5 block;
+  }
+  .input {
+    @apply w-full border border-line bg-ink px-3 py-2 text-[16px] normal-case tracking-normal text-paper placeholder:text-muted/70 md:text-[14px];
+  }
+  .instrument {
+    @apply relative block border border-line bg-panel p-3 text-left transition-[border-color,transform,background-color] duration-200 ease-out;
+    transform: perspective(820px) translateY(0);
+  }
+  .instrument:hover {
+    @apply border-accent/45 bg-ink;
+    transform: perspective(820px) translateY(-2px);
+  }
+  .instrument-on {
+    @apply border-accent bg-ink;
+  }
+}
+
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes tape-draw {
+  from { stroke-dashoffset: 1400; }
+  to { stroke-dashoffset: 0; }
+}
+
+.page-enter {
+  animation: page-enter 0.4s ease both;
+}
+
+.tape-line {
+  stroke-dasharray: 1400;
+  stroke-dashoffset: 0;
+  animation: tape-draw 0.9s ease both;
+}
+
+.tape-fill {
+  opacity: 0;
+  animation: page-enter 0.7s ease 0.25s both;
+}
+
+.row-enter {
+  animation: page-enter 0.35s ease both;
+}
+
+.site-header {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.site-footer {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.snap-strip {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding-bottom: 0.25rem;
+}
+
+.snap-strip > * {
+  flex: 0 0 min(260px, 78vw);
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.chip-row {
+  display: flex;
+  gap: 0.25rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.chip-row::-webkit-scrollbar {
+  display: none;
+}
+
+.chip-row > * {
+  flex: 0 0 auto;
+}
+
+.launch-dock {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 15;
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid #1e2a22;
+  background: rgba(14, 20, 16, 0.94);
+  backdrop-filter: blur(8px);
+}
+
+@media (min-width: 768px) {
+  .chip-row {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+}
+
+@media (min-width: 1024px) {
+  .snap-strip {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    overflow: visible;
+    scroll-snap-type: none;
+    padding-bottom: 0;
+  }
+
+  .snap-strip > * {
+    flex: unset;
+  }
+
+}
+
+@media (max-width: 767px) {
+  .btn-lg {
+    min-height: 44px;
+    width: 100%;
+  }
+
+  .chip {
+    min-height: 36px;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter,
+  .tape-line,
+  .tape-fill,
+  .row-enter,
+  .instrument,
+  .instrument:hover {
+    animation: none;
+    transform: none;
+  }
+}

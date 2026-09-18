@@ -1,0 +1,5 @@
+.env
+.env.local
+.data
+.git
+node_modules

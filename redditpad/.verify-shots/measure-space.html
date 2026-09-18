@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <p id="out">measuring…</p>
+    <script>
+      function measure(family) {
+        const mk = (text) => {
+          const el = document.createElement('span')
+          el.style.cssText = `font: 20px ${family}; letter-spacing: normal; word-spacing: normal; position: absolute;`
+          el.textContent = text
+          document.body.appendChild(el)
+          const w = el.getBoundingClientRect().width
+          const cs = getComputedStyle(el)
+          el.remove()
+          return { w, family: cs.fontFamily, letter: cs.letterSpacing, word: cs.wordSpacing }
+        }
+        const xx = mk('xx')
+        const x_x = mk('x x')
+        return {
+          requested: family,
+          used: xx.family,
+          letterSpacing: xx.letter,
+          wordSpacing: xx.word,
+          spacePx: Number((x_x.w - xx.w).toFixed(3)),
+        }
+      }
+      async function waitFonts() {
+        if (document.fonts?.ready) await document.fonts.ready
+        await new Promise((r) => setTimeout(r, 400))
+      }
+      waitFonts().then(() => {
+        const rows = [
+          measure("'IBM Plex Sans'"),
+          measure("'IBM Plex Mono'"),
+          measure("'Segoe UI'"),
+          measure('system-ui'),
+          measure('Arial'),
+        ]
+        document.getElementById('out').textContent = JSON.stringify(rows, null, 2)
+      })
+    </script>
+  </body>
+</html>

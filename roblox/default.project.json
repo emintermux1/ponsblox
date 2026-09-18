@@ -1,0 +1,42 @@
+{
+  "name": "Ponsblox",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$className": "Workspace",
+      "$properties": {
+        "FilteringEnabled": true
+      }
+    },
+    "Lighting": {
+      "$className": "Lighting",
+      "$properties": {
+        "Technology": "ShadowMap",
+        "ClockTime": 17.35,
+        "Brightness": 2.2,
+        "Ambient": [0.27, 0.19, 0.16],
+        "OutdoorAmbient": [0.38, 0.27, 0.23],
+        "GlobalShadows": true
+      }
+    },
+    "ReplicatedStorage": {
+      "Shared": {
+        "$path": "src/Shared"
+      }
+    },
+    "ServerScriptService": {
+      "Server": {
+        "$path": "src/Server"
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "Client": {
+          "$path": "src/Client"
+        }
+      }
+    }
+  }
+}

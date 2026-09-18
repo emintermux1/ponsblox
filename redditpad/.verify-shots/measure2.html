@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="https://redditpad.family/assets/index-n7OaCX2b.css" />
+  </head>
+  <body>
+    <h1 id="t">Pair the front page of the internet.</h1>
+    <p class="err" id="e">Wallet is not on Robinhood Chain (4663).</p>
+    <pre id="out"></pre>
+    <script>
+      function sp(el) {
+        const cs = getComputedStyle(el)
+        const mk = (text) => {
+          const s = document.createElement('span')
+          s.style.font = cs.font
+          s.style.letterSpacing = cs.letterSpacing
+          s.style.wordSpacing = cs.wordSpacing
+          s.textContent = text
+          document.body.appendChild(s)
+          const w = s.getBoundingClientRect().width
+          s.remove()
+          return w
+        }
+        return {
+          text: el.textContent,
+          font: cs.fontFamily,
+          letter: cs.letterSpacing,
+          word: cs.wordSpacing,
+          spacePx: +(mk('x x') - mk('xx')).toFixed(2),
+        }
+      }
+      const result = { h1: sp(document.getElementById('t')), err: sp(document.getElementById('e')) }
+      document.getElementById('out').textContent = JSON.stringify(result, null, 2)
+    </script>
+  </body>
+</html>

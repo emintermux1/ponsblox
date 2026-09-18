@@ -1,0 +1,21 @@
+{
+  "name": "Spooder-Man",
+  "symbol": "SPOODERMAN",
+  "pair": {
+    "symbol": "MRVL",
+    "name": "Marvell Technology • Robinhood Token",
+    "address": "0x62fd0668e10D8B72339BE2DCF7643001688ff13B",
+    "approved": true,
+    "graduation": "48.682003099573809148 MRVL"
+  },
+  "twitter": "https://x.com/pmtrenches/status/2096525121657729128?s=46",
+  "description": "https://x.com/pmtrenches/status/2096525121657729128?s=46",
+  "logo": "https://files.catbox.moe/gep3l2.jpg",
+  "logoFile": "C:\\Users\\emin\\ponsblox\\launch\\spooderman.jpg",
+  "creatorTaxBps": 100,
+  "buybackEnabled": false,
+  "quoteIn": "",
+  "creatorFeeRecipient": "0x12b9c61161bEd3196bFbF8365cD27De274157a3D",
+  "launchFeeEth": "0.0005",
+  "deployWhen": "Set TOKEN_TWITTER, then npm run launch:deploy"
+}

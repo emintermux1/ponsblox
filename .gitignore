@@ -1,0 +1,13 @@
+node_modules
+tools/rojo.zip
+roblox/*.rbxl
+roblox/*.rbxlx
+dist
+.env
+.env.local
+*.log
+data/*.json
+!data/.gitkeep
+.gitpad-data
+gitpad/.data
+.DS_Store

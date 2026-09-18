@@ -1,0 +1,6 @@
+.vercel
+dist
+.env*
+.verify
+verify*.png
+node_modules

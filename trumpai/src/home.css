@@ -1,0 +1,245 @@
+.home { min-height: 100dvh; background: #000; color: #f5f5f3; }
+
+.home-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: min(72rem, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 28px 0 8px;
+  padding-top: max(28px, env(safe-area-inset-top));
+}
+
+.home-nav .wordmark {
+  color: #f5f5f3;
+}
+
+.home-nav nav {
+  display: flex;
+  gap: 22px;
+}
+
+.home-nav nav a {
+  font-size: 14px;
+  color: #c8c8c4;
+}
+
+.home-nav nav a:hover { color: #fff; }
+
+.home-hero {
+  width: min(44rem, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 72px 0 36px;
+}
+
+.kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 24px;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #d0d0cc;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #e11d2e;
+  box-shadow: 0 0 10px #e11d2e;
+}
+
+.home-hero h1 {
+  margin: 0;
+  font-weight: 400;
+  font-size: clamp(56px, 10vw, 96px);
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+}
+
+.lead {
+  margin: 22px 0 28px;
+  font-weight: 300;
+  font-size: clamp(18px, 2vw, 22px);
+  line-height: 1.45;
+  color: #c8c8c4;
+}
+
+.home-cta {
+  display: inline-block;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+  padding-bottom: 4px;
+}
+
+.home-cta:hover { border-color: #fff; }
+
+.home-art {
+  width: min(72rem, calc(100% - 48px));
+  margin: 0 auto 72px;
+}
+
+.home-art img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #080808;
+}
+
+.home-copy,
+.home-systems {
+  width: min(72rem, calc(100% - 48px));
+  margin: 0 auto;
+  padding-bottom: 88px;
+}
+
+.home-copy { max-width: 40rem; margin-left: auto; margin-right: auto; }
+
+.eyebrow {
+  margin: 0 0 16px;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #9a9a96;
+}
+
+.home-copy h2,
+.home-systems-head h2,
+.home-projects-head h2 {
+  margin: 0 0 18px;
+  font-weight: 400;
+  font-size: clamp(32px, 4vw, 48px);
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+}
+
+.home-copy p,
+.home-systems li p:last-child {
+  margin: 0;
+  font-weight: 300;
+  font-size: 18px;
+  line-height: 1.55;
+  color: #c8c8c4;
+}
+
+.home-systems-head,
+.home-projects-head { max-width: 36rem; margin-bottom: 48px; }
+
+.home-systems ol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px 48px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-systems h3 {
+  margin: 0 0 10px;
+  font-weight: 400;
+  font-size: 24px;
+  letter-spacing: -0.02em;
+}
+
+.home-feature {
+  width: min(72rem, calc(100% - 48px));
+  margin: 0 auto;
+  padding-bottom: 88px;
+}
+
+.home-feature a { display: block; }
+
+.home-feature figure {
+  margin: 0 0 36px;
+}
+
+.home-feature img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #080808;
+}
+
+.home-feature h2 {
+  margin: 0 0 18px;
+  max-width: 22ch;
+  font-weight: 400;
+  font-size: clamp(32px, 5vw, 56px);
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+}
+
+.home-projects {
+  width: min(72rem, calc(100% - 48px));
+  margin: 0 auto;
+  padding-bottom: 88px;
+}
+
+.home-projects ol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 48px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-projects a {
+  display: block;
+  padding: 28px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.home-projects h3 {
+  margin: 0 0 10px;
+  font-weight: 400;
+  font-size: clamp(22px, 3vw, 32px);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.home-projects p:last-child {
+  margin: 0;
+  font-weight: 300;
+  font-size: 18px;
+  line-height: 1.55;
+  color: #c8c8c4;
+}
+
+.home-projects a:hover h3 { color: #fff; }
+
+.home-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  width: min(72rem, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 28px 0 40px;
+  padding-bottom: max(40px, env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9a9a96;
+}
+
+.home-foot div {
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+
+.home-foot a:hover { color: #fff; }
+
+@media (max-width: 720px) {
+  .home-nav, .home-hero, .home-art, .home-copy, .home-systems, .home-feature, .home-projects, .home-foot {
+    width: calc(100% - 36px);
+  }
+  .home-systems ol,
+  .home-projects ol { grid-template-columns: 1fr; }
+  .home-foot { flex-direction: column; }
+}

@@ -1,0 +1,48 @@
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  typescript: { ignoreBuildErrors: true },
+  images: {
+    unoptimized: true,
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    remotePatterns: [
+      { protocol: "https", hostname: "**.supabase.co" },
+      { protocol: "https", hostname: "pbs.twimg.com" },
+      { protocol: "https", hostname: "abs.twimg.com" },
+      { protocol: "https", hostname: "dd.dexscreener.com" },
+      { protocol: "https", hostname: "cdn.dexscreener.com" },
+      { protocol: "https", hostname: "coin-images.coingecko.com" },
+      { protocol: "https", hostname: "assets.coingecko.com" },
+      { protocol: "https", hostname: "**.jup.ag" },
+      { protocol: "https", hostname: "static.jup.ag" },
+      { protocol: "https", hostname: "static.datapi.jup.ag" },
+      { protocol: "https", hostname: "token.jup.ag" },
+      { protocol: "https", hostname: "**.phantom.app" },
+      { protocol: "https", hostname: "assets.geckoterminal.com" },
+      { protocol: "https", hostname: "raw.githubusercontent.com" },
+      { protocol: "https", hostname: "arweave.net" },
+      { protocol: "https", hostname: "**.arweave.net" },
+      { protocol: "https", hostname: "ipfs.io" },
+      { protocol: "https", hostname: "gateway.pinata.cloud" },
+      { protocol: "https", hostname: "cf-ipfs.com" },
+      { protocol: "https", hostname: "cloudflare-ipfs.com" },
+      { protocol: "https", hostname: "dweb.link" },
+      { protocol: "https", hostname: "w3s.link" },
+      { protocol: "https", hostname: "nftstorage.link" },
+      { protocol: "https", hostname: "**.ipfs.nftstorage.link" },
+      { protocol: "https", hostname: "img.fotofolio.xyz" },
+      { protocol: "https", hostname: "img.birdeye.so" },
+      { protocol: "https", hostname: "cdn.birdeye.so" },
+      { protocol: "https", hostname: "**.birdeye.so" },
+      { protocol: "https", hostname: "s2.coinmarketcap.com" },
+      { protocol: "https", hostname: "**.amazonaws.com" },
+      { protocol: "https", hostname: "**.cloudfront.net" },
+      { protocol: "https", hostname: "**.fomoscan.sh" },
+      { protocol: "https", hostname: "pump.fun" },
+      { protocol: "https", hostname: "**.pump.fun" },
+    ],
+  },
+};
+
+export default nextConfig;

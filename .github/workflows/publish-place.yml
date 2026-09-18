@@ -1,0 +1,25 @@
+name: Publish place
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Rojo
+        run: |
+          curl -sL "https://github.com/rojo-rbx/rojo/releases/download/v7.7.0/rojo-7.7.0-linux-x86_64.zip" -o /tmp/rojo.zip
+          unzip -o /tmp/rojo.zip -d /tmp/rojo
+          install -m 0755 "$(find /tmp/rojo -type f -name rojo | head -n 1)" /usr/local/bin/rojo
+          rojo --version
+      - name: Publish to Roblox
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+          ROBLOX_UNIVERSE_ID: ${{ secrets.ROBLOX_UNIVERSE_ID }}
+          ROBLOX_PLACE_ID: ${{ secrets.ROBLOX_PLACE_ID }}
+        run: node scripts/publish-place.mjs

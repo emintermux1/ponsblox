@@ -1,0 +1,29 @@
+{
+  "status": "LAUNCHED",
+  "name": "UPS Dogs",
+  "symbol": "UPSDOGS",
+  "token": "0x27e84686b68186BE4c2C2b6197A588429F5e5Ca9",
+  "curve": "0xF4aa272E792fF8Fc9F55A1127DCDb6736d85997d",
+  "distributor": "0x9a2b30E5ba5cdcC94B258DE65bDaFbDC62b075df",
+  "pair": {
+    "symbol": "UPS",
+    "name": "UPS • Robinhood Token",
+    "address": "0xf23250dac154D05Bb671CB0d0eBEf3c635c79CE2",
+    "approved": true,
+    "graduation": "100.308545348611381553 UPS"
+  },
+  "website": "https://www.facebook.com/upsdogs/",
+  "twitter": "https://x.com/upsdogscoin/status/2096967741957672983?s=46",
+  "description": "UPS Dogs. https://www.facebook.com/upsdogs/",
+  "logo": "ipfs://bafybeiacaccskedmievairlvvgxctw6ryhsxjzq32omstlt663nlpd7on4",
+  "logoFile": "C:\\Users\\emin\\ponsblox\\launch\\upsdogs.png",
+  "creatorTaxBps": 100,
+  "buybackEnabled": false,
+  "holderRewards": true,
+  "creatorFeeRecipient": "0x9a2b30E5ba5cdcC94B258DE65bDaFbDC62b075df",
+  "launchFeeEth": "0.0005",
+  "launchHash": "0xe1d36d61dfd8db066ae6c74494ffce7993203ca662f3ec98966fce0d9c7bd150",
+  "createHash": "0xe216e19306736d3cee379d30cee4f833ab4ab7a2b8774571938635cc81569cad",
+  "routeHash": "0x4aa9f9e042b72f06678a77c40651eda13b826fc6d6d1bfde5f9af28e92851a4d",
+  "buy": "https://www.ponsfamily.com/launchpad/token/0x27e84686b68186BE4c2C2b6197A588429F5e5Ca9"
+}

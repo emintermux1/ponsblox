@@ -1,0 +1,5 @@
+.vercel
+dist
+.env*
+verify*.png
+

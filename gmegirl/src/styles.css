@@ -1,0 +1,392 @@
+:root {
+  --bg: #000;
+  --ink: #fff;
+  --red: #e31837;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 62px;
+}
+
+html, body, #root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: var(--red);
+  color: #fff;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+a { color: inherit; }
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+.page { min-height: 100%; }
+
+.kicker,
+.brand,
+.nav-right,
+.btn,
+.ghost,
+.addr,
+.foot-addr,
+figcaption {
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px 12px 16px;
+  background: #000;
+  border-bottom: 2px solid #fff;
+  border-left: 8px solid var(--red);
+}
+
+.brand {
+  text-decoration: none;
+  font-family: Oswald, Impact, sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.stop { color: var(--red); }
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.nav-right a { text-decoration: none; }
+.nav-right a:hover { color: var(--red); }
+
+.ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  border: 2px solid #fff;
+  padding: 10px 12px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--red);
+  color: #fff;
+  border: 2px solid #fff;
+  text-decoration: none;
+  padding: 14px 20px;
+  cursor: pointer;
+}
+
+.btn:hover,
+.ghost:hover,
+.addr:hover,
+.foot-addr:hover {
+  background: #fff;
+  color: #000;
+}
+
+.btn:focus-visible,
+.ghost:focus-visible,
+.addr:focus-visible,
+.foot-addr:focus-visible,
+.nav-right a:focus-visible,
+.brand:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+.btn-nav { padding: 8px 12px; }
+
+.hero {
+  background: #000;
+}
+
+.hero-banner {
+  width: min(100%, 1280px);
+  height: auto;
+  margin: 0 auto;
+}
+
+.hero-bar {
+  display: grid;
+  grid-template-columns: 1.2fr auto auto;
+  align-items: center;
+  gap: 24px;
+  padding: 22px 28px;
+  background: #000;
+  border-top: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+}
+
+.kicker { color: #fff; margin: 0 0 8px; }
+
+.line {
+  margin: 0;
+  font-size: clamp(22px, 3vw, 32px);
+  line-height: 1.15;
+  font-family: Oswald, Impact, sans-serif;
+  letter-spacing: 0.01em;
+}
+
+.pairs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+
+.pairs b {
+  border: 2px solid #fff;
+  padding: 8px 10px;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+}
+
+.pairs b:first-child {
+  background: #fff;
+  color: #000;
+}
+
+.hero-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tape {
+  overflow: hidden;
+  background: var(--red);
+  border-bottom: 2px solid #fff;
+}
+
+.tape-track {
+  display: flex;
+  width: max-content;
+  animation: tick 22s linear infinite;
+}
+
+.tape p {
+  display: flex;
+  gap: 0;
+  margin: 0;
+  padding: 11px 0;
+  font-family: Oswald, Impact, sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tape span {
+  padding: 0 28px;
+  border-right: 2px solid #fff;
+}
+
+@keyframes tick {
+  to { transform: translateX(-50%); }
+}
+
+.wall {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 2px;
+  background: #fff;
+  border-bottom: 2px solid #fff;
+}
+
+.wall figure {
+  margin: 0;
+  background: #000;
+}
+
+.wall img {
+  width: 100%;
+  height: auto;
+}
+
+figcaption {
+  padding: 10px 12px;
+  border-top: 2px solid #fff;
+  color: #fff;
+}
+
+.fees {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  align-items: center;
+  gap: 48px;
+  padding: 56px 40px;
+  background: var(--red);
+  border-bottom: 2px solid #fff;
+}
+
+.fees-copy { min-width: 0; }
+
+.fees h2 {
+  margin: 10px 0 16px;
+  font-family: Oswald, Impact, sans-serif;
+  font-size: clamp(40px, 6.4vw, 76px);
+  line-height: 0.9;
+  letter-spacing: 0.01em;
+}
+
+.fees p {
+  margin: 0;
+  max-width: 34ch;
+  font-size: 21px;
+  line-height: 1.35;
+}
+
+.dm {
+  margin: 0;
+  padding: 10px 10px 14px;
+  background: #000;
+  border: 2px solid #fff;
+}
+
+.dm::before {
+  content: '';
+  display: block;
+  width: 64px;
+  height: 6px;
+  margin: 0 auto 10px;
+  background: #fff;
+}
+
+.dm img {
+  width: 100%;
+  height: auto;
+  background: #fff;
+}
+
+.addr {
+  margin-top: 24px;
+  background: #000;
+  border: 2px solid #fff;
+  padding: 14px 16px;
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  word-break: break-all;
+}
+
+.about {
+  padding: 64px 28px;
+  max-width: 920px;
+}
+
+.about p {
+  margin: 0 0 20px;
+  font-size: clamp(26px, 3.4vw, 40px);
+  line-height: 1.12;
+  font-family: Oswald, Impact, sans-serif;
+  letter-spacing: 0.01em;
+}
+
+.about-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-top: 2px solid #fff;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.foot p { margin: 0; }
+.foot a { color: #fff; text-decoration: none; }
+.foot a:hover { color: var(--red); }
+
+.foot-addr {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: var(--red);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tape-track { animation: none; }
+}
+
+@media (max-width: 900px) {
+  .hero-bar {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .wall { grid-template-columns: 1fr; }
+
+  .fees {
+    grid-template-columns: 1fr;
+    padding: 36px 20px;
+    text-align: center;
+  }
+
+  .fees p { margin: 0 auto; }
+
+  .dm { max-width: 320px; margin: 0 auto; }
+
+  .about { padding: 40px 20px; }
+}
+
+@media (max-width: 860px) {
+  .nav-right span,
+  .nav-right a:first-child { display: none; }
+}
+
+@media (max-width: 520px) {
+  .nav-right a { display: none; }
+
+  .brand { font-size: 18px; }
+
+  .foot { flex-direction: column; align-items: flex-start; }
+}

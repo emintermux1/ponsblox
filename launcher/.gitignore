@@ -1,0 +1,12 @@
+node_modules
+dist
+contracts/out
+contracts/cache
+contracts/cache-hh
+contracts/artifacts-hh
+contracts/lib
+.env
+.env.local
+.buy-domain.json
+.vercel
+.env*

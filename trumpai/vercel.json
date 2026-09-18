@@ -1,0 +1,44 @@
+{
+  "framework": "vite",
+  "buildCommand": "npx vite build",
+  "outputDirectory": "dist",
+  "redirects": [
+    { "source": "/t1", "destination": "/T1", "permanent": false },
+    { "source": "/t-1", "destination": "/T1", "permanent": false },
+    { "source": "/introducing", "destination": "/T1", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/T1", "destination": "/index.html" },
+    { "source": "/projects/eagle-47/", "destination": "/eagle.html" },
+    { "source": "/projects/eagle-47", "destination": "/eagle.html" },
+    { "source": "/EAGLE-47/", "destination": "/eagle.html" },
+    { "source": "/EAGLE-47", "destination": "/eagle.html" },
+    { "source": "/eagle-47/", "destination": "/eagle.html" },
+    { "source": "/eagle-47", "destination": "/eagle.html" },
+    { "source": "/eagle47/", "destination": "/eagle.html" },
+    { "source": "/eagle47", "destination": "/eagle.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/eagle-47-og.jpg",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400, immutable" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    },
+    {
+      "source": "/eagle-47-card.jpg",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400, immutable" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    },
+    {
+      "source": "/robots.txt",
+      "headers": [
+        { "key": "Content-Type", "value": "text/plain; charset=utf-8" }
+      ]
+    }
+  ]
+}

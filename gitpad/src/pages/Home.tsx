@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { CopyButton } from '../components/CopyButton.tsx'
 import { ErrorState, SkeletonGrid } from '../components/ErrorState.tsx'
 import { FeedTape } from '../components/FeedTape.tsx'
 import { PulseStrip } from '../components/PulseStrip.tsx'
@@ -15,8 +16,10 @@ import {
   type RepoCard as Card,
 } from '../lib/api.ts'
 import { useTrendingRepositories } from '../hooks/useTrendingRepositories.ts'
-import { ART } from '../lib/chain.ts'
-import { compact } from '../lib/format.ts'
+import { GITPAD_OFFICIAL_TOKEN } from '../config/official.ts'
+import { ART, gmgnUrl, tokenUrl } from '../lib/chain.ts'
+import { compact, X_URL } from '../lib/format.ts'
+import { byGitlabName } from '../lib/naming.ts'
 import { loadIndexed } from '../lib/tokens.ts'
 import { launchPath, onNavClick, repoPath } from '../lib/router.ts'
 import type { TokenRecord } from '../lib/pons.ts'
@@ -44,6 +47,7 @@ export function Home() {
     ...pulse,
     trendingToday: Math.max(pulse.trendingToday, trending.repos.length),
     repositoriesTracked: Math.max(pulse.repositoriesTracked, trending.repos.length),
+    tokenizedRepositories: Math.max(pulse.tokenizedRepositories, launches.length),
   }
 
   return (
@@ -148,6 +152,30 @@ export function Home() {
         <Reveal>
         <header className="sec">
           <div>
+            <p className="kicker">Official token</p>
+            <h2>GitPad By GitLab</h2>
+          </div>
+          <a href={`/token/${GITPAD_OFFICIAL_TOKEN}`} onClick={onNavClick(`/token/${GITPAD_OFFICIAL_TOKEN}`)}>Open token</a>
+        </header>
+        <a className="spot" href={`/token/${GITPAD_OFFICIAL_TOKEN}`} onClick={onNavClick(`/token/${GITPAD_OFFICIAL_TOKEN}`)}>
+          <span className="kicker">Live on Pons V2 · $GITPAD</span>
+          <strong>GitPad By GitLab</strong>
+          <p>Official GitPad coin.</p>
+          <span className="spot__meta mono">{GITPAD_OFFICIAL_TOKEN}</span>
+        </a>
+        <div className="hero__cta">
+          <a className="btn btn--lime" href={gmgnUrl(GITPAD_OFFICIAL_TOKEN)} target="_blank" rel="noreferrer">Trade</a>
+          <a className="btn btn--paper" href={X_URL} target="_blank" rel="noreferrer">X</a>
+          <CopyButton value={GITPAD_OFFICIAL_TOKEN} label="Copy CA" className="btn btn--ghost" />
+          <a className="btn btn--ghost" href={tokenUrl(GITPAD_OFFICIAL_TOKEN)} target="_blank" rel="noreferrer">Explorer</a>
+        </div>
+        </Reveal>
+      </section>
+
+      <section className="paper">
+        <Reveal>
+        <header className="sec">
+          <div>
             <p className="kicker">Live launches</p>
             <h2>On Pons V2</h2>
           </div>
@@ -158,12 +186,12 @@ export function Home() {
             {launches.map((t) => (
               <li key={t.token}>
                 <a href={`/token/${t.token}`} onClick={onNavClick(`/token/${t.token}`)}>
-                  <strong>{t.name}</strong> ${t.symbol} · {t.repo ? `${t.repo.owner}/${t.repo.name}` : 'unpaired'}
+                  <strong>{byGitlabName(t.name)}</strong> ${t.symbol} · {t.repo ? `${t.repo.owner}/${t.repo.name}` : 'official'}
                 </a>
               </li>
             ))}
           </ul>
-        ) : <p className="muted">No indexed launches yet.</p>}
+        ) : <p className="muted">Reading Pons V2…</p>}
         </Reveal>
       </section>
 

@@ -1,0 +1,8 @@
+.vercel
+.data
+.env
+.env.local
+api/all.js
+dist
+node_modules
+.env*

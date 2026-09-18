@@ -1,0 +1,270 @@
+:root {
+  --ms-blue: #0078d4;
+  --ms-blue-dark: #005a9e;
+  --ms-green: #107c10;
+  --ink: #1b1b1b;
+  --card: #ffffff;
+  --page: #f5f5f5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--page);
+  color: var(--ink);
+  font-family: "Segoe UI", "Segoe UI Variable", sans-serif;
+}
+
+.ms-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 20px;
+  background: #fff;
+  border-bottom: 1px solid #e1e1e1;
+}
+
+.ms-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ms-brand b {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.x,
+.buy {
+  color: var(--ms-blue);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.buy {
+  background: var(--ms-green);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+.squares {
+  width: 22px;
+  height: 22px;
+  background:
+    linear-gradient(#f25022, #f25022) 0 0 / 10px 10px no-repeat,
+    linear-gradient(#7fba00, #7fba00) 12px 0 / 10px 10px no-repeat,
+    linear-gradient(#00a4ef, #00a4ef) 0 12px / 10px 10px no-repeat,
+    linear-gradient(#ffb900, #ffb900) 12px 12px / 10px 10px no-repeat;
+}
+
+.ms-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.coin {
+  background: #f3f3f3;
+  border: 1px solid #e1e1e1;
+  border-radius: 8px;
+  padding: 6px 10px;
+  min-width: 72px;
+}
+
+.coin span {
+  display: block;
+  font-size: 11px;
+  color: #616161;
+}
+
+.coin strong {
+  color: var(--ms-blue);
+  font-size: 18px;
+}
+
+.ms-bar button,
+.hunt-card button {
+  border: 0;
+  background: var(--ms-blue);
+  color: #fff;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.ms-bar button:hover,
+.hunt-card button:hover {
+  background: var(--ms-blue-dark);
+}
+
+.daily {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px 20px 4px;
+}
+
+.punch {
+  background: #fff;
+  border: 1px solid #e1e1e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.punch small {
+  color: var(--ms-blue);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.punch.done {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.punch span {
+  color: var(--ms-green);
+  font-weight: 700;
+}
+
+.stage {
+  padding: 8px 20px 0;
+}
+
+canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: #2a1548;
+  border: 4px solid #1b1b1b;
+  box-shadow: inset 0 0 0 2px #6a4a22;
+  image-rendering: pixelated;
+  touch-action: none;
+}
+
+.hunt {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.hunt[hidden] {
+  display: none;
+}
+
+.hunt-card {
+  width: min(460px, 100%);
+  background: var(--card);
+  border-radius: 8px;
+  padding: 18px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+}
+
+.hunt-card h2,
+.hunt-card h3 {
+  margin: 0 0 8px;
+}
+
+.muted {
+  color: #616161;
+  margin: 0 0 12px;
+}
+
+.points {
+  font-weight: 700;
+  color: var(--ms-blue);
+}
+
+.hunt-card ul {
+  margin: 0 0 12px;
+  padding-left: 18px;
+}
+
+.hunt-card li.done {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
+.skins {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.skins button {
+  background: #f3f3f3;
+  color: var(--ink);
+}
+
+.skins button.on {
+  background: var(--ms-green);
+  color: #fff;
+}
+
+.skins button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.claim-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.claim-row small {
+  display: block;
+  color: #616161;
+}
+
+.claim-row b {
+  font-size: 28px;
+  color: var(--ms-blue);
+}
+
+.ghost {
+  background: #f3f3f3 !important;
+  color: var(--ink) !important;
+  margin-top: 8px;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 720px) {
+  .ms-bar,
+  .daily {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .daily {
+    grid-template-columns: 1fr;
+  }
+
+  .ms-brand small {
+    display: none;
+  }
+}
