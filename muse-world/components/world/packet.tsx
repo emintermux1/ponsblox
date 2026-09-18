@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { Html } from "@react-three/drei";
+import { Billboard, Text } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import type { Group } from "three";
 import { usePerf } from "@/components/world/perf-context";
@@ -78,11 +78,21 @@ export function TravelPacket({
         color={packet ? packetAccent(packet.from) : "#e8d2a0"}
       />
       {packet ? (
-        <Html center distanceFactor={8} style={{ pointerEvents: "none" }}>
-          <span className="whitespace-nowrap font-serif text-[10px] tracking-[0.16em] text-[#efe6d4]/75">
-            ${packet.label}
-          </span>
-        </Html>
+        <Billboard position={[0, 0.16, 0]}>
+          <Text
+            fontSize={0.078}
+            letterSpacing={0.14}
+            color="#efe6d4"
+            fillOpacity={0.85}
+            anchorX="center"
+            anchorY="bottom"
+            outlineWidth={0.005}
+            outlineColor="#120e0b"
+            outlineOpacity={0.65}
+          >
+            {`$${packet.label}`}
+          </Text>
+        </Billboard>
       ) : null}
     </group>
   );

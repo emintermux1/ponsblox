@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Html } from "@react-three/drei";
+import { Text } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import {
   BackSide,
@@ -633,11 +633,17 @@ function IdeaWall({
                 <boxGeometry args={[0.58, 0.34, 0.018]} />
                 <meshStandardMaterial color={PAPER} roughness={0.8} />
               </mesh>
-              <Html center distanceFactor={8} style={{ pointerEvents: "none" }}>
-                <span className="whitespace-nowrap font-serif text-[9px] tracking-[0.18em] text-[#3a3226]/80">
-                  ${pin.label}
-                </span>
-              </Html>
+              <Text
+                position={[0, 0, 0.014]}
+                fontSize={0.082}
+                letterSpacing={0.12}
+                color="#3a3226"
+                fillOpacity={0.85}
+                anchorX="center"
+                anchorY="middle"
+              >
+                {`$${pin.label}`}
+              </Text>
             </group>
           );
         })}
@@ -649,6 +655,245 @@ function IdeaWall({
         />
       ) : null}
       <Panel args={[1.8, 0.08, 0.42]} position={[0, -1.55, 0.18]} color={WOOD} roughness={0.62} />
+    </group>
+  );
+}
+
+function CenterRug() {
+  const { shadows } = usePerf();
+  return (
+    <group position={[0.3, 0.014, 2.6]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh receiveShadow={shadows}>
+        <circleGeometry args={[1.85, 40]} />
+        <meshStandardMaterial color="#4a3f33" roughness={0.94} metalness={0.02} />
+      </mesh>
+      <mesh position={[0, 0, 0.002]}>
+        <ringGeometry args={[1.62, 1.85, 40]} />
+        <meshStandardMaterial color="#5c4e3d" roughness={0.9} />
+      </mesh>
+    </group>
+  );
+}
+
+function DeskRug() {
+  const { shadows } = usePerf();
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[3.4, 0.012, -0.45]} receiveShadow={shadows}>
+      <planeGeometry args={[4.4, 2.7]} />
+      <meshStandardMaterial color="#453b31" roughness={0.95} metalness={0.02} />
+    </mesh>
+  );
+}
+
+function Plant({
+  position,
+  scale = 1,
+}: {
+  position: [number, number, number];
+  scale?: number;
+}) {
+  const { shadows } = usePerf();
+  const leaves: [number, number, number, number][] = [
+    [0, 0.95, 0, 0.34],
+    [0.24, 0.78, 0.1, 0.24],
+    [-0.22, 0.82, -0.08, 0.26],
+    [0.05, 0.7, -0.22, 0.2],
+    [-0.05, 1.1, 0.14, 0.18],
+  ];
+  return (
+    <group position={position} scale={scale}>
+      <mesh position={[0, 0.2, 0]} castShadow={shadows}>
+        <cylinderGeometry args={[0.17, 0.21, 0.4, 12]} />
+        <meshStandardMaterial color="#3a322a" roughness={0.85} />
+      </mesh>
+      <mesh position={[0, 0.52, 0]}>
+        <cylinderGeometry args={[0.022, 0.034, 0.45, 6]} />
+        <meshStandardMaterial color="#4a3d2c" roughness={0.9} />
+      </mesh>
+      {leaves.map(([x, y, z, r], i) => (
+        <mesh key={i} position={[x, y, z]} castShadow={shadows}>
+          <sphereGeometry args={[r, 10, 8]} />
+          <meshStandardMaterial
+            color={i % 2 === 0 ? "#31493a" : "#3d5a45"}
+            roughness={0.92}
+          />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function Sideboard({ wood }: { wood: CanvasTexture }) {
+  return (
+    <group position={[9.3, 0, -2.0]} rotation={[0, -Math.PI / 2, 0]}>
+      <Panel args={[2.3, 0.09, 0.5]} position={[0, 0.52, 0]} color={WOOD} roughness={0.55} map={wood} />
+      <Panel args={[2.3, 0.42, 0.46]} position={[0, 0.28, 0]} color={WOOD_DEEP} roughness={0.66} map={wood} />
+      <Panel args={[0.05, 0.1, 0.4]} position={[-1.05, 0.05, 0]} color={ALUMINUM_DARK} metalness={0.8} roughness={0.35} />
+      <Panel args={[0.05, 0.1, 0.4]} position={[1.05, 0.05, 0]} color={ALUMINUM_DARK} metalness={0.8} roughness={0.35} />
+      <mesh position={[-0.7, 0.75, 0]} rotation={[0, 0, -0.16]}>
+        <boxGeometry args={[0.02, 0.34, 0.34]} />
+        <meshStandardMaterial color="#5a4638" roughness={0.8} />
+      </mesh>
+      <mesh position={[-0.62, 0.74, 0]} rotation={[0, 0, -0.28]}>
+        <boxGeometry args={[0.02, 0.32, 0.32]} />
+        <meshStandardMaterial color="#3c4a52" roughness={0.8} />
+      </mesh>
+      <mesh position={[-0.52, 0.73, 0]} rotation={[0, 0, -0.38]}>
+        <boxGeometry args={[0.02, 0.3, 0.3]} />
+        <meshStandardMaterial color="#6a5a44" roughness={0.8} />
+      </mesh>
+      <mesh position={[0.75, 0.66, 0]}>
+        <cylinderGeometry args={[0.05, 0.07, 0.18, 10]} />
+        <meshStandardMaterial color={ALUMINUM_DARK} metalness={0.7} roughness={0.4} />
+      </mesh>
+      <mesh position={[0.75, 0.84, 0]}>
+        <sphereGeometry args={[0.09, 12, 10]} />
+        <meshStandardMaterial
+          color="#e8d5b0"
+          emissive="#d9b57e"
+          emissiveIntensity={1.05}
+          roughness={0.5}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+function TableDressing() {
+  return (
+    <group position={[-2.7, 0.31, 2.2]}>
+      <mesh position={[-0.32, 0.015, 0.12]} rotation={[0, 0.3, 0]}>
+        <boxGeometry args={[0.26, 0.03, 0.19]} />
+        <meshStandardMaterial color="#5a4638" roughness={0.75} />
+      </mesh>
+      <mesh position={[-0.3, 0.045, 0.1]} rotation={[0, 0.14, 0]}>
+        <boxGeometry args={[0.22, 0.026, 0.16]} />
+        <meshStandardMaterial color={PAPER} roughness={0.85} />
+      </mesh>
+      <mesh position={[0.28, 0.045, -0.08]}>
+        <cylinderGeometry args={[0.032, 0.028, 0.075, 10]} />
+        <meshStandardMaterial color="#2e2a26" roughness={0.5} />
+      </mesh>
+      <mesh position={[0.05, 0.02, -0.16]} rotation={[0, -0.4, 0]}>
+        <boxGeometry args={[0.16, 0.022, 0.11]} />
+        <meshStandardMaterial color="#3c4a52" roughness={0.8} />
+      </mesh>
+    </group>
+  );
+}
+
+function DeskDressing() {
+  return (
+    <group position={[3.4, 0.785, -0.85]}>
+      <mesh position={[-1.28, 0.045, 0.32]}>
+        <cylinderGeometry args={[0.034, 0.03, 0.08, 10]} />
+        <meshStandardMaterial color="#e3d3b8" roughness={0.6} />
+      </mesh>
+      <group position={[1.3, 0, -0.35]}>
+        <mesh position={[0, 0.02, 0]}>
+          <cylinderGeometry args={[0.07, 0.08, 0.035, 10]} />
+          <meshStandardMaterial color="#1e1c19" metalness={0.5} roughness={0.4} />
+        </mesh>
+        <mesh position={[-0.07, 0.16, 0]} rotation={[0, 0, 0.5]}>
+          <cylinderGeometry args={[0.011, 0.011, 0.32, 6]} />
+          <meshStandardMaterial color="#1e1c19" metalness={0.6} roughness={0.35} />
+        </mesh>
+        <mesh position={[-0.2, 0.31, 0]} rotation={[0, 0, 1.9]}>
+          <coneGeometry args={[0.06, 0.13, 12]} />
+          <meshStandardMaterial color="#26221d" metalness={0.4} roughness={0.4} />
+        </mesh>
+        <mesh position={[-0.24, 0.28, 0]}>
+          <sphereGeometry args={[0.028, 8, 8]} />
+          <meshStandardMaterial color="#f2ddb2" emissive="#e2b87e" emissiveIntensity={1.5} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+function Pendants() {
+  return (
+    <group>
+      {[2.75, 4.05].map((x) => (
+        <group key={x} position={[x, 0, -0.85]}>
+          <mesh position={[0, 3.5, 0]}>
+            <cylinderGeometry args={[0.006, 0.006, 2.3, 6]} />
+            <meshStandardMaterial color="#1a1714" roughness={0.6} />
+          </mesh>
+          <mesh position={[0, 2.32, 0]}>
+            <coneGeometry args={[0.17, 0.2, 16]} />
+            <meshStandardMaterial color="#221e19" metalness={0.35} roughness={0.5} />
+          </mesh>
+          <mesh position={[0, 2.22, 0]}>
+            <sphereGeometry args={[0.045, 10, 10]} />
+            <meshStandardMaterial
+              color="#f4dfb4"
+              emissive="#e6bd82"
+              emissiveIntensity={1.6}
+            />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function WallArt() {
+  return (
+    <group position={[-9.72, 2.55, 0.9]} rotation={[0, Math.PI / 2, 0]}>
+      <mesh>
+        <boxGeometry args={[0.95, 1.25, 0.05]} />
+        <meshStandardMaterial color="#1c1813" roughness={0.6} />
+      </mesh>
+      <mesh position={[0, 0, 0.028]}>
+        <planeGeometry args={[0.8, 1.1]} />
+        <meshStandardMaterial color="#6a5a44" roughness={0.88} />
+      </mesh>
+      <group position={[1.55, -0.22, 0]}>
+        <mesh>
+          <boxGeometry args={[1.15, 0.8, 0.05]} />
+          <meshStandardMaterial color="#1c1813" roughness={0.6} />
+        </mesh>
+        <mesh position={[0, 0, 0.028]}>
+          <planeGeometry args={[1.0, 0.66]} />
+          <meshStandardMaterial color="#39434c" roughness={0.88} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+function FloorCushions() {
+  const { shadows } = usePerf();
+  return (
+    <group>
+      <mesh position={[-0.55, 0.085, 3.35]} scale={[1, 0.5, 1]} castShadow={shadows}>
+        <sphereGeometry args={[0.34, 14, 10]} />
+        <meshStandardMaterial color={LEATHER_SOFT} roughness={0.88} />
+      </mesh>
+      <mesh position={[1.35, 0.08, 2.05]} scale={[1, 0.48, 1]} castShadow={shadows}>
+        <sphereGeometry args={[0.3, 14, 10]} />
+        <meshStandardMaterial color="#4e5a46" roughness={0.9} />
+      </mesh>
+    </group>
+  );
+}
+
+function BookStack() {
+  return (
+    <group position={[-5.95, 0, 3.3]}>
+      <mesh position={[0, 0.03, 0]} rotation={[0, 0.2, 0]}>
+        <boxGeometry args={[0.34, 0.06, 0.26]} />
+        <meshStandardMaterial color="#5a4638" roughness={0.8} />
+      </mesh>
+      <mesh position={[0.02, 0.085, 0.01]} rotation={[0, -0.12, 0]}>
+        <boxGeometry args={[0.3, 0.05, 0.23]} />
+        <meshStandardMaterial color="#3c4a52" roughness={0.8} />
+      </mesh>
+      <mesh position={[-0.01, 0.13, -0.01]} rotation={[0, 0.34, 0]}>
+        <boxGeometry args={[0.27, 0.04, 0.2]} />
+        <meshStandardMaterial color="#6a5a44" roughness={0.8} />
+      </mesh>
     </group>
   );
 }
@@ -771,10 +1016,21 @@ export function Penthouse({
       <Lounge />
       {dense ? <LoungeChair /> : null}
       <CoffeeTable />
+      <TableDressing />
       {dense ? <Hookah /> : null}
       {dense ? <FloorLamp /> : null}
       <Desk wood={wood} />
+      <DeskRug />
+      <DeskDressing />
+      <CenterRug />
       <IdeaWall packet={packet} pins={wallPins} builderPos={builderPos} />
+      {dense ? <Plant position={[-8.9, 0, 5.3]} /> : null}
+      {dense ? <Plant position={[8.8, 0, -3.5]} scale={0.85} /> : null}
+      {dense ? <Sideboard wood={wood} /> : null}
+      {dense ? <Pendants /> : null}
+      {dense ? <WallArt /> : null}
+      {dense ? <FloorCushions /> : null}
+      {dense ? <BookStack /> : null}
       <City count={cityCount} />
       {dense ? <Haze /> : null}
     </group>
