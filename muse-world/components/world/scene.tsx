@@ -213,7 +213,7 @@ export function LivingScene({
         />
       </FrustumGuard>
       {MUSE_IDS.map((id) => (
-        <FrustumGuard key={id} center={world.muses[id].position} radius={1.6}>
+        <FrustumGuard key={id} center={world.muses[id].position} radius={id === "chill" ? 2.1 : 1.6}>
           <MuseBody
             muse={world.muses[id]}
             selected={selected === id}
