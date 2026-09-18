@@ -48,6 +48,22 @@ describe("public tape honesty", () => {
     assert.equal(tapeStamp("gecko"), "LIVE · gecko");
   });
 
+  it("keeps dexscreener and solana pulses live instead of remapping them to SIM", () => {
+    const dex = tapeFromPulse({
+      kind: "VIRAL_POST",
+      ticker: "WIF",
+      source: "dexscreener",
+      changePct: 4.2,
+      candles: [],
+    });
+    assert.equal(dex.source, "dexscreener");
+    assert.equal(tapeStamp(dex.source), "LIVE · dexscreener");
+    assert.deepEqual(dex.fills, []);
+    const sol = tapeFromPulse({ kind: "VIRAL_POST", ticker: "WIF", source: "solana" });
+    assert.equal(sol.source, "solana");
+    assert.equal(tapeStamp("solana"), "LIVE · solana");
+  });
+
   it("drops PAID even if a provider tried to stamp it live", () => {
     const tape = tapeFromPulse({
       kind: "TREND_SPIKE",

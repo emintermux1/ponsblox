@@ -13,6 +13,7 @@ import { TravelPacket } from "@/components/world/packet";
 import { usePerf } from "@/components/world/perf-context";
 import { CameraRig } from "@/components/world/rig";
 import { ThoughtChip } from "@/components/world/thoughts";
+import { deskGrokLive } from "@/lib/sim/tick";
 import { presetForMuse } from "@/lib/world/camera";
 import { GROK_ORB_POS, wallSlotWorld } from "@/lib/world/layout";
 import { MIND_LIFT } from "@/lib/world/mind-graph";
@@ -196,10 +197,15 @@ export function LivingScene({
         builderPos={world.muses.builder.position}
         inspecting={world.inspecting}
         onInspect={onInspect}
+        deskLive={
+          world.muses.trader.activity === "TRADING" ||
+          world.muses.trader.activity === "WATCHING" ||
+          world.muses.builder.activity === "THINKING"
+        }
       />
       <FrustumGuard center={GROK_ORB_POS} radius={1.4}>
         <GrokOrb
-          waking={world.grokWake.phase === "waking"}
+          waking={world.grokWake.phase === "waking" || deskGrokLive(world.events)}
           honesty={world.grokWake.honesty}
           onWake={onWakeGrok}
         />

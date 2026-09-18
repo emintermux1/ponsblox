@@ -8,6 +8,7 @@ import { assertNever, MUSE_IDS } from "@/types/world";
 import {
   activityLine,
   ENTER_MIND,
+  hudMark,
   LEAVE_MIND,
   locationLabel,
   ROOM_PRESETS,
@@ -37,6 +38,7 @@ export function SpectatorChrome({
   const street = useStreetSignal();
   const selected = world.selected ? world.muses[world.selected] : null;
   const signal = lastSignal(street, world.events);
+  const mark = hudMark(signal.mark);
   const grokLive = grokPresence(world.events) === "LIVE";
   const caption = compact ? null : quietIntro(introLine);
   const inspect = world.inspecting ? inspectCopy(world, world.inspecting) : null;
@@ -49,7 +51,7 @@ export function SpectatorChrome({
       data-entry-veil="off"
     >
       <header className="loft-chrome-top">
-        <Wordmark signal={signal} mode={mode} caption={caption} />
+        <Wordmark mark={mark} signal={signal} mode={mode} caption={caption} />
         <div className="loft-chrome-tools">
           <Locations camera={world.camera} onPreset={onPreset} />
           {selected ? <MindButton mindOpen={world.mindOpen} onToggle={onEnterMind} /> : null}
@@ -139,10 +141,12 @@ function signalMarkLabel(mark: LastSignal["mark"]): string {
 }
 
 function Wordmark({
+  mark,
   signal,
   mode,
   caption,
 }: {
+  mark: "REAL" | "SIM";
   signal: LastSignal;
   mode: RenderMode;
   caption: string | null;
@@ -151,7 +155,7 @@ function Wordmark({
     <div className="loft-wordmark-block">
       <p className="loft-wordmark">{WORDMARK}</p>
       <p className="loft-signal">
-        <span className={signalDotClass(signal.mark)} />
+        <span className={signalDotClass(signal.mark)} data-hud-mark={mark} />
         {signalMarkLabel(signal.mark)}
         <span className="loft-signal-mode">{modeLabel(mode)}</span>
       </p>

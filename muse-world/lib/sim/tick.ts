@@ -1,6 +1,12 @@
 import { isPaidTicker } from "@/lib/adapters/parse";
 import { pickStoryBeat, upsertWallPin, type StoryBeat } from "@/lib/sim/stories";
-import { chillHome, PACKET_HOLD_MS } from "@/lib/world/layout";
+import {
+  PACKET_HOLD_MS,
+  arriveActivity,
+  chillHome,
+  nearXZ,
+  stationFor,
+} from "@/lib/world/layout";
 import { packetNoteForBeat, sanitizePacket, sanitizeWallPins } from "@/lib/world/wall-copy";
 import type {
   MuseActivity,
@@ -16,6 +22,8 @@ export type Pulse = {
   kind: WorldEventKind | "QUIET";
   ticker: string | null;
 };
+
+const WALK_SPEED = 0.32;
 
 const THOUGHTS: Record<MuseId, string[]> = {
   scroller: [
@@ -47,13 +55,44 @@ const THOUGHTS: Record<MuseId, string[]> = {
   ],
 };
 
-const TICKERS = ["WIF", "BONK", "PINT", "JUP", "PENGU"];
-
-export function pickTicker(fallback: string | null): string {
-  if (fallback && !isPaidTicker(fallback)) {
-    return fallback;
+export function realTicker(value: string | null | undefined): string | null {
+  if (!value) {
+    return null;
   }
-  return TICKERS[Math.floor(Math.random() * TICKERS.length)] ?? "WIF";
+  const ticker = value.trim().toUpperCase();
+  if (!ticker || isPaidTicker(ticker) || ticker === "PAID") {
+    return null;
+  }
+  return ticker;
+}
+
+export function pickTicker(fallback: string | null): string | null {
+  return realTicker(fallback);
+}
+
+export function deskGrokLive(events: WorldEvent[], now = Date.now()): boolean {
+  return events.some((event) => {
+    if (now - event.at > 16_000) {
+      return false;
+    }
+    switch (event.kind) {
+      case "GROK_REQUESTED":
+        return true;
+      case "GROK_RESPONSE":
+        return event.source === "bot" || event.source === "xai";
+      case "TREND_SPIKE":
+      case "NEW_DISCOVERY":
+      case "POSITION_OPENED":
+      case "POSITION_CLOSED":
+      case "THESIS_CREATED":
+      case "VIRAL_POST":
+      case "BOREDOM":
+      case "SOCIAL_REACTION":
+        return false;
+      default:
+        return assertNever(event.kind);
+    }
+  });
 }
 
 function pick<T>(items: T[], random: () => number): T {
@@ -84,6 +123,9 @@ function pushEvent(
   if (kind === "POSITION_OPENED" || kind === "POSITION_CLOSED") {
     return events;
   }
+  if (text.includes("$PAID") || /\bPAID\b/.test(text)) {
+    return events;
+  }
   return [
     {
       id: eventId(now, random),
@@ -112,44 +154,101 @@ function walkToward(
   muse: MuseState,
   target: [number, number, number],
   speed: number,
+  arrive: MuseActivity,
+  arriveFacing: number,
 ): MuseState {
   const [x, y, z] = muse.position;
   const dx = target[0] - x;
+  const dy = target[1] - y;
   const dz = target[2] - z;
   const dist = Math.hypot(dx, dz);
-  if (dist < 0.08) {
-    return { ...muse, activity: "CHILLING", position: target };
+  if (dist < 0.1 || dist <= speed) {
+    return { ...muse, activity: arrive, position: target, facing: arriveFacing };
   }
+  const step = Math.min(speed, dist);
   return {
     ...muse,
     activity: "WALKING",
     facing: Math.atan2(dx, dz),
-    position: [x + (dx / dist) * speed, y, z + (dz / dist) * speed],
+    position: [x + (dx / dist) * step, y + dy * 0.35, z + (dz / dist) * step],
   };
+}
+
+function defaultWork(id: MuseId): MuseActivity {
+  switch (id) {
+    case "scroller":
+      return "SCROLLING";
+    case "trader":
+      return "TRADING";
+    case "chill":
+      return "CHILLING";
+    case "builder":
+      return "RESEARCHING";
+    default:
+      return assertNever(id);
+  }
+}
+
+function livingActivity(activity: MuseActivity, id: MuseId): MuseActivity {
+  return activity === "IDLE" ? defaultWork(id) : activity;
 }
 
 function nextActivity(muse: MuseState, pulse: boolean, random: () => number): MuseActivity {
   switch (muse.id) {
     case "scroller":
       if (pulse && random() < 0.55) return "REACTING";
-      return random() < 0.88 ? "SCROLLING" : "THINKING";
+      return random() < 0.82 ? "SCROLLING" : random() < 0.55 ? "WATCHING" : "THINKING";
     case "trader":
-      if (pulse) return "THINKING";
-      if (random() < 0.45) return "WATCHING";
-      if (random() < 0.72) return "TRADING";
+      if (pulse) return random() < 0.55 ? "WATCHING" : "TRADING";
+      if (random() < 0.62) return "TRADING";
+      if (random() < 0.7) return "WATCHING";
       return "THINKING";
     case "chill":
-      if (muse.mind.nodes.BOREDOM > 0.7 && random() < 0.4) return "WALKING";
-      if (random() < 0.4) return "WALKING";
-      if (random() < 0.58) return "SMOKING";
-      if (random() < 0.86) return "CHILLING";
+      if (random() < 0.48) return "SMOKING";
+      if (random() < 0.9) return "CHILLING";
       return "WATCHING";
     case "builder":
       if (pulse && random() < 0.4) return "REACTING";
-      return random() < 0.74 ? "RESEARCHING" : "THINKING";
+      return random() < 0.7 ? "RESEARCHING" : "THINKING";
     default:
       return assertNever(muse.id);
   }
+}
+
+function shouldSwitch(muse: MuseState, spiked: boolean, random: () => number): boolean {
+  if (muse.activity === "WALKING") {
+    return false;
+  }
+  if (spiked) {
+    return random() < 0.72;
+  }
+  if (muse.activity === "REACTING") {
+    return random() < 0.5;
+  }
+  if (muse.activity === "IDLE") {
+    return true;
+  }
+  return random() < 0.11;
+}
+
+function desiredActivity(muse: MuseState, spiked: boolean, random: () => number): MuseActivity {
+  if (!shouldSwitch(muse, spiked, random)) {
+    return livingActivity(muse.activity, muse.id);
+  }
+  return livingActivity(nextActivity(muse, spiked, random), muse.id);
+}
+
+function stepMuse(muse: MuseState, desired: MuseActivity, ticker: string | null): MuseState {
+  const dest = stationFor(muse.id, desired);
+  const arrive = arriveActivity(muse.id, desired);
+  if (!nearXZ(muse.position, dest.position, 0.12)) {
+    return walkToward(muse, dest.position, WALK_SPEED, arrive, dest.facing);
+  }
+  return applyActivity(
+    { ...muse, position: dest.position, facing: dest.facing },
+    arrive,
+    ticker,
+  );
 }
 
 export function applyActivity(
@@ -158,8 +257,8 @@ export function applyActivity(
   ticker: string | null,
 ): MuseState {
   const mind = { ...muse.mind, nodes: { ...muse.mind.nodes } };
-  const aboutTicker = ticker && !isPaidTicker(ticker) ? ticker : null;
-  const about = aboutTicker ?? "the room";
+  const subject = realTicker(ticker);
+  const about = subject ?? "the room";
   if (isPaidTicker(mind.watching)) {
     mind.watching = null;
   }
@@ -168,7 +267,7 @@ export function applyActivity(
     case "SCROLLING":
       mind.nodes.ATTENTION = nudge(mind.nodes.ATTENTION, 0.04);
       mind.nodes.BOREDOM = nudge(mind.nodes.BOREDOM, -0.03);
-      mind.observed = "timeline noise";
+      mind.observed = subject ? `timeline on ${subject}` : "timeline noise";
       break;
     case "THINKING":
       mind.nodes.CURIOSITY = nudge(mind.nodes.CURIOSITY, 0.06);
@@ -176,8 +275,8 @@ export function applyActivity(
       mind.observed = `weighing ${about}`;
       break;
     case "WATCHING":
-      if (aboutTicker) {
-        mind.watching = aboutTicker;
+      if (subject) {
+        mind.watching = subject;
       }
       mind.action = "WATCH";
       mind.nodes.ATTENTION = nudge(mind.nodes.ATTENTION, 0.05);
@@ -189,6 +288,10 @@ export function applyActivity(
       mind.nodes.RISK = nudge(mind.nodes.RISK, 0.04);
       mind.nodes.CONVICTION = nudge(mind.nodes.CONVICTION, 0.03);
       mind.action = mind.nodes.CONVICTION > 0.62 ? "HOLD" : "WATCH";
+      if (subject) {
+        mind.watching = subject;
+      }
+      mind.observed = subject ? `tape on ${subject}` : "the tape";
       break;
     case "RESEARCHING":
       mind.nodes.MEMORY = nudge(mind.nodes.MEMORY, 0.05);
@@ -200,7 +303,7 @@ export function applyActivity(
       mind.nodes.BOREDOM = nudge(mind.nodes.BOREDOM, 0.05);
       mind.nodes.ATTENTION = nudge(mind.nodes.ATTENTION, -0.04);
       mind.nodes.FOMO = nudge(mind.nodes.FOMO, -0.03);
-      mind.action = "IDLE";
+      mind.action = "PASS";
       break;
     case "WALKING":
       mind.nodes.BOREDOM = nudge(mind.nodes.BOREDOM, -0.02);
@@ -214,6 +317,9 @@ export function applyActivity(
         mind.nodes.BOREDOM = nudge(mind.nodes.BOREDOM, 0.03);
       } else {
         mind.nodes.FOMO = nudge(mind.nodes.FOMO, 0.05);
+      }
+      if (subject && muse.id !== "chill") {
+        mind.watching = subject;
       }
       break;
     default:
@@ -231,9 +337,12 @@ function applyStoryBeat(
   now: number,
   random: () => number,
 ): Pick<WorldSnapshot, "muses" | "events" | "packet" | "wallPins"> {
+  const ticker = realTicker(beat.ticker);
   switch (beat.type) {
     case "discovery": {
-      const ticker = beat.ticker;
+      if (!ticker) {
+        return { muses, events, packet, wallPins };
+      }
       return {
         muses: {
           ...muses,
@@ -271,7 +380,9 @@ function applyStoryBeat(
       };
     }
     case "thesis": {
-      const ticker = beat.ticker;
+      if (!ticker) {
+        return { muses, events, packet, wallPins };
+      }
       const card = packetNoteForBeat("thesis", beat.slot);
       return {
         muses: {
@@ -306,6 +417,9 @@ function applyStoryBeat(
       };
     }
     case "ask_card":
+      if (!ticker) {
+        return { muses, events, packet, wallPins };
+      }
       return {
         muses: {
           ...muses,
@@ -329,6 +443,9 @@ function applyStoryBeat(
         wallPins,
       };
     case "share_builder":
+      if (!ticker) {
+        return { muses, events, packet, wallPins };
+      }
       return {
         muses: {
           ...muses,
@@ -352,6 +469,9 @@ function applyStoryBeat(
         wallPins,
       };
     case "wave_chill":
+      if (!ticker) {
+        return { muses, events, packet, wallPins };
+      }
       return {
         muses: {
           ...muses,
@@ -400,8 +520,8 @@ function applyStoryBeat(
                 ...muses.chill,
                 mind: {
                   ...muses.chill.mind,
-                  action: "IDLE",
-                  observed: "window",
+                  action: "PASS",
+                  observed: "armchair",
                   nodes: {
                     ...muses.chill.mind.nodes,
                     FOMO: nudge(muses.chill.mind.nodes.FOMO, -0.06),
@@ -409,7 +529,9 @@ function applyStoryBeat(
                 },
               },
               chillHome(now),
-              0.05,
+              WALK_SPEED,
+              "CHILLING",
+              stationFor("chill", "CHILLING").facing,
             ),
             "they can have it",
             3200,
@@ -419,7 +541,9 @@ function applyStoryBeat(
         events: pushEvent(
           events,
           "BOREDOM",
-          `${muses.chill.name} does not care`,
+          ticker
+            ? `${muses.chill.name} lets ${ticker} pass`
+            : `${muses.chill.name} does not care`,
           "chill",
           now,
           random,
@@ -438,13 +562,11 @@ export function tickSnapshot(
   now = Date.now(),
   random = Math.random,
 ): WorldSnapshot {
-  const skippedPaid = isPaidTicker(pulse.ticker);
-  const pulseTicker = skippedPaid ? null : pulse.ticker;
+  const subject = realTicker(
+    pulse.ticker ?? world.muses.trader.mind.watching ?? world.muses.scroller.mind.watching,
+  );
   const spiked =
-    !skippedPaid && (pulse.kind === "TREND_SPIKE" || pulse.kind === "VIRAL_POST");
-  const rawSubject =
-    pulseTicker ?? world.muses.trader.mind.watching ?? world.muses.scroller.mind.watching;
-  const subject = rawSubject && !isPaidTicker(rawSubject) ? rawSubject : null;
+    (pulse.kind === "TREND_SPIKE" || pulse.kind === "VIRAL_POST") && Boolean(subject);
   const events = world.events;
   const packet = sanitizePacket(
     world.packet && now - world.packet.t < PACKET_HOLD_MS ? world.packet : null,
@@ -457,11 +579,8 @@ export function tickSnapshot(
     if (isPaidTicker(muse.mind.watching)) {
       muse = { ...muse, mind: { ...muse.mind, watching: null } };
     }
-    if (muse.id === "chill" && (muse.activity === "WALKING" || random() < 0.3)) {
-      muse = walkToward(muse, chillHome(now), 0.07);
-    } else {
-      muse = applyActivity(muse, nextActivity(muse, spiked, random), subject);
-    }
+    const desired = desiredActivity(muse, spiked, random);
+    muse = stepMuse(muse, desired, subject);
     if (random() < 0.16) {
       const line = pick(THOUGHTS[muse.id], random);
       muse = setThought(muse, line, 2600, now);
@@ -484,7 +603,7 @@ export function tickSnapshot(
     packet,
     wallPins,
     spiked,
-    pulseTicker,
+    pulseTicker: subject,
     now,
     random,
   });

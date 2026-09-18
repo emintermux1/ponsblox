@@ -523,6 +523,29 @@ function FloorLamp() {
   );
 }
 
+
+function DeskChair({ position }: { position: [number, number, number] }) {
+  return (
+    <group position={position} rotation={[0, Math.PI, 0]}>
+      <Panel args={[0.5, 0.05, 0.48]} position={[0, 0.36, 0]} color={LEATHER} roughness={0.64} />
+      <Panel args={[0.5, 0.4, 0.06]} position={[0, 0.58, -0.22]} color={LEATHER} roughness={0.6} />
+      <Panel args={[0.045, 0.34, 0.045]} position={[-0.18, 0.17, 0.16]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
+      <Panel args={[0.045, 0.34, 0.045]} position={[0.18, 0.17, 0.16]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
+      <Panel args={[0.045, 0.34, 0.045]} position={[-0.18, 0.17, -0.16]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
+      <Panel args={[0.045, 0.34, 0.045]} position={[0.18, 0.17, -0.16]} color={ALUMINUM} metalness={0.86} roughness={0.3} />
+    </group>
+  );
+}
+
+function DeskKeyboard({ x }: { x: number }) {
+  return (
+    <group position={[x, 0.785, 0.22]}>
+      <Panel args={[0.38, 0.016, 0.14]} position={[0, 0, 0]} color="#1a1916" roughness={0.42} metalness={0.18} />
+      <Panel args={[0.34, 0.008, 0.1]} position={[0, 0.01, 0]} color="#2a2824" roughness={0.5} />
+    </group>
+  );
+}
+
 function DeskScreen({
   id,
   position,
@@ -597,6 +620,8 @@ function Desk({
         active={inspecting === "notes"}
         onInspect={onInspect}
       />
+      <DeskKeyboard x={-0.58} />
+      <DeskKeyboard x={0.62} />
       <Panel args={[0.42, 0.02, 0.3]} position={[1.18, 0.8, 0.22]} color={PAPER} roughness={0.82} />
       <Panel args={[0.36, 0.015, 0.26]} position={[1.2, 0.82, 0.2]} color="#d7c6aa" roughness={0.8} />
     </group>
@@ -799,13 +824,16 @@ export function Penthouse({
   builderPos = [6.4, 0.62, 2.8],
   inspecting = null,
   onInspect,
+  deskLive = false,
 }: {
   packet?: SpatialPacket | null;
   wallPins?: WallPin[];
   builderPos?: [number, number, number];
   inspecting?: ScreenId | null;
   onInspect?: (id: ScreenId) => void;
+  deskLive?: boolean;
 }) {
+  void deskLive;
   const { cityCount, cityLod } = usePerf();
   const dense = showDenseProps(cityLod);
   const concrete = useMemo(() => asMap(makeSpeckle(512, "#8a8680", 404, 9000), 3, 2), []);
@@ -824,7 +852,7 @@ export function Penthouse({
       <Structure concrete={concrete} wood={wood} />
       <WindowWall />
       <Lounge />
-      {dense ? <LoungeChair /> : null}
+      <LoungeChair />
       <CoffeeTable />
       {dense ? <Hookah /> : null}
       {dense ? <FloorLamp /> : null}
@@ -833,6 +861,8 @@ export function Penthouse({
         inspecting={inspecting}
         onInspect={onInspect ?? (() => undefined)}
       />
+      <DeskChair position={[3.28, 0, 0.12]} />
+      <DeskChair position={[4.12, 0, 0.12]} />
       <IdeaWall packet={packet} pins={wallPins} builderPos={builderPos} />
       <City count={cityCount} />
       {dense ? <Haze /> : null}

@@ -7,6 +7,7 @@ import { BodyDress, Flipper, HeadDress, HeldProps } from "@/components/world/mus
 import { NameTag } from "@/components/world/name-tag";
 import { usePerf } from "@/components/world/perf-context";
 import { damp } from "@/lib/world/camera";
+import { STAND_Y } from "@/lib/world/layout";
 import type { MuseActivity, MuseId, MuseState } from "@/types/world";
 import { assertNever } from "@/types/world";
 
@@ -31,24 +32,8 @@ function phaseFor(id: MuseId): number {
   }
 }
 
-function sits(activity: MuseActivity): boolean {
-  switch (activity) {
-    case "SCROLLING":
-    case "CHILLING":
-    case "WATCHING":
-    case "TRADING":
-    case "RESEARCHING":
-    case "SMOKING":
-    case "IDLE":
-    case "THINKING":
-      return true;
-    case "WALKING":
-    case "TALKING":
-    case "REACTING":
-      return false;
-    default:
-      return assertNever(activity);
-  }
+function isSitting(muse: MuseState): boolean {
+  return muse.activity !== "WALKING" && muse.position[1] < STAND_Y - 0.08;
 }
 
 function Bean() {
@@ -108,15 +93,19 @@ type Motion = {
   rightArm: [number, number, number];
 };
 
-function motionFor(activity: MuseActivity, t: number, phase: number): Motion {
+function sitPose(motion: Motion, recline: number) {
+  motion.offset[1] -= 0.16;
+  motion.sway[0] += recline;
+}
+
+function motionFor(activity: MuseActivity, t: number, phase: number, sitting: boolean): Motion {
   const breathe = Math.sin(t * 1.7 + phase);
   const shift = Math.sin(t * 0.76 + phase * 0.8);
   const look = Math.sin(t * 0.43 + phase * 1.25);
-  const seated = sits(activity);
   const motion: Motion = {
-    offset: [shift * 0.03, (seated ? -0.16 : 0) + 0.02 * breathe, look * 0.012],
+    offset: [shift * 0.03, 0.02 * breathe, look * 0.012],
     facing: look * 0.14,
-    sway: [0.04 * shift + (seated ? 0.12 : 0), 0.06 * look, 0.05 * shift],
+    sway: [0.04 * shift, 0.06 * look, 0.05 * shift],
     torso: [1 + breathe * 0.03, 1 + breathe * 0.05, 1 + breathe * 0.03],
     head: [0.06 * breathe, 0.14 * look, 0.04 * shift],
     leftArm: [0.16 * breathe, 0.05 * look, 0.28 + 0.08 * shift],
@@ -125,78 +114,90 @@ function motionFor(activity: MuseActivity, t: number, phase: number): Motion {
 
   switch (activity) {
     case "IDLE":
+      if (sitting) sitPose(motion, 0.12);
       break;
     case "SCROLLING": {
       const flick = Math.sin(t * 8.6 + phase);
-      motion.head = [0.32 + flick * 0.05, 0.2, 0.05];
-      motion.rightArm = [-0.7, -0.22, -0.12];
-      motion.leftArm = [0.2, 0.18, 0.4];
-      motion.sway = [0.12 + 0.03 * shift, 0.08 * look, flick * 0.05];
+      motion.head = [0.42 + flick * 0.05, 0.18, 0.04];
+      motion.rightArm = [-1.05, -0.22, -0.12];
+      motion.leftArm = [0.12, 0.18, 0.38];
+      motion.sway = [0.18 + 0.03 * shift, 0.06 * look, flick * 0.04];
       motion.offset[1] += Math.abs(flick) * 0.006;
+      if (sitting) sitPose(motion, 0.06);
       break;
     }
     case "WALKING": {
-      const step = t * 4.8 + phase;
+      const step = t * 5.1 + phase;
       motion.offset[1] += Math.abs(Math.sin(step)) * 0.05;
-      motion.sway = [0.08, Math.sin(step) * 0.16, Math.sin(step) * 0.12];
-      motion.leftArm = [Math.sin(step) * 0.7, 0, 0.28];
-      motion.rightArm = [Math.sin(step + Math.PI) * 0.7, 0, -0.28];
-      motion.head = [0.08, Math.sin(step) * 0.1, Math.sin(step) * 0.06];
+      motion.sway = [0.06, Math.sin(step) * 0.16, Math.sin(step) * 0.12];
+      motion.leftArm = [Math.sin(step) * 0.62, 0, 0.22];
+      motion.rightArm = [Math.sin(step + Math.PI) * 0.62, 0, -0.22];
+      motion.head = [0.04, Math.sin(step) * 0.07, Math.sin(step) * 0.04];
+      motion.facing = 0;
       break;
     }
     case "SMOKING": {
       const drag = (Math.sin(t * 1.15 + phase) + 1) / 2;
       motion.torso = [1 + drag * 0.05, 1 + drag * 0.09, 1 + drag * 0.05];
-      motion.head = [0.12 + drag * 0.04, 0.16, 0.05];
-      motion.rightArm = [-0.7, 0.1, -0.35];
-      motion.sway = [0.14 + 0.02 * shift, 0.08 * look, 0.04 * shift];
+      motion.head = [0.08 + drag * 0.04, 0.16, 0.04];
+      motion.rightArm = [-0.88, 0.1, -0.38];
+      motion.sway = [0.08 + 0.02 * shift, 0.08 * look, 0.04 * shift];
+      if (sitting) sitPose(motion, 0.2);
       break;
     }
     case "CHILLING":
-      motion.sway = [0.22 + 0.03 * shift, 0.12 * look, 0.06 * shift];
-      motion.head = [0.18, 0.16 * look, 0.05];
-      motion.leftArm = [0.35, 0.12, 0.42];
-      motion.rightArm = [0.28, -0.1, -0.32];
+      motion.sway = [0.04 + 0.03 * shift, 0.12 * look, 0.05 * shift];
+      motion.head = [0.08, 0.18 * look, 0.04];
+      motion.leftArm = [0.32, 0.12, 0.42];
+      motion.rightArm = [0.28, -0.1, -0.36];
+      if (sitting) sitPose(motion, 0.22);
       break;
     case "WATCHING":
-      motion.sway = [0.16, 0.05 * look, 0.03 * shift];
-      motion.head = [0.2, 0.1 * look, 0.02];
-      motion.leftArm = [-0.28, 0.1, 0.22];
-      motion.rightArm = [-0.22, -0.08, -0.18];
+      motion.sway = [0.2, 0.03 * look, 0.02 * shift];
+      motion.head = [0.32, 0.05 * look, 0.02];
+      motion.leftArm = [-0.55, 0.08, 0.18];
+      motion.rightArm = [-0.48, -0.06, -0.16];
+      if (sitting) sitPose(motion, 0.04);
       break;
     case "TRADING": {
-      const tap = Math.sin(t * 7.4 + phase);
-      motion.sway = [0.16, 0.03, tap * 0.04];
-      motion.head = [0.24, 0.06, 0];
-      motion.rightArm = [-0.62 + tap * 0.14, -0.14, -0.1];
-      motion.leftArm = [-0.4, 0.12, 0.2];
+      const tap = Math.sin(t * 9.4 + phase);
+      const tapB = Math.sin(t * 8.1 + phase * 1.3);
+      motion.sway = [0.22, tap * 0.02, tap * 0.02];
+      motion.head = [0.36, 0.04 * look, 0];
+      motion.rightArm = [-1.05 + tap * 0.16, -0.08, -0.06];
+      motion.leftArm = [-0.98 + tapB * 0.14, 0.1, 0.08];
+      if (sitting) sitPose(motion, 0.02);
       break;
     }
     case "RESEARCHING": {
-      const jot = Math.sin(t * 3.5 + phase);
-      motion.head = [0.3 + jot * 0.04, -0.14, 0.04];
-      motion.leftArm = [-0.62, 0.32, 0.26];
-      motion.rightArm = [-0.18, -0.1, -0.28];
-      motion.sway = [0.1, -0.05, 0.04 * shift];
+      const jot = Math.sin(t * 4.2 + phase);
+      motion.head = [0.3 + jot * 0.05, -0.12, 0.03];
+      motion.leftArm = [-0.82, 0.28, 0.22];
+      motion.rightArm = [-0.55 + jot * 0.18, -0.08, -0.18];
+      motion.sway = [0.12, -0.05, 0.03 * shift];
+      if (sitting) sitPose(motion, 0.05);
       break;
     }
     case "THINKING":
-      motion.head = [0.14, 0.08, 0.22 + 0.04 * shift];
-      motion.leftArm = [-0.85, 0.4, 0.52];
-      motion.rightArm = [0.18, -0.1, -0.2];
+      motion.head = [0.14, 0.06, 0.18 + 0.04 * shift];
+      motion.leftArm = [-0.95, 0.42, 0.55];
+      motion.rightArm = [0.12, -0.1, -0.2];
+      if (sitting) sitPose(motion, 0.08);
       break;
     case "TALKING":
-      motion.head = [0.1 + Math.sin(t * 5.8 + phase) * 0.12, 0.12 * look, 0];
-      motion.leftArm = [0.28, 0.18, 0.52];
-      motion.rightArm = [-0.32, -0.18, -0.42];
+      motion.head = [0.08 + Math.sin(t * 5.6 + phase) * 0.1, 0.1 * look, 0];
+      motion.leftArm = [0.2, 0.15, 0.45];
+      motion.rightArm = [-0.35, -0.2, -0.4];
+      if (sitting) sitPose(motion, 0.08);
       break;
     case "REACTING": {
-      const hop = Math.abs(Math.sin(t * 8 + phase));
-      motion.offset[1] += hop * 0.1;
-      motion.torso = [1 + hop * 0.05, 1 + hop * 0.08, 1 + hop * 0.05];
-      motion.head = [-0.1, 0.18 * look, 0];
-      motion.leftArm = [-1.15, 0.22, 0.62];
-      motion.rightArm = [-1.1, -0.22, -0.62];
+      const hop = Math.abs(Math.sin(t * 7.8 + phase));
+      motion.offset[1] += hop * 0.05;
+      motion.torso = [1 + hop * 0.04, 1 + hop * 0.06, 1 + hop * 0.04];
+      motion.head = [0.12, 0.18 * look, 0];
+      motion.leftArm = [-1.05, 0.16, 0.48];
+      motion.rightArm = [-1.0, -0.16, -0.48];
+      if (sitting) sitPose(motion, 0.04);
       break;
     }
     default:
@@ -283,17 +284,37 @@ export function MuseBody({
 
   useFrame((state, delta) => {
     if (!root.current) return;
+    const sitting = isSitting(muse);
     const motion = motionFor(
       muse.activity,
       pauseExtras ? 0 : state.clock.elapsedTime,
       phase,
+      sitting,
     );
-    root.current.position.set(
+    root.current.position.x = damp(
+      root.current.position.x,
       muse.position[0] + motion.offset[0],
-      muse.position[1] + motion.offset[1],
-      muse.position[2] + motion.offset[2],
+      4.4,
+      delta,
     );
-    root.current.rotation.y = muse.facing + motion.facing;
+    root.current.position.y = damp(
+      root.current.position.y,
+      muse.position[1] + motion.offset[1],
+      4.4,
+      delta,
+    );
+    root.current.position.z = damp(
+      root.current.position.z,
+      muse.position[2] + motion.offset[2],
+      4.4,
+      delta,
+    );
+    root.current.rotation.y = damp(
+      root.current.rotation.y,
+      muse.facing + motion.facing,
+      5.2,
+      delta,
+    );
     dampRot(sway.current, motion.sway, 5.5, delta);
     dampScale(torso.current, motion.torso, 4.2, delta);
     dampRot(head.current, motion.head, 6.2, delta);
