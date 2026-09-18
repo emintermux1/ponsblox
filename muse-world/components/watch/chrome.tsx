@@ -1,18 +1,20 @@
 "use client";
 
-import { GROK_NAME, grokPresence } from "@/lib/world/cast";
-import { grokSignalLive } from "@/lib/world/mind-graph";
+import { GROK_NAME, GROK_ROLE, grokPresence } from "@/lib/world/cast";
 import { inspectCopy } from "@/lib/world/pick";
 import type { RenderMode } from "@/lib/world/perf";
 import type { CameraPreset, MuseId, ScreenId, WorldSnapshot } from "@/types/world";
 import { assertNever, MUSE_IDS } from "@/types/world";
 import {
   activityLine,
-  ENTER_MIND,
+  grokHonestyMark,
+  hudMark,
   LEAVE_MIND,
   locationLabel,
+  MIND_HINT,
   ROOM_PRESETS,
   WORDMARK,
+  WORLD_MARK,
 } from "@/components/watch/copy";
 import { lastSignal, useStreetSignal, type LastSignal } from "@/components/watch/signal";
 
@@ -38,11 +40,8 @@ export function SpectatorChrome({
   const street = useStreetSignal();
   const selected = world.selected ? world.muses[world.selected] : null;
   const signal = lastSignal(street, world.events);
-  const grokLive =
-    grokPresence(world.events) === "LIVE" ||
-    world.grokWake.honesty === "REAL" ||
-    MUSE_IDS.some((id) => grokSignalLive(world.muses[id].mind));
-  const caption = quietIntro(introLine);
+  const grokMark = grokHonestyMark(world.events);
+  const grokLive = grokPresence(world.events) === "LIVE";
   const inspect = world.inspecting ? inspectCopy(world, world.inspecting) : null;
 
   return (
