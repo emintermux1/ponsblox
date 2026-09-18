@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { INTRO_COPY, mostAwakeId } from "@/components/watch/copy";
 import { tickSnapshot, type Pulse } from "@/lib/sim/tick";
+import { quietScreenPulse, sanitizeScreenPulse, type ScreenPulse } from "@/lib/world/screen-texture";
 import { INTRO_CLEAR_MS, INTRO_COPY_AT_MS, presetForMuse } from "@/lib/world/camera";
 import { seedWorld } from "@/lib/world/defaults";
 import { PERF_BUDGET } from "@/lib/world/perf";
@@ -30,6 +31,7 @@ export function useLivingWorld() {
     prefersReducedMotion() ? null : INTRO_COPY[0],
   );
   const [pulse, setPulse] = useState<Pulse>({ kind: "QUIET", ticker: null });
+  const [screenPulse, setScreenPulse] = useState<ScreenPulse>(quietScreenPulse);
   const [tape, setTape] = useState<TapeView>(quietTape);
 
   useEffect(() => {
@@ -61,9 +63,16 @@ export function useLivingWorld() {
       try {
         const market = await fetch("/api/market", { cache: "no-store" });
         if (market.ok) {
-          const next = (await market.json()) as Pulse;
+          const next = (await market.json()) as Pulse & Record<string, unknown>;
           if (!cancelled) {
-            setPulse(next);
+            setPulse({
+              kind:
+                next.kind === "TREND_SPIKE" || next.kind === "VIRAL_POST"
+                  ? next.kind
+                  : "QUIET",
+              ticker: typeof next.ticker === "string" ? next.ticker : null,
+            });
+            setScreenPulse(sanitizeScreenPulse(next));
             setTape(tapeFromPulse(next));
           }
         }
@@ -173,5 +182,6 @@ export function useLivingWorld() {
     wakeGrok,
     setCamera,
     toggleMind,
+    pulse: screenPulse,
   };
 }

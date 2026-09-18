@@ -32,6 +32,7 @@ export function SpectatorFrame() {
           fallback={
             <WatchMode
               world={living.world}
+              pulse={living.pulse}
               onSelect={living.select}
               onInspect={living.inspect}
               onWakeGrok={living.wakeGrok}
@@ -40,6 +41,7 @@ export function SpectatorFrame() {
         >
           <MuseWorld
             world={living.world}
+            pulse={living.pulse}
             introDone={living.introDone}
             onIntroDone={() => living.setIntroDone(true)}
             onSelect={living.select}

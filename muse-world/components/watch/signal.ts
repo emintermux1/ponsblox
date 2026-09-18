@@ -44,7 +44,14 @@ export function useStreetSignal(): StreetSignal {
         if (cancelled) {
           return;
         }
-        if (body.source === "gecko") {
+        if (
+          body.source === "gecko" ||
+          body.source === "dexscreener" ||
+          body.source === "birdeye" ||
+          body.source === "gmgn" ||
+          body.source === "helius" ||
+          body.source === "solana"
+        ) {
           const ticker = typeof body.ticker === "string" ? body.ticker : null;
           setSignal({
             status: "gecko",

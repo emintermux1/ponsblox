@@ -12,11 +12,13 @@ import { Penthouse } from "@/components/world/penthouse";
 import { TravelPacket } from "@/components/world/packet";
 import { usePerf } from "@/components/world/perf-context";
 import { CameraRig } from "@/components/world/rig";
+import { ScreenPulseProvider } from "@/components/world/screens";
 import { ThoughtChip } from "@/components/world/thoughts";
 import { deskGrokLive } from "@/lib/sim/tick";
 import { presetForMuse } from "@/lib/world/camera";
 import { GROK_ORB_POS, wallSlotWorld } from "@/lib/world/layout";
 import { MIND_LIFT } from "@/lib/world/mind-graph";
+import type { ScreenPulse } from "@/lib/world/screen-texture";
 import type { MuseId, PacketEndpoint, ScreenId, WorldSnapshot } from "@/types/world";
 import { MUSE_IDS } from "@/types/world";
 
@@ -133,7 +135,7 @@ function DemandInvalidator({ revision }: { revision: string }) {
   return null;
 }
 
-function worldRevision(world: WorldSnapshot): string {
+function worldRevision(world: WorldSnapshot, pulse: ScreenPulse): string {
   return [
     world.camera,
     world.selected ?? "",
@@ -142,6 +144,10 @@ function worldRevision(world: WorldSnapshot): string {
     world.grokWake.honesty ?? "",
     world.mindOpen ? "1" : "0",
     world.packet?.t ?? 0,
+    pulse.source,
+    pulse.ticker ?? "",
+    pulse.name ?? "",
+    String(pulse.changePct ?? ""),
     ...MUSE_IDS.map((id) => {
       const muse = world.muses[id];
       return `${muse.position[0].toFixed(2)}:${muse.activity}:${muse.thought ?? ""}`;
@@ -151,6 +157,7 @@ function worldRevision(world: WorldSnapshot): string {
 
 export function LivingScene({
   world,
+  pulse,
   introDone,
   onIntroDone,
   onSelect,
@@ -158,6 +165,7 @@ export function LivingScene({
   onWakeGrok,
 }: {
   world: WorldSnapshot;
+  pulse: ScreenPulse;
   introDone: boolean;
   onIntroDone: () => void;
   onSelect: (id: MuseId) => void;
@@ -180,10 +188,10 @@ export function LivingScene({
   };
 
   return (
-    <>
+    <ScreenPulseProvider pulse={pulse}>
       <Lighting />
       <CanvasPointer />
-      <DemandInvalidator revision={worldRevision(world)} />
+      <DemandInvalidator revision={worldRevision(world, pulse)} />
       <CameraRig
         preset={world.camera}
         selected={world.selected}
@@ -233,6 +241,6 @@ export function LivingScene({
       {contactShadows ? (
         <ContactShadows position={[0, 0.012, 0.4]} opacity={0.38} scale={22} blur={2.7} far={6} />
       ) : null}
-    </>
+    </ScreenPulseProvider>
   );
 }

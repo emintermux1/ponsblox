@@ -1,13 +1,31 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import { useFrame } from "@react-three/fiber";
 import {
   CanvasTexture,
   SRGBColorSpace,
   Texture,
   TextureLoader,
 } from "three";
+import { usePerf } from "@/components/world/perf-context";
 import { PLATE, type PlateKind } from "@/lib/world/plates";
+import {
+  paintScreen,
+  quietScreenPulse,
+  sanitizeScreenPulse,
+  type ScreenKind,
+  type ScreenPulse,
+} from "@/lib/world/screen-texture";
 import { assertNever } from "@/types/world";
 
 function paintPhone(ctx: CanvasRenderingContext2D, w: number, h: number) {
@@ -356,6 +374,125 @@ export function LitLaptop({
         <group position={[0, 0, 0.008]}>
           <ScreenPane kind={plate} width={0.39} height={0.23} intensity={1.1} />
         </group>
+      </group>
+    </group>
+  );
+}
+
+const ScreenPulseContext = createContext<ScreenPulse>(quietScreenPulse());
+
+export function ScreenPulseProvider({
+  pulse,
+  children,
+}: {
+  pulse: ScreenPulse;
+  children: ReactNode;
+}) {
+  const value = useMemo(() => sanitizeScreenPulse(pulse), [pulse]);
+  return <ScreenPulseContext.Provider value={value}>{children}</ScreenPulseContext.Provider>;
+}
+
+export function useScreenPulse(): ScreenPulse {
+  return useContext(ScreenPulseContext);
+}
+
+function screenSize(kind: ScreenKind): [number, number] {
+  switch (kind) {
+    case "phone":
+      return [256, 448];
+    case "laptop":
+      return [512, 320];
+    case "desk":
+      return [640, 400];
+    default:
+      return assertNever(kind);
+  }
+}
+
+function useLitPulse(kind: ScreenKind) {
+  const pulse = useScreenPulse();
+  const { pauseExtras } = usePerf();
+  const size = screenSize(kind);
+  const canvas = useMemo(() => {
+    const node = document.createElement("canvas");
+    node.width = size[0];
+    node.height = size[1];
+    return node;
+  }, [size]);
+  const texture = useMemo(() => {
+    const tex = new CanvasTexture(canvas);
+    tex.colorSpace = SRGBColorSpace;
+    tex.needsUpdate = true;
+    return tex;
+  }, [canvas]);
+
+  const paint = useCallback(
+    (time: number) => {
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        return;
+      }
+      paintScreen(ctx, canvas.width, canvas.height, pulse, time, kind);
+      texture.needsUpdate = true;
+    },
+    [canvas, kind, pulse, texture],
+  );
+
+  useLayoutEffect(() => {
+    paint(0);
+  }, [paint]);
+
+  useLayoutEffect(() => {
+    return () => {
+      texture.dispose();
+    };
+  }, [texture]);
+
+  useFrame((state) => {
+    if (pauseExtras) {
+      return;
+    }
+    paint(state.clock.elapsedTime);
+  });
+
+  return texture;
+}
+
+export function PulseGlass({
+  kind,
+  width,
+  height,
+}: {
+  kind: ScreenKind;
+  width: number;
+  height: number;
+}) {
+  const texture = useLitPulse(kind);
+  return (
+    <mesh>
+      <planeGeometry args={[width, height]} />
+      <meshStandardMaterial
+        map={texture}
+        emissive="#b7d7ea"
+        emissiveMap={texture}
+        emissiveIntensity={1.45}
+        toneMapped={false}
+        roughness={0.22}
+        metalness={0.08}
+      />
+    </mesh>
+  );
+}
+
+export function PhoneScreen() {
+  return (
+    <group>
+      <mesh>
+        <boxGeometry args={[0.1, 0.17, 0.018]} />
+        <meshStandardMaterial color="#11110f" roughness={0.3} metalness={0.4} />
+      </mesh>
+      <group position={[0, 0, 0.011]}>
+        <PulseGlass kind="phone" width={0.082} height={0.14} />
       </group>
     </group>
   );

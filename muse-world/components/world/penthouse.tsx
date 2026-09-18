@@ -14,6 +14,7 @@ import {
 import type { ColorRepresentation, Mesh } from "three";
 import { loftPickHandlers } from "@/components/world/loft-cursor";
 import { usePerf } from "@/components/world/perf-context";
+import { PulseGlass } from "@/components/world/screens";
 import {
   IDEA_WALL_CARDS,
   IDEA_WALL_ORIGIN,
@@ -570,18 +571,15 @@ function DeskScreen({
         <boxGeometry args={[0.92, 0.56, 0.03]} />
         <meshStandardMaterial color="#161513" metalness={0.72} roughness={0.26} />
       </mesh>
-      <mesh position={[0, 0, 0.018]}>
-        <planeGeometry args={[0.86, 0.5]} />
-        <meshPhysicalMaterial
-          color={active ? "#121820" : "#0e1216"}
-          emissive={active ? "#4a6a82" : "#1a2430"}
-          emissiveIntensity={active ? 0.72 : 0.38}
-          metalness={0.35}
-          roughness={0.08}
-          transparent
-          opacity={0.88}
-        />
-      </mesh>
+      <group position={[0, 0, 0.018]}>
+        <PulseGlass kind="desk" width={0.86} height={0.5} />
+      </group>
+      {active ? (
+        <mesh position={[0, 0, 0.03]}>
+          <planeGeometry args={[0.9, 0.54]} />
+          <meshBasicMaterial color="#8fb7cc" transparent opacity={0.12} />
+        </mesh>
+      ) : null}
     </group>
   );
 }

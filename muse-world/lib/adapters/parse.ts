@@ -298,6 +298,87 @@ export function tickerFromSymbol(symbol: string | undefined | null): string | nu
   return token.toUpperCase();
 }
 
+const JUNK_TICKERS = new Set([
+  "PAID",
+  "LONGER",
+  "NVDAX3L",
+  "REDDITPAD",
+  "WIKIPAD",
+  "ROBLOXPAD",
+  "SKINPAD",
+  "GITPAD",
+  "SNAPPAD",
+  "INDEXPAD",
+  "PONS",
+  "SOL",
+  "WSOL",
+  "USDC",
+  "USDT",
+]);
+
+export function normalizeTicker(symbol: string | undefined | null): string | null {
+  if (!symbol) {
+    return null;
+  }
+  const token = symbol.trim().replace(/^\$/, "");
+  if (!token || token.length > 8 || /[^A-Za-z0-9]/.test(token)) {
+    return null;
+  }
+  return token.toUpperCase();
+}
+
+export function isJunkTicker(symbol: string | undefined | null): boolean {
+  const token = normalizeTicker(symbol);
+  if (!token) {
+    return true;
+  }
+  if (JUNK_TICKERS.has(token) || token.endsWith("PAD") || isPaidTicker(token)) {
+    return true;
+  }
+  return /^\d+$/.test(token);
+}
+
+export function cleanTicker(symbol: string | undefined | null): string | null {
+  const token = normalizeTicker(symbol);
+  if (!token || isJunkTicker(token)) {
+    return null;
+  }
+  return token;
+}
+
+export function finiteChange(value: unknown): number | null {
+  const amount = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(amount) || Math.abs(amount) > 10_000) {
+    return null;
+  }
+  return amount;
+}
+
+export function isJunkDisplayName(name: string | null | undefined): boolean {
+  const raw = name?.split("/")[0]?.trim().replace(/^\$/, "") ?? "";
+  if (!raw) {
+    return true;
+  }
+  const upper = raw.toUpperCase();
+  if (upper === "PAID" || JUNK_TICKERS.has(upper) || upper.endsWith("PAD") || isPaidTicker(upper)) {
+    return true;
+  }
+  const compact = upper.replace(/[^A-Z0-9]/g, "");
+  return compact === "PAID" || JUNK_TICKERS.has(compact) || compact.endsWith("PAD");
+}
+
+export function pulseDisplayName(
+  name: string | null | undefined,
+  ticker: string | null,
+): string | null {
+  const clean = cleanTicker(ticker);
+  const raw = name?.split("/")[0]?.trim() ?? "";
+  if (raw && !isJunkDisplayName(raw)) {
+    return raw.length > 18 ? (clean ?? raw.slice(0, 18)) : raw;
+  }
+  return clean;
+}
+
 export function mintFromGeckoTokenId(id: string | undefined): string | null {
   if (!id) {
     return null;
