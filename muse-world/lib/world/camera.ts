@@ -24,15 +24,33 @@ export const CINEMA_EASE = "power2.inOut";
 export const INTRO_COPY_AT_MS = [0, 3200, 7000] as const;
 export const INTRO_CLEAR_MS = 10_800;
 export const INTRO_HOLD_S = 0.28;
-export const INTRO_SETTLE_S = 0.4;
+export const INTRO_SETTLE_S = 0.28;
 export const INTRO_LEG_S = 3.05;
+export const INTRO_EASE_S = 1.8;
+export const INTRO_FAILSAFE_MS = 4_000;
+export const LOOK_ARRIVE_EPS = 0.08;
+
+export const HOME_SHOT: Shot = {
+  position: [2.4, 4.6, 9.8],
+  target: [0.4, 1.2, 1.2],
+  fov: 40,
+};
 
 export const INTRO_SHOTS: Shot[] = [
   { position: [1.1, 3.15, 11.4], target: [0.15, 1.25, 0.35], fov: 36 },
-  { position: [-1.4, 2.4, 8.2], target: [-3.2, 1.1, 1.2], fov: 36 },
-  { position: [6.8, 2.6, 6.4], target: [3.2, 1.15, -0.2], fov: 34 },
-  { position: [2.4, 4.6, 9.8], target: [0.4, 1.2, 1.2], fov: 40 },
+  HOME_SHOT,
 ];
+
+export const LOOK_CAM = {
+  minDistance: 2.8,
+  maxDistance: 22,
+  minPolarAngle: 0.18,
+  maxPolarAngle: Math.PI / 2 - 0.04,
+  dampingFactor: 0.085,
+  rotateSpeed: 0.86,
+  zoomSpeed: 0.88,
+  panSpeed: 0.72,
+} as const;
 
 const FOLLOW_LAMBDA = {
   position: 1.12,
@@ -69,7 +87,7 @@ export function shotForPreset(
       return { position: [x + 1.6, y + 1.72, z + 2.55], target: [x, y + 1.08, z], fov: 32 };
     }
     case "ROOM":
-      return { position: [2.4, 4.6, 9.8], target: [0.4, 1.2, 1.2], fov: 40 };
+      return HOME_SHOT;
     default:
       return assertNever(preset);
   }
@@ -100,6 +118,16 @@ export function flattenShot(shot: Shot): ShotProxy {
     tz: shot.target[2],
     fov: shot.fov,
   };
+}
+
+export function writeShot(proxy: ShotProxy, shot: Shot): void {
+  proxy.px = shot.position[0];
+  proxy.py = shot.position[1];
+  proxy.pz = shot.position[2];
+  proxy.tx = shot.target[0];
+  proxy.ty = shot.target[1];
+  proxy.tz = shot.target[2];
+  proxy.fov = shot.fov;
 }
 
 export function proxyFromCamera(camera: Camera, fallback: Shot): ShotProxy {
@@ -146,6 +174,10 @@ export function shotDistance(from: Shot, to: Shot): number {
   return pos + look * 0.55 + Math.abs(to.fov - from.fov) * 0.04;
 }
 
+export function shotSettled(from: Shot, to: Shot, epsilon = LOOK_ARRIVE_EPS): boolean {
+  return shotDistance(from, to) < epsilon;
+}
+
 export function cinematicDuration(from: Shot, to: Shot): number {
   const distance = shotDistance(from, to);
   return Math.min(6.8, Math.max(1.65, 1.85 + distance * 0.26));
@@ -153,6 +185,10 @@ export function cinematicDuration(from: Shot, to: Shot): number {
 
 export function introLegDuration(from: Shot, to: Shot): number {
   return Math.min(INTRO_LEG_S + 0.2, Math.max(INTRO_LEG_S - 0.2, cinematicDuration(from, to) * 0.7));
+}
+
+export function introEaseDuration(from: Shot, to: Shot): number {
+  return Math.min(INTRO_EASE_S, Math.max(1.05, cinematicDuration(from, to) * 0.42));
 }
 
 export function lerp(a: number, b: number, t: number): number {
@@ -163,6 +199,7 @@ export function damp(current: number, target: number, lambda: number, dt: number
   return lerp(current, target, 1 - Math.exp(-lambda * dt));
 }
 
+/** Clamp a resumed-tab spike so the look-cam cannot jump a room. */
 export function cinemaDt(dt: number): number {
   return Math.min(Math.max(dt, 0), 1 / 24);
 }
@@ -197,7 +234,7 @@ export function tweenShot(
   const { duration: requested, ...rest } = extras ?? {};
   const duration =
     typeof requested === "number"
-      ? Math.max(1.65, requested)
+      ? Math.max(0.7, requested)
       : cinematicDuration(from, to);
   return gsap.to(proxy, {
     ...flattenShot(to),
@@ -215,24 +252,12 @@ export function playIntro(
   armCinema();
   const tl = gsap.timeline({ onComplete });
   const start = readShot(proxy);
-  if (shotDistance(start, INTRO_SHOTS[0]) > 0.05) {
+  if (shotDistance(start, HOME_SHOT) > 0.05) {
     tl.to(proxy, {
-      ...flattenShot(INTRO_SHOTS[0]),
-      duration: Math.min(1.2, cinematicDuration(start, INTRO_SHOTS[0])),
+      ...flattenShot(HOME_SHOT),
+      duration: introEaseDuration(start, HOME_SHOT),
       ease: CINEMA_EASE,
     });
-  }
-  for (let i = 1; i < INTRO_SHOTS.length; i++) {
-    const prev = INTRO_SHOTS[i - 1];
-    const next = INTRO_SHOTS[i];
-    tl.to(proxy, {
-      ...flattenShot(next),
-      duration: introLegDuration(prev, next),
-      ease: CINEMA_EASE,
-    });
-    if (i < INTRO_SHOTS.length - 1) {
-      tl.to({}, { duration: INTRO_HOLD_S });
-    }
   }
   tl.to({}, { duration: INTRO_SETTLE_S });
   return tl;

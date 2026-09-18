@@ -3,6 +3,8 @@ import { test } from "node:test";
 import {
   activityLine,
   asCaption,
+  ENTER_MIND,
+  ENTRY_CAPTION,
   INTRO_COPY,
   isAwake,
   PAGE_DESCRIPTION,
@@ -49,6 +51,10 @@ test("asCaption can keep the first short clause of a long line", () => {
     ),
     "still at the window",
   );
+});
+
+test("first entry copy is not ENTER MIND", () => {
+  assert.notEqual(ENTRY_CAPTION, ENTER_MIND);
 });
 
 test("literary activities stay awake except rest", () => {

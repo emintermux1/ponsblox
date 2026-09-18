@@ -99,6 +99,26 @@ function Lighting() {
   );
 }
 
+function CanvasPointer() {
+  const gl = useThree((state) => state.gl);
+
+  useEffect(() => {
+    const el = gl.domElement;
+    el.style.touchAction = "none";
+    el.style.pointerEvents = "auto";
+    el.style.userSelect = "none";
+    const blockMenu = (event: Event) => {
+      event.preventDefault();
+    };
+    el.addEventListener("contextmenu", blockMenu);
+    return () => {
+      el.removeEventListener("contextmenu", blockMenu);
+    };
+  }, [gl]);
+
+  return null;
+}
+
 function DemandInvalidator({ revision }: { revision: string }) {
   const invalidate = useThree((state) => state.invalidate);
   const { frameloop } = usePerf();
@@ -148,6 +168,7 @@ export function LivingScene({
   return (
     <>
       <Lighting />
+      <CanvasPointer />
       <DemandInvalidator revision={worldRevision(world)} />
       <CameraRig
         preset={world.camera}

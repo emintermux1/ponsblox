@@ -94,6 +94,18 @@ canvas {
   letter-spacing: 0.18em;
 }
 
+.loft-chrome,
+.loft-chrome-in,
+.loft-veil {
+  pointer-events: none;
+}
+
+.loft-chrome button,
+.loft-chrome a,
+.loft-chrome [role="button"] {
+  pointer-events: auto;
+}
+
 .loft-chrome-in {
   animation: loft-chrome-in 0.8s ease-out;
 }

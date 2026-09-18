@@ -1,20 +1,43 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { OrbitControls } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
-import { PerspectiveCamera } from "three";
+import { MOUSE, TOUCH, PerspectiveCamera } from "three";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { usePerf } from "@/components/world/perf-context";
 import {
   applyProxyToCamera,
   dampShot,
+  flattenShot,
+  HOME_SHOT,
+  INTRO_FAILSAFE_MS,
   INTRO_SHOTS,
+  LOOK_CAM,
   playIntro,
   proxyFromCamera,
+  readShot,
   shotForPreset,
-  tweenShot,
+  shotSettled,
+  writeShot,
+  type Shot,
   type ShotProxy,
 } from "@/lib/world/camera";
 import type { CameraPreset, MuseId } from "@/types/world";
+import { assertNever } from "@/types/world";
+
+type Drive =
+  | { kind: "intro" }
+  | { kind: "ease"; to: Shot }
+  | { kind: "free" };
+
+function syncLook(controls: OrbitControlsImpl | null, proxy: ShotProxy): void {
+  if (!controls) {
+    return;
+  }
+  controls.target.set(proxy.tx, proxy.ty, proxy.tz);
+  controls.update();
+}
 
 export function CameraRig({
   preset,
@@ -30,12 +53,24 @@ export function CameraRig({
   onIntroDone: () => void;
 }) {
   const camera = useThree((state) => state.camera);
+  const gl = useThree((state) => state.gl);
   const { reducedMotion, hidden, cameraFar } = usePerf();
-  const proxy = useRef<ShotProxy>(proxyFromCamera(camera, INTRO_SHOTS[0]));
-  const follow = useRef(false);
-  const finished = useRef(false);
+  const controlsRef = useRef<OrbitControlsImpl | null>(null);
+  const proxy = useRef<ShotProxy>(
+    flattenShot(introDone || reducedMotion ? HOME_SHOT : INTRO_SHOTS[0]),
+  );
+  const drive = useRef<Drive>(
+    introDone || reducedMotion ? { kind: "free" } : { kind: "intro" },
+  );
+  const dragging = useRef(false);
+  const skipPreset = useRef(true);
+  const finished = useRef(introDone || reducedMotion);
   const musePosRef = useRef(musePos);
   const onIntroDoneRef = useRef(onIntroDone);
+  const releaseRef = useRef<(fromCamera: boolean, finishIntro: boolean) => void>(
+    () => undefined,
+  );
+  const [lookFree, setLookFree] = useState(introDone || reducedMotion);
 
   useEffect(() => {
     musePosRef.current = musePos;
@@ -45,26 +80,51 @@ export function CameraRig({
     onIntroDoneRef.current = onIntroDone;
   }, [onIntroDone]);
 
+  releaseRef.current = (fromCamera, finishIntro) => {
+    if (fromCamera) {
+      proxy.current = proxyFromCamera(camera, HOME_SHOT);
+    }
+    applyProxyToCamera(camera, proxy.current);
+    const controls = controlsRef.current;
+    if (controls) {
+      controls.enabled = true;
+      syncLook(controls, proxy.current);
+    }
+    drive.current = { kind: "free" };
+    setLookFree(true);
+    if (finishIntro && !finished.current) {
+      finished.current = true;
+      onIntroDoneRef.current();
+    }
+  };
+
   useEffect(() => {
-    if (reducedMotion && !introDone) {
+    if (!reducedMotion) {
+      return;
+    }
+    writeShot(proxy.current, HOME_SHOT);
+    applyProxyToCamera(camera, proxy.current);
+    syncLook(controlsRef.current, proxy.current);
+    drive.current = { kind: "free" };
+    setLookFree(true);
+    if (!introDone) {
       onIntroDone();
     }
-  }, [introDone, onIntroDone, reducedMotion]);
+  }, [camera, introDone, onIntroDone, reducedMotion]);
 
   useEffect(() => {
     if (introDone || reducedMotion) {
       return;
     }
-    const finish = () => {
-      if (finished.current) {
-        return;
-      }
-      finished.current = true;
-      follow.current = false;
-      onIntroDoneRef.current();
-    };
-    const timeline = playIntro(proxy.current, finish);
-    const failSafe = window.setTimeout(finish, 14_000);
+    drive.current = { kind: "intro" };
+    setLookFree(false);
+    const timeline = playIntro(proxy.current, () => {
+      releaseRef.current(false, true);
+    });
+    const failSafe = window.setTimeout(() => {
+      timeline.kill();
+      releaseRef.current(false, true);
+    }, INTRO_FAILSAFE_MS);
     return () => {
       window.clearTimeout(failSafe);
       timeline.kill();
@@ -75,31 +135,128 @@ export function CameraRig({
     if (!introDone) {
       return;
     }
-    follow.current = false;
+    if (skipPreset.current) {
+      skipPreset.current = false;
+      drive.current = { kind: "free" };
+      setLookFree(true);
+      syncLook(controlsRef.current, proxy.current);
+      return;
+    }
     const next = shotForPreset(preset, selected, musePosRef.current);
-    const tween = tweenShot(proxy.current, next, {
-      onComplete: () => {
-        follow.current = preset === "MIND";
-      },
-    });
-    return () => {
-      tween.kill();
-    };
-  }, [preset, selected, introDone]);
+    proxy.current = proxyFromCamera(camera, next);
+    drive.current = { kind: "ease", to: next };
+    setLookFree(true);
+  }, [camera, introDone, preset, selected]);
 
-  useFrame((state, dt) => {
+  useEffect(() => {
+    const el = gl.domElement;
+    const onPointerDown = () => {
+      const mode = drive.current;
+      switch (mode.kind) {
+        case "intro":
+          releaseRef.current(true, true);
+          return;
+        case "ease":
+          dragging.current = true;
+          releaseRef.current(true, false);
+          return;
+        case "free":
+          dragging.current = true;
+          return;
+        default:
+          return assertNever(mode);
+      }
+    };
+    el.addEventListener("pointerdown", onPointerDown, { capture: true });
+    return () => {
+      el.removeEventListener("pointerdown", onPointerDown, true);
+    };
+  }, [gl]);
+
+  useFrame((_, dt) => {
     if (hidden) {
       return;
     }
-    const frameCamera = state.camera;
-    if (frameCamera instanceof PerspectiveCamera) {
-      frameCamera.far = cameraFar;
+    if (camera instanceof PerspectiveCamera) {
+      camera.far = cameraFar;
+      camera.updateProjectionMatrix();
     }
-    if (follow.current && preset === "MIND") {
-      dampShot(proxy.current, shotForPreset("MIND", selected, musePos), dt);
+    const mode = drive.current;
+    switch (mode.kind) {
+      case "intro":
+        applyProxyToCamera(camera, proxy.current);
+        return;
+      case "ease": {
+        if (dragging.current) {
+          drive.current = { kind: "free" };
+          return;
+        }
+        dampShot(proxy.current, mode.to, dt);
+        applyProxyToCamera(camera, proxy.current);
+        syncLook(controlsRef.current, proxy.current);
+        if (shotSettled(readShot(proxy.current), mode.to)) {
+          drive.current = { kind: "free" };
+        }
+        return;
+      }
+      case "free":
+        return;
+      default:
+        return assertNever(mode);
     }
-    applyProxyToCamera(frameCamera, proxy.current);
   });
 
-  return null;
+  return (
+    <OrbitControls
+      ref={(node) => {
+        controlsRef.current = node;
+        if (node) {
+          node.target.set(proxy.current.tx, proxy.current.ty, proxy.current.tz);
+        }
+      }}
+      makeDefault
+      enabled={lookFree}
+      enableDamping
+      dampingFactor={LOOK_CAM.dampingFactor}
+      enablePan
+      enableZoom
+      enableRotate
+      screenSpacePanning
+      minDistance={LOOK_CAM.minDistance}
+      maxDistance={LOOK_CAM.maxDistance}
+      minPolarAngle={LOOK_CAM.minPolarAngle}
+      maxPolarAngle={LOOK_CAM.maxPolarAngle}
+      rotateSpeed={LOOK_CAM.rotateSpeed}
+      zoomSpeed={LOOK_CAM.zoomSpeed}
+      panSpeed={LOOK_CAM.panSpeed}
+      mouseButtons={{
+        LEFT: MOUSE.ROTATE,
+        MIDDLE: MOUSE.DOLLY,
+        RIGHT: MOUSE.PAN,
+      }}
+      touches={{
+        ONE: TOUCH.ROTATE,
+        TWO: TOUCH.DOLLY_PAN,
+      }}
+      onStart={() => {
+        dragging.current = true;
+        const mode = drive.current;
+        switch (mode.kind) {
+          case "intro":
+            releaseRef.current(true, true);
+            return;
+          case "ease":
+            releaseRef.current(true, false);
+            return;
+          case "free":
+            return;
+          default:
+            return assertNever(mode);
+        }
+      }}
+      onEnd={() => {
+        dragging.current = false;
+      }}
+    />
+  );
 }

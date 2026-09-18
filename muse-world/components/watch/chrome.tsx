@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   MIND_LINKS,
   MIND_SHORT,
@@ -20,7 +19,6 @@ import {
   activityLine,
   EMPTY_SELECTION,
   ENTER_MIND,
-  ENTRY_CAPTION,
   isAwake,
   LEAVE_MIND,
   locationLabel,
@@ -45,99 +43,48 @@ export function SpectatorChrome({
   onSelect: (id: MuseId | null) => void;
   onEnterMind: () => void;
 }) {
-  const reduceMotion = useReducedMotion();
-  const [entered, setEntered] = useState(false);
-  const settled = useEntrySettled(reduceMotion === true) || entered;
   const street = useStreetSignal();
   const selected = world.selected ? world.muses[world.selected] : null;
   const signal = lastSignal(street, world.events);
 
-  const enterMind = () => {
-    setEntered(true);
-    onEnterMind();
-  };
-
   return (
     <div className="loft-chrome pointer-events-none absolute inset-0 z-40 text-loft-paper">
-      {!settled ? (
-        <EntryVeil mindOpen={world.mindOpen} onEnter={enterMind} onLeave={onEnterMind} />
-      ) : (
-        <div className="loft-chrome-in pointer-events-none absolute inset-0">
-          <Wordmark signal={signal} mode={mode} />
-          <Locations camera={world.camera} onPreset={onPreset} />
-          <Roster world={world} selectedId={world.selected} onSelect={onSelect} />
-          <AnimatePresence mode="wait">
-            {introLine ? (
-              <motion.p
-                key={introLine}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute left-1/2 top-[15%] max-w-lg -translate-x-1/2 px-6 text-center font-serif text-[clamp(1.05rem,2.4vw,1.65rem)] italic tracking-[0.08em] text-loft-paper/78"
-              >
-                {introLine}
-              </motion.p>
-            ) : null}
-          </AnimatePresence>
-          <div className="pointer-events-auto absolute bottom-5 right-5 sm:hidden">
+      <div className="loft-chrome-in pointer-events-none absolute inset-0">
+        <Wordmark signal={signal} mode={mode} />
+        <Locations camera={world.camera} onPreset={onPreset} />
+        <Roster world={world} selectedId={world.selected} onSelect={onSelect} />
+        <AnimatePresence mode="wait">
+          {introLine ? (
+            <motion.p
+              key={introLine}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute left-1/2 top-[15%] max-w-lg -translate-x-1/2 px-6 text-center font-serif text-[clamp(1.05rem,2.4vw,1.65rem)] italic tracking-[0.08em] text-loft-paper/78"
+            >
+              {introLine}
+            </motion.p>
+          ) : null}
+        </AnimatePresence>
+        {selected ? (
+          <div className="absolute bottom-5 right-5 sm:hidden">
             <MindButton
               mindOpen={world.mindOpen}
-              onEnter={enterMind}
+              onEnter={onEnterMind}
               onLeave={onEnterMind}
             />
           </div>
-          <div className="hidden sm:block">
-            <SelectedPane
-              selected={selected}
-              mindOpen={world.mindOpen}
-              onEnter={enterMind}
-              onLeave={onEnterMind}
-            />
-          </div>
+        ) : null}
+        <div className="hidden sm:block">
+          <SelectedPane
+            selected={selected}
+            mindOpen={world.mindOpen}
+            onEnter={onEnterMind}
+            onLeave={onEnterMind}
+          />
         </div>
-      )}
-    </div>
-  );
-}
-
-function useEntrySettled(reduceMotion: boolean): boolean {
-  const [settled, setSettled] = useState(false);
-
-  useEffect(() => {
-    if (reduceMotion) {
-      setSettled(true);
-      return;
-    }
-    const id = window.setTimeout(() => setSettled(true), 3000);
-    return () => window.clearTimeout(id);
-  }, [reduceMotion]);
-
-  return settled;
-}
-
-function EntryVeil({
-  mindOpen,
-  onEnter,
-  onLeave,
-}: {
-  mindOpen: boolean;
-  onEnter: () => void;
-  onLeave: () => void;
-}) {
-  return (
-    <div className="loft-veil absolute inset-0 flex flex-col items-center justify-center">
-      <p className="text-center font-serif text-[clamp(2.8rem,8vw,6.2rem)] italic leading-none tracking-[-0.03em]">
-        {WORDMARK}
-      </p>
-      <p className="mt-4 text-[12px] tracking-[0.28em] text-loft-brass/80">
-        {WORLD_MARK}
-      </p>
-      <span className="loft-rule mt-5" />
-      <p className="loft-entry-caption mt-6 text-[15px] text-loft-paper/88 md:text-[16px]">
-        {ENTRY_CAPTION}
-      </p>
-      <MindButton mindOpen={mindOpen} onEnter={onEnter} onLeave={onLeave} />
+      </div>
     </div>
   );
 }
@@ -199,7 +146,7 @@ function Locations({
   onPreset: (preset: CameraPreset) => void;
 }) {
   return (
-    <nav className="pointer-events-auto absolute right-5 top-6 hidden gap-5 text-[11px] text-loft-paper/40 md:flex md:right-7">
+    <nav className="absolute right-5 top-6 hidden gap-5 text-[11px] text-loft-paper/40 md:flex md:right-7">
       {ROOM_PRESETS.map((preset) => (
         <button
           key={preset}
@@ -207,8 +154,8 @@ function Locations({
           onClick={() => onPreset(preset)}
           className={
             camera === preset
-              ? "text-loft-paper"
-              : "transition-colors duration-300 hover:text-loft-paper/80"
+              ? "pointer-events-auto text-loft-paper"
+              : "pointer-events-auto transition-colors duration-300 hover:text-loft-paper/80"
           }
         >
           {locationLabel(preset)}
@@ -230,7 +177,7 @@ function Roster({
   const awake = MUSE_IDS.filter((id) => isAwake(world.muses[id].activity));
 
   return (
-    <div className="pointer-events-auto absolute bottom-5 left-5 md:bottom-7 md:left-7">
+    <div className="absolute bottom-5 left-5 md:bottom-7 md:left-7">
       <p className="text-[9px] tracking-[0.22em] text-loft-brass/75">
         {awake.length === 0 ? "the room is still" : "awake"}
       </p>
@@ -243,7 +190,7 @@ function Roster({
               <button
                 type="button"
                 onClick={() => onSelect(id)}
-                className={`flex items-baseline gap-3 text-left ${
+                className={`pointer-events-auto flex items-baseline gap-3 text-left ${
                   selectedId === id ? "text-loft-paper" : "text-loft-paper/58"
                 }`}
               >
@@ -359,17 +306,16 @@ function SelectedPane({
 }) {
   if (!selected) {
     return (
-      <div className="pointer-events-auto absolute bottom-5 right-5 w-[14.5rem] md:bottom-7 md:right-7">
+      <div className="absolute bottom-5 right-5 w-[14.5rem] md:bottom-7 md:right-7">
         <p className="font-serif text-[13px] italic leading-6 text-loft-paper/62">
           {EMPTY_SELECTION}
         </p>
-        <MindButton mindOpen={mindOpen} onEnter={onEnter} onLeave={onLeave} />
       </div>
     );
   }
 
   return (
-    <div className="pointer-events-auto absolute bottom-5 right-5 w-[15.5rem] text-right md:bottom-7 md:right-7">
+    <div className="absolute bottom-5 right-5 w-[15.5rem] text-right md:bottom-7 md:right-7">
       <p className="font-serif text-[1.35rem] italic leading-none tracking-[-0.02em]">
         {selected.name}
       </p>
