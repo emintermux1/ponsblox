@@ -34,9 +34,17 @@ describe("loft pick", () => {
     assert.equal(next.camera, "TRADER");
     assert.equal(next.muses.trader.name, world.muses.trader.name);
     assert.equal(next.muses.trader.activity, world.muses.trader.activity);
+    assert.equal(next.muses.trader.activity, "TRADING");
     const shot = shotForPreset("TRADER", "trader", world.muses.trader.position);
     assert.equal(shot.target[0], world.muses.trader.position[0]);
     assert.equal(shot.target[2], world.muses.trader.position[2]);
+  });
+
+  it("select does not rewrite TRADING into WATCHING", () => {
+    const world = seedWorld();
+    world.muses.trader.activity = "TRADING";
+    const next = applyMuseSelect(world, "trader");
+    assert.equal(next.muses.trader.activity, "TRADING");
   });
 
   it("clearing a muse returns the room", () => {
